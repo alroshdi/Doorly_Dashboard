@@ -379,23 +379,38 @@ export interface CustomerAnalytics {
 
 // Get customer requests count (sorted descending)
 export function getCustomerRequestsCount(data: RequestData[]): ChartData[] {
-  const customerColumn = Object.keys(data[0] || {}).find(k => 
+  const customerIdColumn = Object.keys(data[0] || {}).find(k => 
     k.toLowerCase().includes("customer_id")
   );
+  const customerNameColumn = Object.keys(data[0] || {}).find(k => 
+    k.toLowerCase().includes("customer_name") ||
+    k.toLowerCase().includes("name")
+  );
   
-  if (!customerColumn || data.length === 0) return [];
+  if (!customerIdColumn || data.length === 0) return [];
 
-  const grouped: { [key: string]: number } = {};
+  const grouped: { [key: string]: { name: string; count: number } } = {};
 
   data.forEach((row) => {
-    const customerId = String(row[customerColumn] || "").trim();
+    const customerId = String(row[customerIdColumn] || "").trim();
     if (customerId) {
-      grouped[customerId] = (grouped[customerId] || 0) + 1;
+      // Use customer name if available, otherwise fallback to ID
+      const customerName = customerNameColumn 
+        ? String(row[customerNameColumn] || "").trim() 
+        : customerId;
+      
+      // Use customer name as key, or ID if name is not available
+      const displayName = customerName || customerId;
+      
+      if (!grouped[customerId]) {
+        grouped[customerId] = { name: displayName, count: 0 };
+      }
+      grouped[customerId].count++;
     }
   });
 
-  return Object.entries(grouped)
-    .map(([name, value]) => ({ name, value }))
+  return Object.values(grouped)
+    .map(({ name, count }) => ({ name, value: count }))
     .sort((a, b) => b.value - a.value);
 }
 
@@ -407,10 +422,19 @@ export function getCustomersWithRepeatedPropertyTypes(data: RequestData[]): Cust
   const customerNameColumn = Object.keys(data[0] || {}).find(k => 
     k.toLowerCase().includes("customer_name")
   );
-  const propertyTypeColumn = Object.keys(data[0] || {}).find(k => 
-    k.toLowerCase().includes("property_type_ar") || 
-    k.toLowerCase().includes("property_type")
+  
+  // Prioritize Arabic name column, then English name, then fallback to property_type
+  const propertyTypeArColumn = Object.keys(data[0] || {}).find(k => 
+    k.toLowerCase().includes("property_type_ar")
   );
+  const propertyTypeEnColumn = Object.keys(data[0] || {}).find(k => 
+    k.toLowerCase().includes("property_type_en") ||
+    (k.toLowerCase().includes("property_type") && !k.toLowerCase().includes("_id") && !k.toLowerCase().includes("_ar"))
+  );
+  const propertyTypeColumn = propertyTypeArColumn || propertyTypeEnColumn || 
+    Object.keys(data[0] || {}).find(k => 
+      k.toLowerCase().includes("property_type") && !k.toLowerCase().includes("_id")
+    );
 
   if (!customerIdColumn || !propertyTypeColumn || data.length === 0) return [];
 
@@ -419,9 +443,27 @@ export function getCustomersWithRepeatedPropertyTypes(data: RequestData[]): Cust
   data.forEach((row) => {
     const customerId = String(row[customerIdColumn] || "").trim();
     const customerName = customerNameColumn ? String(row[customerNameColumn] || "").trim() : customerId;
-    const propertyType = String(row[propertyTypeColumn] || "").trim();
+    
+    // Get property type name (prioritize Arabic, then English, then fallback)
+    let propertyType = "";
+    if (propertyTypeArColumn) {
+      propertyType = String(row[propertyTypeArColumn] || "").trim();
+    }
+    if (!propertyType && propertyTypeEnColumn) {
+      propertyType = String(row[propertyTypeEnColumn] || "").trim();
+    }
+    if (!propertyType && propertyTypeColumn) {
+      propertyType = String(row[propertyTypeColumn] || "").trim();
+    }
+    
+    // Skip if it looks like an ID (numeric or contains "id" pattern)
+    // Only include if it's a meaningful name
+    if (propertyType && /^\d+$/.test(propertyType)) {
+      // If it's a pure number (ID), skip this row or try to find name mapping
+      return;
+    }
 
-    if (customerId && propertyType) {
+    if (customerId && propertyType && propertyType.length > 1 && !propertyType.toLowerCase().includes(":")) {
       if (!customerMap[customerId]) {
         customerMap[customerId] = {
           customerId,
@@ -551,18 +593,44 @@ export function getCustomerDistributionByCity(data: RequestData[]): ChartData[] 
 
 // Get favorite property types by customers
 export function getFavoritePropertyTypesByCustomers(data: RequestData[]): ChartData[] {
-  const propertyTypeColumn = Object.keys(data[0] || {}).find(k => 
-    k.toLowerCase().includes("property_type_ar") || 
-    k.toLowerCase().includes("property_type")
+  // Prioritize Arabic name column, then English name, then fallback to property_type
+  const propertyTypeArColumn = Object.keys(data[0] || {}).find(k => 
+    k.toLowerCase().includes("property_type_ar")
   );
+  const propertyTypeEnColumn = Object.keys(data[0] || {}).find(k => 
+    k.toLowerCase().includes("property_type_en") ||
+    (k.toLowerCase().includes("property_type") && !k.toLowerCase().includes("_id") && !k.toLowerCase().includes("_ar"))
+  );
+  const propertyTypeIdColumn = Object.keys(data[0] || {}).find(k => 
+    k.toLowerCase().includes("property_type_id")
+  );
+
+  // Use name column if available, otherwise use the general property_type column
+  const propertyTypeColumn = propertyTypeArColumn || propertyTypeEnColumn || 
+    Object.keys(data[0] || {}).find(k => 
+      k.toLowerCase().includes("property_type") && !k.toLowerCase().includes("_id")
+    );
 
   if (!propertyTypeColumn || data.length === 0) return [];
 
   const propertyTypeCount: { [type: string]: number } = {};
 
   data.forEach((row) => {
-    const propertyType = String(row[propertyTypeColumn] || "").trim();
-    if (propertyType) {
+    // Get property type name (prioritize Arabic, then English, then fallback)
+    let propertyType = "";
+    if (propertyTypeArColumn) {
+      propertyType = String(row[propertyTypeArColumn] || "").trim();
+    }
+    if (!propertyType && propertyTypeEnColumn) {
+      propertyType = String(row[propertyTypeEnColumn] || "").trim();
+    }
+    if (!propertyType && propertyTypeColumn) {
+      propertyType = String(row[propertyTypeColumn] || "").trim();
+    }
+    
+    // Skip if it looks like an ID (numeric or contains "id" pattern)
+    // Only include if it's a meaningful name
+    if (propertyType && !/^\d+$/.test(propertyType) && !propertyType.toLowerCase().includes(":") && propertyType.length > 1) {
       propertyTypeCount[propertyType] = (propertyTypeCount[propertyType] || 0) + 1;
     }
   });

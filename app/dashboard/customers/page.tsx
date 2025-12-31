@@ -307,8 +307,8 @@ export default function CustomersPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Customer Requests Count Chart */}
             <BarChartComponent 
-              data={customerRequestsCount.slice(0, 15)} 
-              title={isRTL ? "عدد طلبات العملاء (أعلى 15)" : "Customer Requests Count (Top 15)"} 
+              data={customerRequestsCount.slice(0, 10)} 
+              title={isRTL ? "عدد طلبات العملاء (أعلى 10)" : "Customer Requests Count (Top 10)"} 
             />
 
             {/* Customer Distribution by City */}

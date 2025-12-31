@@ -36,7 +36,12 @@ export function DateRangeSlicer({
         // Allow date picker calendar to work
         if (target.tagName === 'INPUT' || 
             target.closest('input[type="date"]') ||
-            target.closest('.date-picker-container')) {
+            target.closest('.date-picker-container') ||
+            target.closest('button')) {
+          return;
+        }
+        // Don't close if clicking the main button
+        if (target.closest('[role="button"]')) {
           return;
         }
       }
@@ -51,7 +56,7 @@ export function DateRangeSlicer({
       // Use a delay to allow date picker to open
       const timeoutId = setTimeout(() => {
         document.addEventListener("mousedown", handleClickOutside, true);
-      }, 200);
+      }, 100);
       
       return () => {
         clearTimeout(timeoutId);
@@ -82,86 +87,123 @@ export function DateRangeSlicer({
   const hasDates = startDate || endDate;
 
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium">{label}</label>
-      <div className="relative" ref={containerRef}>
+    <div className="space-y-2 relative" style={{ zIndex: 1000, pointerEvents: 'auto' }}>
+      <label className="text-sm font-medium text-foreground/90">{label}</label>
+      <div className="relative" ref={containerRef} style={{ zIndex: 1000, pointerEvents: 'auto' }}>
         <div
           className={cn(
-            "flex items-center gap-2 p-3 border-2 rounded-lg cursor-pointer hover:bg-accent/50 hover:border-primary/50 transition-all duration-300 active:scale-[0.98]",
-            isOpen && "ring-2 ring-primary border-primary shadow-md bg-accent/30"
+            "flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer",
+            "bg-gradient-to-br from-background via-background to-muted/30",
+            "hover:from-primary/5 hover:via-primary/5 hover:to-primary/10",
+            "hover:border-primary/60 hover:shadow-lg hover:shadow-primary/10",
+            "transition-all duration-300 ease-out",
+            "active:scale-[0.97] active:shadow-md",
+            isOpen && "ring-2 ring-primary/50 border-primary shadow-xl shadow-primary/20 bg-primary/5",
+            "group pointer-events-auto"
           )}
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             setIsOpen(!isOpen);
           }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
           role="button"
           tabIndex={0}
+          aria-expanded={isOpen}
+          aria-haspopup="true"
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
+              e.stopPropagation();
               setIsOpen(!isOpen);
             }
             if (e.key === "Escape") {
+              e.preventDefault();
+              e.stopPropagation();
               setIsOpen(false);
             }
           }}
         >
-          <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <div className={cn(
+            "p-2 rounded-lg transition-all duration-300",
+            "bg-primary/10 group-hover:bg-primary/20",
+            isOpen && "bg-primary/30 scale-110"
+          )}>
+            <Calendar className={cn(
+              "h-5 w-5 transition-all duration-300",
+              "text-primary group-hover:text-primary",
+              isOpen && "scale-110 rotate-12"
+            )} />
+          </div>
           <div className="flex-1 text-sm min-w-0">
-            {startDate && endDate ? (
-              <span className="truncate">
-                {formatDisplayDate(startDate)} - {formatDisplayDate(endDate)}
+            <div className="flex flex-col">
+              <span className="font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                {isRTL ? "اختر التاريخ" : "Choose Date"}
               </span>
-            ) : startDate ? (
-              <span className="truncate">{formatDisplayDate(startDate)}</span>
-            ) : (
-              <span className="text-muted-foreground">{isRTL ? "اختر التاريخ" : "Select Date"}</span>
-            )}
+              <span className="text-xs text-muted-foreground/70">{isRTL ? "انقر للاختيار" : "Click to select"}</span>
+            </div>
           </div>
           {hasDates && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-5 w-5 p-0 hover:bg-destructive hover:text-destructive-foreground"
+              className="h-8 w-8 p-0 rounded-lg hover:bg-destructive/20 hover:text-destructive transition-all duration-200 active:scale-95"
               onClick={(e) => {
                 e.stopPropagation();
                 clearDates();
               }}
             >
-              <X className="h-3 w-3" />
+              <X className="h-4 w-4" />
             </Button>
           )}
         </div>
         {isOpen && (
           <div 
-            className="absolute top-full left-0 right-0 mt-2 p-4 bg-card border-2 rounded-xl shadow-xl z-50 min-w-[320px] animate-slide-down backdrop-blur-sm date-picker-container"
+            className={cn(
+              "absolute top-full mt-3 p-5 bg-gradient-to-br from-card via-card to-card/95",
+              "border-2 border-primary/20 rounded-2xl shadow-2xl min-w-[360px]",
+              "animate-slide-down backdrop-blur-md date-picker-container",
+              "ring-1 ring-primary/10",
+              isRTL ? "right-0" : "left-0"
+            )}
+            style={{ zIndex: 9999 }}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold">{label}</h4>
+            <div className="space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-border/50">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-primary/10">
+                    <Calendar className="h-4 w-4 text-primary" />
+                  </div>
+                  <h4 className="text-sm font-bold text-foreground">{label}</h4>
+                </div>
                 {hasDates && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-xs hover:bg-destructive/10 hover:text-destructive"
+                    className="h-8 px-3 text-xs font-medium hover:bg-destructive/10 hover:text-destructive transition-all duration-200 rounded-lg"
                     onClick={(e) => {
                       e.stopPropagation();
                       clearDates();
                     }}
                   >
+                    <X className="h-3.5 w-3.5 mr-1.5" />
                     {isRTL ? "مسح" : "Clear"}
                   </Button>
                 )}
               </div>
               
-              <div className={cn("grid grid-cols-2 gap-3", isRTL && "grid-cols-2")}>
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block font-medium">
+              <div className={cn("grid grid-cols-2 gap-4", isRTL && "grid-cols-2")}>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                     {isRTL ? "من" : "From"}
                   </label>
-                  <div className="relative">
+                  <div className="relative group/input">
                     <Input
                       type="date"
                       value={startDate}
@@ -182,16 +224,22 @@ export function DateRangeSlicer({
                         e.currentTarget.showPicker?.();
                       }}
                       max={endDate || undefined}
-                      className="w-full cursor-pointer"
+                      className={cn(
+                        "w-full cursor-pointer transition-all duration-200",
+                        "hover:border-primary/50 hover:bg-accent/30",
+                        "focus:border-primary focus:ring-2 focus:ring-primary/20",
+                        "font-medium"
+                      )}
                       placeholder={isRTL ? "mm/dd/yyyy" : "mm/dd/yyyy"}
                     />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground block font-medium">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                     {isRTL ? "إلى" : "To"}
                   </label>
-                  <div className="relative">
+                  <div className="relative group/input">
                     <Input
                       type="date"
                       value={endDate}
@@ -212,7 +260,12 @@ export function DateRangeSlicer({
                         e.currentTarget.showPicker?.();
                       }}
                       min={startDate || undefined}
-                      className="w-full cursor-pointer"
+                      className={cn(
+                        "w-full cursor-pointer transition-all duration-200",
+                        "hover:border-primary/50 hover:bg-accent/30",
+                        "focus:border-primary focus:ring-2 focus:ring-primary/20",
+                        "font-medium"
+                      )}
                       placeholder={isRTL ? "mm/dd/yyyy" : "mm/dd/yyyy"}
                     />
                   </div>
@@ -220,11 +273,15 @@ export function DateRangeSlicer({
               </div>
               
               {/* Quick action buttons */}
-              <div className="flex gap-2 pt-2 border-t">
+              <div className="flex gap-2 pt-3 border-t border-border/50">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 text-xs"
+                  className={cn(
+                    "flex-1 text-xs font-medium transition-all duration-200",
+                    "hover:bg-primary/10 hover:text-primary hover:border-primary/50",
+                    "active:scale-95 hover:scale-105"
+                  )}
                   onClick={(e) => {
                     e.stopPropagation();
                     const today = new Date().toISOString().split('T')[0];
@@ -237,7 +294,11 @@ export function DateRangeSlicer({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 text-xs"
+                  className={cn(
+                    "flex-1 text-xs font-medium transition-all duration-200",
+                    "hover:bg-primary/10 hover:text-primary hover:border-primary/50",
+                    "active:scale-95 hover:scale-105"
+                  )}
                   onClick={(e) => {
                     e.stopPropagation();
                     const today = new Date();
@@ -252,7 +313,11 @@ export function DateRangeSlicer({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 text-xs"
+                  className={cn(
+                    "flex-1 text-xs font-medium transition-all duration-200",
+                    "hover:bg-primary/10 hover:text-primary hover:border-primary/50",
+                    "active:scale-95 hover:scale-105"
+                  )}
                   onClick={(e) => {
                     e.stopPropagation();
                     const today = new Date();

@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { DateRangeSlicer } from "@/components/ui/date-range-slicer";
 import { getTranslations, getLanguage, type Language } from "@/lib/i18n";
 import { format } from "date-fns";
 
@@ -137,30 +136,15 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
   };
 
   return (
-    <Card className="mb-6 animate-fade-in hover-lift border-2 hover:border-primary/30 bg-gradient-to-br from-card to-card/95 transition-all duration-500">
-      <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
-          {/* Date Range Slicer */}
-          <div className="xl:col-span-2">
-            <DateRangeSlicer
-              startDate={filters.startDate}
-              endDate={filters.endDate}
-              onStartDateChange={(date) => {
-                updateFilter("startDate", date);
-                updateFilter("quickFilter", ""); // Clear quick filter when manually selecting dates
-              }}
-              onEndDateChange={(date) => {
-                updateFilter("endDate", date);
-                updateFilter("quickFilter", ""); // Clear quick filter when manually selecting dates
-              }}
-              label={t.filters.dateRange}
-              isRTL={isRTL}
-            />
-          </div>
-
+    <Card className="mb-6 animate-fade-in hover-lift border-2 hover:border-primary/30 bg-gradient-to-br from-card via-card/98 to-card/95 transition-all duration-500 relative shadow-lg hover:shadow-xl" style={{ zIndex: 10 }}>
+      <CardContent className="p-5 md:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 md:gap-5">
           {/* Quick Date Filters */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t.filters.quickFilter}</label>
+          <div className="space-y-2.5">
+            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+              {t.filters.quickFilter}
+            </label>
             <Select
               value={filters.quickFilter}
               onChange={(e) => {
@@ -170,6 +154,7 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
                   updateFilter("quickFilter", "");
                 }
               }}
+              className="transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
               <option value="">{t.filters.all}</option>
               <option value="last7days">{t.filters.last7days}</option>
@@ -179,11 +164,15 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
           </div>
 
           {/* Wilaya */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t.filters.wilaya}</label>
+          <div className="space-y-2.5">
+            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+              {t.filters.wilaya}
+            </label>
             <Select
               value={filters.wilaya}
               onChange={(e) => updateFilter("wilaya", e.target.value)}
+              className="transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
               <option value="">{t.filters.all}</option>
               {wilayas.map((w) => (
@@ -193,11 +182,15 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
           </div>
 
           {/* Request Type */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t.filters.requestType}</label>
+          <div className="space-y-2.5">
+            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+              {t.filters.requestType}
+            </label>
             <Select
               value={filters.requestType}
               onChange={(e) => updateFilter("requestType", e.target.value)}
+              className="transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
               <option value="">{t.filters.all}</option>
               {requestTypes.map((t) => (
@@ -207,11 +200,15 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
           </div>
 
           {/* Property Type */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t.filters.propertyType}</label>
+          <div className="space-y-2.5">
+            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+              {t.filters.propertyType}
+            </label>
             <Select
               value={filters.propertyType}
               onChange={(e) => updateFilter("propertyType", e.target.value)}
+              className="transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
               <option value="">{t.filters.all}</option>
               {propertyTypes.map((t) => (
@@ -221,11 +218,15 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
           </div>
 
           {/* Source */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t.filters.source}</label>
+          <div className="space-y-2.5">
+            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+              {t.filters.source}
+            </label>
             <Select
               value={filters.source}
               onChange={(e) => updateFilter("source", e.target.value)}
+              className="transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
               <option value="">{t.filters.all}</option>
               {sources.map((s) => (
@@ -235,11 +236,15 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
           </div>
 
           {/* Status */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t.filters.status}</label>
+          <div className="space-y-2.5">
+            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+              {t.filters.status}
+            </label>
             <Select
               value={filters.status}
               onChange={(e) => updateFilter("status", e.target.value)}
+              className="transition-all duration-200 hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
               <option value="">{t.filters.all}</option>
               {statuses.map((s) => (
@@ -248,11 +253,11 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
             </Select>
           </div>
         </div>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-5 pt-4 border-t border-border/50 flex justify-end">
           <Button 
             variant="outline" 
             onClick={clearFilters}
-            className="transition-all duration-300 hover:scale-105 active:scale-95 hover:bg-primary/10 hover:text-primary hover:border-primary/50"
+            className="transition-all duration-300 hover:scale-105 active:scale-95 hover:bg-primary/10 hover:text-primary hover:border-primary/50 font-medium px-6"
           >
             {isRTL ? "مسح الفلاتر" : "Clear Filters"}
           </Button>

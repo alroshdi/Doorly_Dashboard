@@ -6,20 +6,18 @@ import type { Language } from "@/lib/i18n";
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
-  const [lang, setLang] = useState<Language>("ar");
 
   useEffect(() => {
     setMounted(true);
+    // Only update if different from default (ar/rtl)
     const currentLang = getLanguage();
-    setLang(currentLang);
-    document.documentElement.lang = currentLang;
-    document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
+    if (currentLang !== "ar") {
+      document.documentElement.lang = currentLang;
+      document.documentElement.dir = "ltr";
+    }
   }, []);
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
+  // Always render children, no conditional rendering to avoid hydration issues
   return <>{children}</>;
 }
 

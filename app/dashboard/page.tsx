@@ -23,10 +23,9 @@ import {
   getUsageTypeDistribution,
   type RequestData,
 } from "@/lib/analytics";
-import { FileText, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { parseISO, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
-import { exportDashboardToPDF } from "@/lib/pdf-export";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -277,19 +276,6 @@ export default function DashboardPage() {
     );
   }
 
-  const handleExportPDF = async () => {
-    const reportTitle = isRTL 
-      ? `تقرير دورلي - ${new Date().toLocaleDateString("ar-DZ")}`
-      : `Doorly Report - ${new Date().toLocaleDateString("en-US")}`;
-    
-    await exportDashboardToPDF("dashboard-content", {
-      title: reportTitle,
-      filename: `doorly-dashboard-${new Date().toISOString().split("T")[0]}.pdf`,
-      includeKPIs: true,
-      includeCharts: true,
-      includeTables: true,
-    });
-  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
@@ -297,13 +283,17 @@ export default function DashboardPage() {
       <div className="flex-1 overflow-y-auto">
         <div id="dashboard-content" className="p-6 md:p-8 space-y-6 md:space-y-8 animate-fade-in">
           {/* Header Section */}
-          <div className="mb-6 animate-slide-down">
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2 animate-fade-in">
-              {t.sidebar.overview}
-            </h1>
-            <p className="text-muted-foreground text-lg animate-slide-up" style={{ animationDelay: "100ms" }}>
-              {isRTL ? "لوحة تحكم شاملة لإدارة وتحليل طلبات العقارات" : "Comprehensive dashboard for real estate request management and analytics"}
-            </p>
+          <div className="mb-8 animate-slide-down">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-3 animate-fade-in bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                  {t.sidebar.overview}
+                </h1>
+                <p className="text-muted-foreground text-base md:text-lg animate-slide-up max-w-2xl" style={{ animationDelay: "100ms" }}>
+                  {isRTL ? "لوحة تحكم شاملة لإدارة وتحليل طلبات العقارات" : "Comprehensive dashboard for real estate request management and analytics"}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Top Filters */}
@@ -317,10 +307,10 @@ export default function DashboardPage() {
           </div>
 
           {/* Charts Section */}
-          <div className="space-y-6 animate-slide-up" style={{ animationDelay: "400ms" }} data-chart-section>
+          <div className="space-y-6 md:space-y-8 animate-slide-up" style={{ animationDelay: "400ms" }} data-chart-section>
             {/* Time Period Toggle for Line Chart */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <h2 className="text-2xl font-bold text-foreground">{t.charts.requestsOverTime}</h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-2">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">{t.charts.requestsOverTime}</h2>
               <div className="flex gap-2 bg-muted/50 p-1 rounded-lg backdrop-blur-sm border border-border/50">
                 <Button
                   variant={timePeriod === "daily" ? "default" : "ghost"}
@@ -353,7 +343,7 @@ export default function DashboardPage() {
               <LineChartComponent data={requestsOverTime} title={t.charts.requestsOverTime} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
               <div className="animate-slide-in-left" style={{ animationDelay: "600ms" }}>
                 <DonutChartComponent data={requestsByWilaya} title={t.charts.byWilaya} />
               </div>
@@ -362,7 +352,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
               <div className="animate-slide-in-left" style={{ animationDelay: "800ms" }}>
                 <BarChartComponent data={propertyTypeDistribution} title={t.charts.propertyTypeDistribution} />
               </div>
@@ -376,26 +366,6 @@ export default function DashboardPage() {
           <div className="animate-slide-up" style={{ animationDelay: "1000ms" }} data-table-section>
             <Tables data={filteredData} />
           </div>
-
-          {/* PDF Reports Button (UI Only) */}
-          <Card className="bg-gradient-to-br from-card to-card/95 border-2 hover:border-primary/30 transition-all duration-300 hover-lift animate-scale-in" style={{ animationDelay: "1100ms" }}>
-            <CardHeader>
-              <CardTitle className="text-xl">{t.reports.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                variant="outline" 
-                className="w-full hover:bg-primary hover:text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95 ripple"
-                onClick={handleExportPDF}
-              >
-                <FileText className={cn("h-4 w-4 transition-transform group-hover:rotate-12", isRTL ? "mr-2" : "ml-2")} />
-                {t.reports.export}
-              </Button>
-              <p className="text-sm text-muted-foreground mt-2 text-center">
-                {isRTL ? "انقر لتصدير التقرير كملف PDF" : "Click to export report as PDF"}
-              </p>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

@@ -40,10 +40,13 @@ export function BarChartComponent({ data, title }: BarChartComponentProps) {
         <CardTitle className="group-hover:text-primary transition-colors duration-300">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Chart - Takes 2 columns */}
+          <div className="lg:col-span-2">
+            <ResponsiveContainer width="100%" height={300}>
           <BarChart 
             data={displayData}
-            margin={{ top: 30, right: 30, left: 20, bottom: 60 }}
+            margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis 
@@ -127,32 +130,49 @@ export function BarChartComponent({ data, title }: BarChartComponentProps) {
                 );
               })}
             </Bar>
-            <Legend
-              verticalAlign="bottom"
-              align="center"
-              formatter={(value, entry: any) => {
-                if (!entry || !entry.payload || !entry.payload.name) return "";
-                const name = String(entry.payload.name).trim();
-                const val = entry.payload.value || 0;
-                const percentage = total > 0 ? ((val / total) * 100).toFixed(1) : "0";
-                return `${name}: ${formatNumber(val)} (${percentage}%)`;
-              }}
-              wrapperStyle={{ paddingTop: '24px', fontSize: '13px', fontWeight: '500' }}
-              iconType="square"
-              iconSize={14}
-              payload={displayData.map((entry, index) => ({
-                value: entry.name,
-                type: 'square',
-                id: `legend-${index}`,
-                color: COLORS[index % COLORS.length],
-                payload: {
-                  ...entry,
-                  strokeDasharray: 0
-                }
-              }))}
-            />
           </BarChart>
         </ResponsiveContainer>
+          </div>
+          
+          {/* Information Panel - Takes 1 column */}
+          <div className="lg:col-span-1">
+            <div className="bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20 rounded-xl p-4 border-2 border-border/50 shadow-lg h-full max-h-[300px] overflow-hidden flex flex-col">
+              <h4 className="font-bold text-sm mb-4 text-foreground flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                Details
+              </h4>
+              <div className="space-y-2 overflow-y-auto flex-1 pr-2" style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
+              }}>
+                {displayData.map((item, index) => {
+                  const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : "0";
+                  const color = COLORS[index % COLORS.length];
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary/5 hover:shadow-md transition-all duration-200 border border-transparent hover:border-primary/20 group"
+                    >
+                      <div
+                        className="w-4 h-4 rounded flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform duration-200"
+                        style={{ backgroundColor: color }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={item.name}>
+                          {item.name}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm font-bold text-primary">{formatNumber(item.value)}</span>
+                          <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{percentage}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

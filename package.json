@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:3001": "next dev -p 3001",
     "build": "next build",
+    "build:pages": "NEXT_PUBLIC_BASE_PATH=/Doorly_Dashboard NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
     "export": "next build && next export"

@@ -21,8 +21,8 @@ function SidebarLogo() {
     <Image
       src="/logo.png"
       alt="Doorly Logo"
-      width={80}
-      height={80}
+      width={140}
+      height={140}
       className="object-contain"
       onError={() => setImgError(true)}
     />
@@ -70,7 +70,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-border/50 bg-card/50 backdrop-blur-sm">
         <div className="flex justify-center">
-          <div className="w-20 h-20 flex items-center justify-center rounded-xl bg-primary/10 p-3 transition-all duration-300 hover:bg-primary/20 hover:scale-110 hover:rotate-3 hover:shadow-lg group">
+          <div className="flex items-center justify-center transition-all duration-300 hover:scale-110 hover:rotate-3 group">
             <div className="transition-transform duration-300 group-hover:scale-110">
               <SidebarLogo />
             </div>

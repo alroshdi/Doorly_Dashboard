@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { setAuth, isAuthenticated } from "@/lib/auth";
+import { verifyUser } from "@/lib/user-management";
 import { getTranslations, getLanguage, setLanguage, type Language } from "@/lib/i18n";
 
 function LogoImage() {
@@ -21,8 +22,8 @@ function LogoImage() {
     <Image
       src="/logo.png"
       alt="Doorly Logo"
-      width={120}
-      height={120}
+      width={180}
+      height={180}
       className="object-contain"
       priority
       onError={() => setImgError(true)}
@@ -49,8 +50,9 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    if (email === "admin@admin.com" && password === "admin123") {
-      setAuth(email);
+    const user = verifyUser(email, password);
+    if (user) {
+      setAuth(user.email, user.id, user.role);
       router.push("/dashboard");
     } else {
       setError(getTranslations(lang).login.error);
@@ -72,7 +74,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-32 h-32 bg-primary/10 rounded-lg flex items-center justify-center">
+            <div className="flex items-center justify-center">
               <LogoImage />
             </div>
           </div>

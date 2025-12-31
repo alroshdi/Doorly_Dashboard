@@ -28,11 +28,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
-      <body className={`${cairo.variable} ${inter.variable} font-sans`}>
+      <body 
+        className={`${cairo.variable} ${inter.variable} font-sans`}
+        suppressHydrationWarning
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem
+          enableSystem={false}
           disableTransitionOnChange
         >
           <LanguageProvider>
