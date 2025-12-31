@@ -242,11 +242,13 @@ export function LinkedInKPICards({ kpis }: LinkedInKPICardsProps) {
             </CardHeader>
             <CardContent className="relative z-10">
               <div className="text-3xl font-bold group-hover:text-primary transition-all duration-300 mb-1 group-hover:scale-105 inline-block">
-                {card.isPercentage ? (
+                {
+                  card.isPercentage ? (
                   formatPercentage(card.value)
-                ) : card.isTime ? (
-                  formatTime(card.value)
-                ) : (
+                ) :  (
+                  <AnimatedCounter value={card.value} delay={index * 100} />
+                )       
+                  : (
                   <AnimatedCounter value={card.value} delay={index * 100} />
                 )}
               </div>
