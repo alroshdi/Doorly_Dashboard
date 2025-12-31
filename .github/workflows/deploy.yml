@@ -35,6 +35,7 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_BASE_PATH: /Doorly_Dashboard
+          NODE_ENV: production
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
