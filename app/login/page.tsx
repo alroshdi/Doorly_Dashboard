@@ -70,7 +70,7 @@ export default function LoginPage() {
   const t = getTranslations(lang);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-secondary/20 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-secondary/20 p-4 sm:p-6">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center mb-4">
@@ -137,7 +137,7 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full min-h-[44px]">
               {t.login.submit}
             </Button>
           </form>

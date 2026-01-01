@@ -124,10 +124,10 @@ export function KPICards({ metrics }: KPICardsProps) {
       gradient: "from-emerald-500 to-emerald-600",
     },
     {
-      title: t.kpi.pending,
-      value: metrics.pending,
+      title: t.kpi.completed,
+      value: metrics.completed,
       icon: Clock,
-      available: metrics.pending > 0 || metrics.totalRequests > 0,
+      available: metrics.completed > 0 || metrics.totalRequests > 0,
       gradient: "from-amber-500 to-amber-600",
     },
     {
@@ -148,7 +148,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       title: t.kpi.totalOffers,
       value: metrics.totalOffers,
       icon: Tag,
-      available: metrics.totalOffers > 0,
+      available: metrics.hasOffersColumn, // Show value if column exists, even if 0
       gradient: "from-pink-500 to-pink-600",
     },
     {
@@ -168,7 +168,7 @@ export function KPICards({ metrics }: KPICardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 md:gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-8">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
@@ -199,16 +199,16 @@ export function KPICards({ metrics }: KPICardsProps) {
             {/* Animated background gradient on hover */}
             <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
             
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10 px-6 pt-6">
-              <CardTitle className="text-sm font-semibold text-foreground/80 group-hover:text-primary transition-all duration-300 leading-tight">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 sm:pb-4 relative z-10 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardTitle className="text-xs sm:text-sm font-semibold text-foreground/80 group-hover:text-primary transition-all duration-300 leading-tight">
                 {card.title}
               </CardTitle>
               <div className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
-                <Icon className={`h-6 w-6 ${getIconColor(card.gradient)} group-hover:scale-125 transition-all duration-300`} />
+                <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${getIconColor(card.gradient)} group-hover:scale-125 transition-all duration-300`} />
               </div>
             </CardHeader>
-            <CardContent className="relative z-10 px-6 pb-6">
-              <div className={`text-3xl md:text-4xl font-bold group-hover:scale-105 transition-all duration-300 mb-1 text-foreground group-hover:text-primary`}>
+            <CardContent className="relative z-10 px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className={`text-2xl sm:text-3xl md:text-4xl font-bold group-hover:scale-105 transition-all duration-300 mb-1 text-foreground group-hover:text-primary`}>
                 <AnimatedCounter value={card.value} delay={index * 100} />
               </div>
               {!card.available && (

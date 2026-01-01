@@ -57,7 +57,7 @@ export function CustomerKPICards({ metrics }: CustomerKPICardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
@@ -75,16 +75,16 @@ export function CustomerKPICards({ metrics }: CustomerKPICardsProps) {
               hover:border-primary/30
             `}
           >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-semibold group-hover:text-primary transition-colors duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 sm:pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardTitle className="text-xs sm:text-sm font-semibold group-hover:text-primary transition-colors duration-300">
                 {card.title}
               </CardTitle>
               <div className={`p-2 rounded-lg ${card.bgColor} group-hover:scale-110 transition-all duration-300`}>
                 <Icon className={`h-4 w-4 ${card.color} group-hover:scale-110 transition-all duration-300`} />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold group-hover:text-primary transition-colors duration-300 mb-1">
+            <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="text-2xl sm:text-3xl font-bold group-hover:text-primary transition-colors duration-300 mb-1">
                 {card.value}
               </div>
             </CardContent>

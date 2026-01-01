@@ -137,14 +137,14 @@ export default function LinkedInInsightsPage() {
     const kpis = calculateLinkedInKPIs(data);
 
     return (
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6 md:p-8 space-y-6 md:space-y-8 animate-fade-in">
+      <div className="flex-1 overflow-y-auto lg:ml-0">
+        <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 md:space-y-8 animate-fade-in pt-16 lg:pt-6">
           {/* Header Section */}
-          <div className="mb-6 animate-slide-down">
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2 animate-fade-in">
+          <div className="mb-4 sm:mb-6 animate-slide-down">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text mb-2 animate-fade-in">
               {t.linkedin.title}
             </h1>
-            <p className="text-muted-foreground text-lg animate-slide-up" style={{ animationDelay: "100ms" }}>
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg animate-slide-up" style={{ animationDelay: "100ms" }}>
               {t.linkedin.subtitle}
             </p>
           </div>
@@ -155,10 +155,10 @@ export default function LinkedInInsightsPage() {
           </div>
 
           {/* Charts Section */}
-          <div className="space-y-6 animate-slide-up" style={{ animationDelay: "300ms" }}>
+          <div className="space-y-4 sm:space-y-6 animate-slide-up" style={{ animationDelay: "300ms" }}>
             {/* Time-based Charts - Only show if data exists */}
             {kpis.impressionsOverTime.length > 0 || kpis.engagementsOverTime.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {kpis.impressionsOverTime.length > 0 && (
                   <div className="animate-slide-in-left" style={{ animationDelay: "400ms" }}>
                     <LineChartComponent 
@@ -180,7 +180,7 @@ export default function LinkedInInsightsPage() {
 
             {/* Followers Distribution - Only show if data exists */}
             {(kpis.followersByCountry.length > 0 || kpis.followersByIndustry.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {kpis.followersByCountry.length > 0 && (
                   <div className="animate-slide-in-left" style={{ animationDelay: "600ms" }}>
                     <DonutChartComponent 
@@ -202,7 +202,7 @@ export default function LinkedInInsightsPage() {
 
             {/* Visitors Distribution - Only show if data exists */}
             {(kpis.visitorsByCountry.length > 0 || kpis.visitorsByIndustry.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {kpis.visitorsByCountry.length > 0 && (
                   <div className="animate-slide-in-left" style={{ animationDelay: "800ms" }}>
                     <BarChartComponent 
@@ -256,7 +256,7 @@ export default function LinkedInInsightsPage() {
 
             {/* Time Spent Metrics */}
             {(kpis.timeSpentDistribution.length > 0 || kpis.engagementTimeOverTime.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {kpis.timeSpentDistribution.length > 0 && (
                   <div className="animate-slide-in-left" style={{ animationDelay: "1300ms" }}>
                     <BarChartComponent 
@@ -287,7 +287,7 @@ export default function LinkedInInsightsPage() {
                     />
                   </div>
                 )}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {kpis.engagementByType.length > 0 && (
                     <div className="animate-slide-in-left" style={{ animationDelay: "1600ms" }}>
                       <PieChartComponent 
@@ -317,7 +317,7 @@ export default function LinkedInInsightsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
                 <div>
                   <p className="text-muted-foreground mb-1">
                     {isRTL ? "آخر تحديث:" : "Last Updated:"}

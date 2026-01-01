@@ -68,11 +68,11 @@ export default function SettingsPage() {
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto lg:ml-0">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 pt-16 lg:pt-6">
           <div>
-            <h1 className="text-3xl font-bold">{t.sidebar.settings}</h1>
-            <p className="text-muted-foreground mt-2">
+            <h1 className="text-2xl sm:text-3xl font-bold">{t.sidebar.settings}</h1>
+            <p className="text-muted-foreground mt-2 text-sm sm:text-base">
               {isRTL ? "إدارة إعدادات التطبيق" : "Manage application settings"}
             </p>
           </div>
@@ -132,7 +132,7 @@ export default function SettingsPage() {
                   <Button
                     variant={theme === "light" ? "default" : "outline"}
                     onClick={() => handleThemeChange("light")}
-                    className="flex-1"
+                    className="flex-1 min-h-[44px]"
                   >
                     <Sun className="h-4 w-4 ml-2" />
                     {isRTL ? "فاتح" : "Light"}
@@ -140,7 +140,7 @@ export default function SettingsPage() {
                   <Button
                     variant={theme === "dark" ? "default" : "outline"}
                     onClick={() => handleThemeChange("dark")}
-                    className="flex-1"
+                    className="flex-1 min-h-[44px]"
                   >
                     <Moon className="h-4 w-4 ml-2" />
                     {isRTL ? "داكن" : "Dark"}
@@ -155,7 +155,7 @@ export default function SettingsPage() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="min-w-[120px]"
+              className="min-w-[120px] min-h-[44px]"
             >
               {saving ? (
                 <>

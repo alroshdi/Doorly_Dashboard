@@ -136,12 +136,12 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
   };
 
   return (
-    <Card className="mb-6 animate-fade-in hover-lift border-2 hover:border-primary/30 bg-gradient-to-br from-card via-card/98 to-card/95 transition-all duration-500 relative shadow-lg hover:shadow-xl" style={{ zIndex: 10 }}>
-      <CardContent className="p-5 md:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 md:gap-5">
+    <Card className="mb-4 sm:mb-6 animate-fade-in hover-lift border-2 hover:border-primary/30 bg-gradient-to-br from-card via-card/98 to-card/95 transition-all duration-500 relative shadow-lg hover:shadow-xl" style={{ zIndex: 10 }}>
+      <CardContent className="p-4 sm:p-5 md:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-3 sm:gap-4 md:gap-5">
           {/* Quick Date Filters */}
-          <div className="space-y-2.5">
-            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-semibold text-foreground/90 flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
               {t.filters.quickFilter}
             </label>
@@ -164,8 +164,8 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
           </div>
 
           {/* Wilaya */}
-          <div className="space-y-2.5">
-            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-semibold text-foreground/90 flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
               {t.filters.wilaya}
             </label>
@@ -182,8 +182,8 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
           </div>
 
           {/* Request Type */}
-          <div className="space-y-2.5">
-            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-semibold text-foreground/90 flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
               {t.filters.requestType}
             </label>
@@ -200,8 +200,8 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
           </div>
 
           {/* Property Type */}
-          <div className="space-y-2.5">
-            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-semibold text-foreground/90 flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
               {t.filters.propertyType}
             </label>
@@ -218,8 +218,8 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
           </div>
 
           {/* Source */}
-          <div className="space-y-2.5">
-            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-semibold text-foreground/90 flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
               {t.filters.source}
             </label>
@@ -236,8 +236,8 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
           </div>
 
           {/* Status */}
-          <div className="space-y-2.5">
-            <label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-semibold text-foreground/90 flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
               {t.filters.status}
             </label>
@@ -253,11 +253,11 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
             </Select>
           </div>
         </div>
-        <div className="mt-5 pt-4 border-t border-border/50 flex justify-end">
+        <div className="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-border/50 flex justify-end">
           <Button 
             variant="outline" 
             onClick={clearFilters}
-            className="transition-all duration-300 hover:scale-105 active:scale-95 hover:bg-primary/10 hover:text-primary hover:border-primary/50 font-medium px-6"
+            className="transition-all duration-300 hover:scale-105 active:scale-95 hover:bg-primary/10 hover:text-primary hover:border-primary/50 font-medium px-4 sm:px-6 min-h-[44px] text-sm sm:text-base"
           >
             {isRTL ? "مسح الفلاتر" : "Clear Filters"}
           </Button>

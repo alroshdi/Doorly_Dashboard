@@ -99,11 +99,12 @@ export async function exportDashboardToPDF(
       thisWeek: 0,
       verified: 0,
       active: 0,
-      pending: 0,
+      completed: 0,
       cancelled: 0,
       paymentPending: 0,
       paymentPendingVerify: 0,
       totalOffers: 0,
+      hasOffersColumn: false,
       totalViewsCount: 0,
       avgViews: 0,
       minPrice: 0,
@@ -114,7 +115,7 @@ export async function exportDashboardToPDF(
     // Calculate percentages
     const total = metricsData.totalRequests || 1;
     const activeRate = total > 0 ? ((metricsData.active / total) * 100).toFixed(1) : "0";
-    const pendingRate = total > 0 ? ((metricsData.pending / total) * 100).toFixed(1) : "0";
+    const completedRate = total > 0 ? ((metricsData.completed / total) * 100).toFixed(1) : "0";
     const cancelledRate = total > 0 ? ((metricsData.cancelled / total) * 100).toFixed(1) : "0";
     const verifiedRate = total > 0 ? ((metricsData.verified / total) * 100).toFixed(1) : "0";
 
@@ -132,7 +133,7 @@ export async function exportDashboardToPDF(
       { label: t.kpi.totalRequests, value: metricsData.totalRequests, color: [59, 130, 246] },
       { label: t.kpi.newToday, value: metricsData.newToday, color: [20, 184, 166] },
       { label: t.kpi.active, value: metricsData.active, color: [34, 197, 94] },
-      { label: t.kpi.pending, value: metricsData.pending, color: [245, 158, 11] },
+      { label: t.kpi.completed, value: metricsData.completed, color: [245, 158, 11] },
       { label: t.kpi.cancelled, value: metricsData.cancelled, color: [239, 68, 68] },
       { label: t.kpi.verified, value: metricsData.verified, color: [139, 92, 246] },
     ];
@@ -196,7 +197,7 @@ export async function exportDashboardToPDF(
 
     const stats = [
       { label: reportIsRTL ? "معدل الطلبات النشطة" : "Active Rate", value: `${activeRate}%` },
-      { label: reportIsRTL ? "معدل الطلبات المعلقة" : "Pending Rate", value: `${pendingRate}%` },
+      { label: reportIsRTL ? "معدل الصفقات المكتملة" : "Completed Rate", value: `${completedRate}%` },
       { label: reportIsRTL ? "معدل الإلغاء" : "Cancellation Rate", value: `${cancelledRate}%` },
       { label: reportIsRTL ? "معدل التحقق" : "Verification Rate", value: `${verifiedRate}%` },
     ];
@@ -226,7 +227,7 @@ export async function exportDashboardToPDF(
       { label: t.kpi.newToday, value: metricsData.newToday },
       { label: t.kpi.verified, value: metricsData.verified },
       { label: t.kpi.active, value: metricsData.active },
-      { label: t.kpi.pending, value: metricsData.pending },
+      { label: t.kpi.completed, value: metricsData.completed },
       { label: t.kpi.cancelled, value: metricsData.cancelled },
       { label: t.kpi.paymentPendingVerify, value: metricsData.paymentPendingVerify },
       { label: t.kpi.totalOffers, value: metricsData.totalOffers },

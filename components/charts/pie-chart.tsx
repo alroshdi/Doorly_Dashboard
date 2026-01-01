@@ -40,10 +40,10 @@ export function PieChartComponent({ data, title }: PieChartComponentProps) {
         <CardTitle className="group-hover:text-primary transition-colors duration-300">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
           {/* Chart - Takes 2 columns */}
-          <div className="lg:col-span-2">
-            <ResponsiveContainer width="100%" height={300}>
+          <div className="lg:col-span-2 order-1">
+            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
               <PieChart>
                 <Pie
                   data={displayData}
@@ -51,7 +51,7 @@ export function PieChartComponent({ data, title }: PieChartComponentProps) {
                   cy="50%"
                   labelLine={false}
                   label={false}
-                  outerRadius={100}
+                  outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                   animationDuration={1000}
@@ -102,13 +102,13 @@ export function PieChartComponent({ data, title }: PieChartComponentProps) {
           </div>
           
           {/* Information Panel - Takes 1 column */}
-          <div className="lg:col-span-1">
-            <div className="bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20 rounded-xl p-4 border-2 border-border/50 shadow-lg h-full max-h-[300px] overflow-hidden flex flex-col">
-              <h4 className="font-bold text-sm mb-4 text-foreground flex items-center gap-2">
+          <div className="lg:col-span-1 order-2 lg:order-2">
+            <div className="bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20 rounded-xl p-3 sm:p-4 border-2 border-border/50 shadow-lg h-full max-h-[250px] sm:max-h-[300px] overflow-hidden flex flex-col">
+              <h4 className="font-bold text-xs sm:text-sm mb-3 sm:mb-4 text-foreground flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                 Details
               </h4>
-              <div className="space-y-2 overflow-y-auto flex-1 pr-2" style={{
+              <div className="space-y-1.5 sm:space-y-2 overflow-y-auto flex-1 pr-1 sm:pr-2" style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
               }}>
@@ -118,19 +118,19 @@ export function PieChartComponent({ data, title }: PieChartComponentProps) {
                   return (
                     <div
                       key={index}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary/5 hover:shadow-md transition-all duration-200 border border-transparent hover:border-primary/20 group"
+                      className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg hover:bg-primary/5 hover:shadow-md transition-all duration-200 border border-transparent hover:border-primary/20 group"
                     >
                       <div
-                        className="w-4 h-4 rounded-full flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform duration-200"
+                        className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform duration-200"
                         style={{ backgroundColor: color }}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={item.name}>
+                        <div className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={item.name}>
                           {item.name}
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm font-bold text-primary">{formatNumber(item.value)}</span>
-                          <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">{percentage}%</span>
+                        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
+                          <span className="text-xs sm:text-sm font-bold text-primary">{formatNumber(item.value)}</span>
+                          <span className="text-xs text-muted-foreground bg-muted/50 px-1.5 sm:px-2 py-0.5 rounded-full">{percentage}%</span>
                         </div>
                       </div>
                     </div>

@@ -90,13 +90,13 @@ export function Tables({ data }: TablesProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="group-hover:text-primary transition-colors duration-300">{t.tables.recentRequests}</CardTitle>
-            <div className="relative w-64 group">
+            <div className="relative w-full sm:w-64 group">
               <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
               <Input
                 placeholder={t.tables.search}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-8 transition-all duration-300 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="pr-8 transition-all duration-300 focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[44px]"
               />
             </div>
           </div>
@@ -107,37 +107,39 @@ export function Tables({ data }: TablesProps) {
               {t.tables.noData}
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-border animate-fade-in">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-border bg-muted/30">
-                    {data[0] && Object.keys(data[0]).slice(0, 8).map((key, idx) => (
-                      <th 
-                        key={key} 
-                        className={`text-right p-3 text-sm font-semibold text-foreground transition-colors duration-300 ${isRTL ? "text-right" : "text-left"}`}
-                        style={{ animationDelay: `${idx * 50}ms` }}
-                      >
-                        {key}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentRequests.map((row, idx) => (
-                    <tr 
-                      key={idx} 
-                      className="border-b border-border/50 hover:bg-primary/5 transition-all duration-300 hover:scale-[1.01] hover:shadow-sm"
-                      style={{ animationDelay: `${idx * 30}ms` }}
-                    >
-                      {data[0] && Object.keys(data[0]).slice(0, 8).map((key) => (
-                        <td key={key} className={`p-3 text-sm transition-colors duration-200 ${isRTL ? "text-right" : "text-left"}`}>
-                          {String(row[key] || "").slice(0, 50)}
-                        </td>
+            <div className="overflow-x-auto rounded-lg border border-border animate-fade-in -mx-2 sm:mx-0">
+              <div className="inline-block min-w-full align-middle">
+                <table className="w-full min-w-[640px]">
+                  <thead>
+                    <tr className="border-b-2 border-border bg-muted/30">
+                      {data[0] && Object.keys(data[0]).slice(0, 8).map((key, idx) => (
+                        <th 
+                          key={key} 
+                          className={`text-right p-2 sm:p-3 text-xs sm:text-sm font-semibold text-foreground transition-colors duration-300 whitespace-nowrap ${isRTL ? "text-right" : "text-left"}`}
+                          style={{ animationDelay: `${idx * 50}ms` }}
+                        >
+                          {key}
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {recentRequests.map((row, idx) => (
+                      <tr 
+                        key={idx} 
+                        className="border-b border-border/50 hover:bg-primary/5 transition-all duration-300"
+                        style={{ animationDelay: `${idx * 30}ms` }}
+                      >
+                        {data[0] && Object.keys(data[0]).slice(0, 8).map((key) => (
+                          <td key={key} className={`p-2 sm:p-3 text-xs sm:text-sm transition-colors duration-200 ${isRTL ? "text-right" : "text-left"}`}>
+                            {String(row[key] || "").slice(0, 50)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </CardContent>
@@ -158,10 +160,10 @@ export function Tables({ data }: TablesProps) {
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-border bg-muted/30">
-                    <th className={`p-3 text-sm font-semibold text-foreground transition-colors duration-300 ${isRTL ? "text-right" : "text-left"}`}>
+                    <th className={`p-2 sm:p-3 text-xs sm:text-sm font-semibold text-foreground transition-colors duration-300 ${isRTL ? "text-right" : "text-left"}`}>
                       {isRTL ? "المنطقة" : "Area"}
                     </th>
-                    <th className={`p-3 text-sm font-semibold text-foreground transition-colors duration-300 ${isRTL ? "text-right" : "text-left"}`}>
+                    <th className={`p-2 sm:p-3 text-xs sm:text-sm font-semibold text-foreground transition-colors duration-300 ${isRTL ? "text-right" : "text-left"}`}>
                       {isRTL ? "عدد الطلبات" : "Requests"}
                     </th>
                   </tr>
@@ -170,12 +172,12 @@ export function Tables({ data }: TablesProps) {
                   {topAreas.map((area, idx) => (
                     <tr 
                       key={idx} 
-                      className="border-b border-border/50 hover:bg-primary/5 transition-all duration-300 hover:scale-[1.01] hover:shadow-sm"
+                      className="border-b border-border/50 hover:bg-primary/5 transition-all duration-300"
                       style={{ animationDelay: `${idx * 50}ms` }}
                     >
-                      <td className={`p-3 text-sm font-medium transition-colors duration-200 ${isRTL ? "text-right" : "text-left"}`}>{area.name}</td>
-                      <td className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
-                        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-300 hover:scale-110 hover:shadow-md">
+                      <td className={`p-2 sm:p-3 text-xs sm:text-sm font-medium transition-colors duration-200 ${isRTL ? "text-right" : "text-left"}`}>{area.name}</td>
+                      <td className={`p-2 sm:p-3 text-xs sm:text-sm ${isRTL ? "text-right" : "text-left"}`}>
+                        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-300 hover:scale-110 hover:shadow-md text-xs sm:text-sm px-2 py-1">
                           {area.value}
                         </Badge>
                       </td>

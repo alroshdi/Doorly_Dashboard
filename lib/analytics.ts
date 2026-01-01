@@ -10,11 +10,12 @@ export interface KPIMetrics {
   thisWeek: number;
   verified: number; // From verify_status_ar === "موثق"
   active: number;
-  pending: number;
+  completed: number; // From status_en column (was pending)
   cancelled: number;
   paymentPending: number;
   paymentPendingVerify: number; // From verify_status_ar column
   totalOffers: number;
+  hasOffersColumn: boolean; // Whether offers_count column exists in data
   totalViewsCount: number; // Total views from view_count column
   avgViews: number;
   minPrice: number;
@@ -30,6 +31,14 @@ export interface ChartData {
 export function detectColumn(data: RequestData[], possibleNames: string[]): string | null {
   if (!data || data.length === 0) return null;
   const keys = Object.keys(data[0]);
+  
+  // First, try exact matches (case-insensitive)
+  for (const name of possibleNames) {
+    const exactMatch = keys.find(k => k.toLowerCase() === name.toLowerCase());
+    if (exactMatch) return exactMatch;
+  }
+  
+  // Then, try partial matches
   for (const name of possibleNames) {
     const found = keys.find(k => 
       k.toLowerCase().includes(name.toLowerCase()) ||
@@ -58,13 +67,18 @@ function normalizeStatusAr(status: string): string {
   return String(status || "").trim();
 }
 
+// Helper function to normalize English status value for comparison
+function normalizeStatusEn(status: string): string {
+  return String(status || "").trim().toLowerCase();
+}
+
 export function calculateKPIs(data: RequestData[]): KPIMetrics {
   const now = new Date();
   const todayStart = startOfDay(now);
   const weekStart = startOfWeek(now, { weekStartsOn: 6 }); // Saturday for Arabic week
 
   const dateColumn = detectColumn(data, ["created_at", "date", "created_at_date", "timestamp"]);
-  const offersColumn = detectColumn(data, ["offers", "عدد_العروض", "offers_count"]);
+  const offersColumn = detectColumn(data, ["offers_count", "offers", "عدد_العروض"]);
   const viewsColumn = detectColumn(data, ["view_count", "views", "مشاهدات", "views_count"]);
   const priceMinColumn = detectColumn(data, ["price_min", "min_price", "أقل_سعر"]);
   const priceMaxColumn = detectColumn(data, ["price_max", "max_price", "أعلى_سعر"]);
@@ -74,7 +88,7 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
   let thisWeek = 0;
   let verified = 0; // From verify_status_ar === "موثق"
   let active = 0;
-  let pending = 0;
+  let completed = 0; // From status_en column (was pending)
   let cancelled = 0;
   let paymentPending = 0;
   let paymentPendingVerify = 0; // From verify_status_ar column
@@ -108,15 +122,13 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
       
       if (statusAr === STATUS_ACTIVE) {
         active++;
-      } else if (statusAr === STATUS_PENDING || statusAr === STATUS_PENDING_ALT) {
-        // Handle both "قيد المراجعة" and "تحت المراجعة" (under review)
-        pending++;
       } else if (statusAr === STATUS_CANCELLED || statusAr.startsWith(STATUS_CANCELLED)) {
         // Handle both "ملغي" and "ملغي من الادارة" (cancelled by administration)
         cancelled++;
       } else if (statusAr === STATUS_PAYMENT) {
         paymentPending++;
       }
+      // Note: Pending status is now calculated from verify_status_en column (see below)
       // If status_ar doesn't match any expected value, count as 0 (do nothing)
     }
 
@@ -131,10 +143,33 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
       }
     }
 
-    // Offers
-    if (offersColumn && row[offersColumn]) {
-      const offers = Number(row[offersColumn]);
-      if (!isNaN(offers)) totalOffers += offers;
+    // Completed status from status_en column
+    if (row.status_en !== undefined && row.status_en !== null) {
+      const statusEn = normalizeStatusEn(row.status_en);
+      // Check for various English completed statuses
+      if (
+        statusEn === "completed" ||
+        statusEn === "done" ||
+        statusEn === "finished" ||
+        statusEn === "closed" ||
+        statusEn.includes("completed") ||
+        statusEn.includes("done") ||
+        statusEn.includes("finished")
+      ) {
+        completed++;
+      }
+    }
+
+    // Offers - from offers_count column
+    if (offersColumn) {
+      const offersValue = row[offersColumn];
+      // Handle null, undefined, empty string, and zero values
+      if (offersValue !== null && offersValue !== undefined && offersValue !== "") {
+        const offers = Number(offersValue);
+        if (!isNaN(offers) && offers >= 0) {
+          totalOffers += offers;
+        }
+      }
     }
 
     // Views - from view_count column
@@ -164,11 +199,12 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
     thisWeek,
     verified,
     active,
-    pending,
+    completed,
     cancelled,
     paymentPending,
     paymentPendingVerify,
     totalOffers,
+    hasOffersColumn: offersColumn !== null, // Track if offers_count column exists
     totalViewsCount,
     avgViews: viewsCount > 0 ? totalViews / viewsCount : 0,
     minPrice: prices.length > 0 ? Math.min(...prices) : 0,

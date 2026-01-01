@@ -70,28 +70,28 @@ export function LineChartComponent({ data, title }: LineChartComponentProps) {
 
   return (
     <Card className="animate-fade-in hover-lift transition-all duration-500 group border-2 hover:border-primary/30 bg-gradient-to-br from-card to-card/95">
-      <CardContent className="pt-6">
+      <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
         <div className="relative">
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
             <LineChart data={displayData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground) / 0.2)" />
               <XAxis 
                 dataKey="name" 
                 angle={-45}
                 textAnchor="end"
-                height={80}
+                height={60}
                 tickFormatter={formatXAxisLabel}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
                 style={{ transition: 'all 0.3s ease' }}
               />
               <YAxis 
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
                 tickFormatter={(value) => {
                   // Format numbers with thousand separators
                   return new Intl.NumberFormat('ar-DZ').format(value);
                 }}
-                width={70}
-                tickMargin={10}
+                width={50}
+                tickMargin={8}
                 axisLine={false}
                 tickLine={false}
               />
@@ -166,7 +166,7 @@ export function LineChartComponent({ data, title }: LineChartComponentProps) {
             </LineChart>
           </ResponsiveContainer>
           {year && (
-            <div className="text-center text-xl font-bold text-foreground mt-1 animate-fade-in">
+            <div className="text-center text-lg sm:text-xl font-bold text-foreground mt-1 animate-fade-in">
               {year}
             </div>
           )}
