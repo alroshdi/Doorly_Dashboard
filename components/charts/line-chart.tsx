@@ -147,8 +147,7 @@ export function LineChartComponent({ data, title }: LineChartComponentProps) {
                   r: 5, 
                   fill: '#3B82F6',
                   strokeWidth: 2,
-                  stroke: '#ffffff',
-                  transition: 'all 0.3s ease'
+                  stroke: '#ffffff'
                 }}
                 activeDot={{ 
                   r: 10, 

@@ -56,16 +56,40 @@ export default function DashboardPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/requests");
+      setError("");
+      
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      const response = await fetch("/api/requests", {
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (!response.ok) {
-        throw new Error("Failed to fetch data");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch data: ${response.status}`);
       }
+      
       const result = await response.json();
-      setData(result);
+      
+      // Check if response has error property
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      setData(Array.isArray(result) ? result : []);
       setError("");
     } catch (err: any) {
-      setError(err.message || "Failed to load data");
+      if (err.name === "AbortError") {
+        setError("Request timeout. Please check your connection and try again.");
+      } else {
+        setError(err.message || "Failed to load data. Please check the console for details.");
+      }
       console.error("Error fetching data:", err);
+      setData([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -262,14 +286,33 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+        <Card className="max-w-md animate-fade-in">
           <CardHeader>
-            <CardTitle className="text-destructive">Error</CardTitle>
+            <CardTitle className="text-destructive">{isRTL ? "خطأ" : "Error"}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={fetchData}>Retry</Button>
+            <div className="flex gap-2">
+              <Button onClick={fetchData} className="flex-1">
+                {isRTL ? "إعادة المحاولة" : "Retry"}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setError("");
+                  setLoading(false);
+                  setData([]);
+                }}
+              >
+                {isRTL ? "إلغاء" : "Cancel"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              {isRTL 
+                ? "تأكد من أن خادم API يعمل وأن بيانات Google Sheets متوفرة." 
+                : "Make sure the API server is running and Google Sheets data is available."}
+            </p>
           </CardContent>
         </Card>
       </div>

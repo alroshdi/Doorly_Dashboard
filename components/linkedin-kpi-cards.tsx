@@ -206,32 +206,17 @@ export function LinkedInKPICards({ kpis }: LinkedInKPICardsProps) {
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
-          <Card 
-            key={index} 
-            className={`
-              transition-all duration-500 ease-out
-              hover:shadow-2xl hover:scale-[1.03]
-              hover:border-primary/50
-              cursor-default
-              group
-              bg-gradient-to-br from-card via-card/98 to-card/95
-              backdrop-blur-sm
-              border-2
-              hover:border-primary/40
-              hover-lift
-              relative overflow-hidden
-              before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/0 before:to-primary/0
-              hover:before:from-primary/5 hover:before:to-primary/10
-              before:transition-all before:duration-500
-            `}
-            style={{ 
+          <Card
+            key={index}
+            className="transition-all duration-500 ease-out hover:shadow-2xl hover:scale-[1.03] hover:border-primary/50 cursor-default group bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-sm border-2 hover:border-primary/40 hover-lift relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/0 before:to-primary/0 hover:before:from-primary/5 hover:before:to-primary/10 before:transition-all before:duration-500"
+            style={{
               animationDelay: `${index * 80}ms`,
-              animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 80}ms both`
+              animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 80}ms both`,
             }}
           >
-            {/* Animated background gradient on hover */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-            
+            <div
+              className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
+            />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
               <CardTitle className="text-sm font-semibold group-hover:text-primary transition-all duration-300 group-hover:scale-105">
                 {card.title}
@@ -249,8 +234,6 @@ export function LinkedInKPICards({ kpis }: LinkedInKPICardsProps) {
                 )}
               </div>
             </CardContent>
-            
-            {/* Shine effect on hover */}
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           </Card>
         );
@@ -258,5 +241,3 @@ export function LinkedInKPICards({ kpis }: LinkedInKPICardsProps) {
     </div>
   );
 }
-
-
