@@ -148,7 +148,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       title: t.kpi.totalOffers,
       value: metrics.totalOffers,
       icon: Tag,
-      available: metrics.hasOffersColumn, // Show value if column exists, even if 0
+      available: true, // Always show value, even if 0
       gradient: "from-pink-500 to-pink-600",
     },
     {
