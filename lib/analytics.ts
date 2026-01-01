@@ -141,11 +141,14 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
     }
 
     // Verified status from verify_status_en column
-    if (row.verify_status_en !== undefined && row.verify_status_en !== null) {
-      const verifyStatusEn = normalizeStatusEn(row.verify_status_en);
-      // Check for "Verified" in English
+    if (row.verify_status_en !== undefined && row.verify_status_en !== null && row.verify_status_en !== "") {
+      const verifyStatusEn = normalizeStatusEn(String(row.verify_status_en));
+      // Check for "Verified" in English (case-insensitive, handles variations)
+      // Accepts: "verified", "verify", "Verified", "VERIFIED", or any string containing "verified"
       if (
         verifyStatusEn === "verified" ||
+        verifyStatusEn === "verify" ||
+        verifyStatusEn.startsWith("verified") ||
         verifyStatusEn.includes("verified")
       ) {
         verified++;

@@ -113,7 +113,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       title: t.kpi.verified,
       value: metrics.verified,
       icon: TrendingUp,
-      available: metrics.verified > 0 || metrics.totalRequests > 0,
+      available: true, // Always show value, even if 0
       gradient: "from-green-500 to-green-600",
     },
     {
