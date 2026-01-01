@@ -30,9 +30,12 @@ function parseExcelFile(filePath: string) {
 async function getLinkedInData() {
   try {
     // Try multiple possible paths for the linkedin folder
+    // On Vercel, files are in the project root
+    // In development, they might be in parent directory or same directory
     const possiblePaths = [
+      join(process.cwd(), "linkedin"), // Vercel/production: same directory
       join(process.cwd(), "..", "linkedin"), // Development: parent directory
-      join(process.cwd(), "linkedin"), // Same directory
+      join(process.cwd(), "..", "..", "linkedin"), // Alternative development path
       join(__dirname, "..", "..", "..", "linkedin"), // Alternative path
     ];
     
@@ -41,15 +44,18 @@ async function getLinkedInData() {
       try {
         if (existsSync(path)) {
           basePath = path;
+          console.log(`Found LinkedIn folder at: ${path}`);
           break;
         }
-      } catch {
+      } catch (err) {
         // Continue to next path
+        console.log(`Path not found: ${path}`);
       }
     }
     
     if (!basePath) {
-      throw new Error("LinkedIn data folder not found. Please ensure the 'linkedin' folder exists.");
+      console.error("LinkedIn folder not found. Tried paths:", possiblePaths);
+      throw new Error("LinkedIn data folder not found. Please ensure the 'linkedin' folder exists in the project root.");
     }
     
     // Parse all LinkedIn files

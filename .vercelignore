@@ -6,8 +6,8 @@ out
 *.log
 .env.local
 .env*.local
-linkedin/
 scripts/
 .github/
+
 
 

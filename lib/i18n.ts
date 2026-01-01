@@ -162,6 +162,8 @@ export const translations = {
         engagementByType: "التفاعل حسب النوع (أفضل 10)",
         reachBySource: "الوصول حسب المصدر (أفضل 10)",
       },
+      visitPage: "زيارة صفحة LinkedIn",
+      visitPageTooltip: "افتح صفحة LinkedIn الخاصة بنا في علامة تبويب جديدة",
     },
   },
   en: {
@@ -325,6 +327,8 @@ export const translations = {
         engagementByType: "Engagement by Type (Top 10)",
         reachBySource: "Reach by Source (Top 10)",
       },
+      visitPage: "Visit LinkedIn Page",
+      visitPageTooltip: "Open our LinkedIn Company Page in a new tab",
     },
   },
 };
