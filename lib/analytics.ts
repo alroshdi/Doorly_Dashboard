@@ -8,7 +8,7 @@ export interface KPIMetrics {
   totalRequests: number;
   newToday: number;
   thisWeek: number;
-  verified: number; // From verify_status_ar === "موثق"
+  verified: number; // From verify_status_en === "Verified"
   active: number;
   completed: number; // From status_en column (was pending)
   cancelled: number;
@@ -86,7 +86,7 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
   let totalRequests = data.length;
   let newToday = 0;
   let thisWeek = 0;
-  let verified = 0; // From verify_status_ar === "موثق"
+  let verified = 0; // From verify_status_en === "Verified"
   let active = 0;
   let completed = 0; // From status_en column (was pending)
   let cancelled = 0;
@@ -132,13 +132,22 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
       // If status_ar doesn't match any expected value, count as 0 (do nothing)
     }
 
-    // Verify status calculations - use verify_status_ar column
+    // Verify status calculations - use verify_status_ar column for payment
     if (row.verify_status_ar !== undefined && row.verify_status_ar !== null) {
       const verifyStatusAr = normalizeStatusAr(row.verify_status_ar);
       if (verifyStatusAr === STATUS_PAYMENT) {
         paymentPendingVerify++;
       }
-      if (verifyStatusAr === STATUS_VERIFIED) {
+    }
+
+    // Verified status from verify_status_en column
+    if (row.verify_status_en !== undefined && row.verify_status_en !== null) {
+      const verifyStatusEn = normalizeStatusEn(row.verify_status_en);
+      // Check for "Verified" in English
+      if (
+        verifyStatusEn === "verified" ||
+        verifyStatusEn.includes("verified")
+      ) {
         verified++;
       }
     }
