@@ -48,3 +48,4 @@ vercel env add GOOGLE_SHEET_RANGE
 **Note:** The web interface is recommended for first-time setup as it's easier to configure environment variables.
 
 
+

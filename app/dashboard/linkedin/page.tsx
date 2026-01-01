@@ -9,15 +9,10 @@ import { BarChartComponent } from "@/components/charts/bar-chart";
 import { PieChartComponent } from "@/components/charts/pie-chart";
 import { DonutChartComponent } from "@/components/charts/donut-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { isAuthenticated } from "@/lib/auth";
 import { getTranslations, getLanguage } from "@/lib/i18n";
 import { calculateLinkedInKPIs, type LinkedInData } from "@/lib/linkedin-analytics";
-import { cn } from "@/lib/utils";
-import { Loader2, ExternalLink } from "lucide-react";
-
-// LinkedIn Company Page URL - Update this with your actual LinkedIn page URL
-const LINKEDIN_PAGE_URL = process.env.NEXT_PUBLIC_LINKEDIN_PAGE_URL || "https://www.linkedin.com/company/doorly";
+import { Loader2 } from "lucide-react";
 
 export default function LinkedInInsightsPage() {
   const router = useRouter();
@@ -146,27 +141,12 @@ export default function LinkedInInsightsPage() {
         <div className="p-6 md:p-8 space-y-6 md:space-y-8 animate-fade-in">
           {/* Header Section */}
           <div className="mb-6 animate-slide-down">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="flex-1">
-                <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2 animate-fade-in">
-                  {t.linkedin.title}
-                </h1>
-                <p className="text-muted-foreground text-lg animate-slide-up" style={{ animationDelay: "100ms" }}>
-                  {t.linkedin.subtitle}
-                </p>
-              </div>
-              <Button
-                onClick={() => {
-                  window.open(LINKEDIN_PAGE_URL, "_blank", "noopener,noreferrer");
-                }}
-                className="animate-slide-up hover:scale-105 transition-transform duration-300"
-                style={{ animationDelay: "150ms" }}
-                title={t.linkedin.visitPageTooltip}
-              >
-                <ExternalLink className={cn("h-4 w-4", isRTL ? "mr-2" : "ml-2")} />
-                {t.linkedin.visitPage}
-              </Button>
-            </div>
+            <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2 animate-fade-in">
+              {t.linkedin.title}
+            </h1>
+            <p className="text-muted-foreground text-lg animate-slide-up" style={{ animationDelay: "100ms" }}>
+              {t.linkedin.subtitle}
+            </p>
           </div>
 
           {/* KPI Cards */}
