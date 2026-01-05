@@ -382,13 +382,30 @@ export function calculateLinkedInKPIs(data: LinkedInData): LinkedInKPIs {
       }
     });
 
+    // Extract Total Followers from competitor analytics file
+    // Look for "Total Followers" column in the competitor data
+    // This file contains the main page's Total Followers metric
+    let competitorTotalFollowers = 0;
+    allCompetitors.forEach((c: any) => {
+      const totalFollowers = extractValue(c, ["total_followers", "total followers", "followers", "follower_count"]);
+      if (totalFollowers > 0) {
+        // Get the maximum Total Followers value from competitor data
+        competitorTotalFollowers = Math.max(competitorTotalFollowers, totalFollowers);
+      }
+    });
+    
+    // Use Total Followers from competitor file if available, otherwise keep existing value
+    if (competitorTotalFollowers > 0) {
+      kpis.totalFollowers = competitorTotalFollowers;
+    }
+
     const competitorMap = new Map<string, { followers: number; engagement: number }>();
     
     allCompetitors.forEach((c: any) => {
-      const name = extractStringValue(c, ["company", "name", "competitor", "page_name"]);
+      const name = extractStringValue(c, ["company", "name", "competitor", "page_name", "page"]);
       if (name) {
-        const followers = extractValue(c, ["followers", "follower_count", "total_followers"]);
-        const engagement = extractValue(c, ["engagement", "engagements", "total_engagement"]);
+        const followers = extractValue(c, ["followers", "follower_count", "total_followers", "total followers"]);
+        const engagement = extractValue(c, ["engagement", "engagements", "total_engagement", "total post engagements"]);
         
         if (competitorMap.has(name)) {
           const existing = competitorMap.get(name)!;
