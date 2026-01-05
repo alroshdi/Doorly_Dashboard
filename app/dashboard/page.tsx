@@ -23,7 +23,7 @@ import {
   getUsageTypeDistribution,
   type RequestData,
 } from "@/lib/analytics";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { parseISO, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -53,7 +53,7 @@ export default function DashboardPage() {
     fetchData();
   }, [router]);
 
-  const fetchData = async () => {
+  const fetchData = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError("");
@@ -62,7 +62,10 @@ export default function DashboardPage() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
-      const response = await fetch("/api/requests", {
+      // Add refresh parameter to bypass cache
+      const url = forceRefresh ? "/api/requests?refresh=true" : "/api/requests";
+      
+      const response = await fetch(url, {
         signal: controller.signal,
       });
       
@@ -294,7 +297,7 @@ export default function DashboardPage() {
           <CardContent>
             <p className="text-muted-foreground mb-4">{error}</p>
             <div className="flex gap-2">
-              <Button onClick={fetchData} className="flex-1">
+              <Button onClick={() => fetchData(true)} className="flex-1">
                 {isRTL ? "إعادة المحاولة" : "Retry"}
               </Button>
               <Button 
@@ -328,7 +331,7 @@ export default function DashboardPage() {
           {/* Header Section */}
           <div className="mb-4 sm:mb-6 md:mb-8 animate-slide-down">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div>
+              <div className="flex-1">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold gradient-text mb-2 sm:mb-3 animate-fade-in bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                   {t.sidebar.overview}
                 </h1>
@@ -336,6 +339,16 @@ export default function DashboardPage() {
                   {isRTL ? "لوحة تحكم شاملة لإدارة وتحليل طلبات العقارات" : "Comprehensive dashboard for real estate request management and analytics"}
                 </p>
               </div>
+              <Button
+                onClick={() => fetchData(true)}
+                disabled={loading}
+                variant="outline"
+                size="sm"
+                className="gap-2 min-h-[44px]"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                {isRTL ? "تحديث البيانات" : "Refresh Data"}
+              </Button>
             </div>
           </div>
 

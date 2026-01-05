@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { google } from "googleapis";
 
 let cache: { data: any[]; timestamp: number } | null = null;
-const CACHE_DURATION = 60 * 1000; // 60 seconds
+const CACHE_DURATION = 30 * 1000; // 30 seconds (reduced from 60)
 
 async function getGoogleSheetsData() {
   try {
@@ -53,10 +53,14 @@ async function getGoogleSheetsData() {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Check cache
-    if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
+    // Check for cache bypass parameter
+    const { searchParams } = new URL(request.url);
+    const bypassCache = searchParams.get("refresh") === "true" || searchParams.get("nocache") === "true";
+    
+    // Check cache (unless bypassed)
+    if (!bypassCache && cache && Date.now() - cache.timestamp < CACHE_DURATION) {
       return NextResponse.json(cache.data);
     }
 
