@@ -156,6 +156,70 @@ export function calculateLinkedInKPIs(data: LinkedInData): LinkedInKPIs {
     reachBySource: [],
   };
 
+  // Process Competitor Data FIRST to get Total Followers
+  // This should be processed before followers data to prioritize the competitor analytics file
+  if (data.competitors) {
+    const competitorSheets = Object.values(data.competitors) as any[][];
+    const allCompetitors: any[] = [];
+    
+    competitorSheets.forEach((sheet: any) => {
+      if (Array.isArray(sheet)) {
+        // Filter out empty objects and headers
+        const validItems = sheet.filter((item: any) => 
+          item && typeof item === "object" && Object.keys(item).length > 0
+        );
+        allCompetitors.push(...validItems);
+      } else if (sheet && typeof sheet === "object") {
+        // Handle single object
+        allCompetitors.push(sheet);
+      }
+    });
+
+    // Extract Total Followers from competitor analytics file
+    // This file contains the main page's Total Followers metric (153 in the Excel file)
+    allCompetitors.forEach((c: any) => {
+      if (!c || typeof c !== "object") return;
+      
+      // First, try to find "Total Followers" column directly (case-insensitive)
+      let totalFollowers = 0;
+      for (const key in c) {
+        if (key && typeof key === "string") {
+          const normalizedKey = key.trim().toLowerCase();
+          // Check for "total followers" variations
+          if (normalizedKey === "total followers" || 
+              normalizedKey === "total_followers" ||
+              normalizedKey.includes("total") && normalizedKey.includes("followers")) {
+            const value = c[key];
+            if (typeof value === "number" && !isNaN(value) && value > 0) {
+              totalFollowers = Math.max(totalFollowers, value);
+            } else if (typeof value === "string") {
+              const parsed = parseFloat(value.replace(/[^\d.-]/g, ""));
+              if (!isNaN(parsed) && parsed > 0) {
+                totalFollowers = Math.max(totalFollowers, parsed);
+              }
+            }
+          }
+        }
+      }
+      
+      // If not found with direct check, use extractValue as fallback
+      if (totalFollowers === 0) {
+        totalFollowers = extractValue(c, [
+          "total followers", 
+          "total_followers", 
+          "Total Followers",
+          "followers", 
+          "follower_count"
+        ]);
+      }
+      
+      if (totalFollowers > 0) {
+        // Use the Total Followers value from competitor analytics file
+        kpis.totalFollowers = Math.max(kpis.totalFollowers, totalFollowers);
+      }
+    });
+  }
+
   // Process Content Data
   if (data.content) {
     const contentSheets = Object.values(data.content) as any[][];
@@ -208,12 +272,16 @@ export function calculateLinkedInKPIs(data: LinkedInData): LinkedInKPIs {
     });
 
     // Get latest follower count
+    // Only update if Total Followers wasn't already set from competitor analytics file
     const followerCounts = allFollowers
       .map((f: any) => extractValue(f, ["followers", "follower_count", "total_followers", "count"]))
       .filter((v: number) => v > 0);
     
     if (followerCounts.length > 0) {
-      kpis.totalFollowers = Math.max(...followerCounts);
+      // Only use followers data if Total Followers wasn't already extracted from competitor file
+      if (kpis.totalFollowers === 0) {
+        kpis.totalFollowers = Math.max(...followerCounts);
+      }
       kpis.newFollowers = followerCounts.length > 1 
         ? followerCounts[followerCounts.length - 1] - followerCounts[0]
         : followerCounts[0];
@@ -364,7 +432,8 @@ export function calculateLinkedInKPIs(data: LinkedInData): LinkedInKPIs {
     }
   }
 
-  // Process Competitor Data
+  // Process Competitor Data (for competitor comparison)
+  // Note: Total Followers was already extracted above, this section is for competitor comparison only
   if (data.competitors) {
     const competitorSheets = Object.values(data.competitors) as any[][];
     const allCompetitors: any[] = [];
@@ -381,23 +450,6 @@ export function calculateLinkedInKPIs(data: LinkedInData): LinkedInKPIs {
         allCompetitors.push(sheet);
       }
     });
-
-    // Extract Total Followers from competitor analytics file
-    // Look for "Total Followers" column in the competitor data
-    // This file contains the main page's Total Followers metric
-    let competitorTotalFollowers = 0;
-    allCompetitors.forEach((c: any) => {
-      const totalFollowers = extractValue(c, ["total_followers", "total followers", "followers", "follower_count"]);
-      if (totalFollowers > 0) {
-        // Get the maximum Total Followers value from competitor data
-        competitorTotalFollowers = Math.max(competitorTotalFollowers, totalFollowers);
-      }
-    });
-    
-    // Use Total Followers from competitor file if available, otherwise keep existing value
-    if (competitorTotalFollowers > 0) {
-      kpis.totalFollowers = competitorTotalFollowers;
-    }
 
     const competitorMap = new Map<string, { followers: number; engagement: number }>();
     
