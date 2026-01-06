@@ -25,8 +25,6 @@ import {
   getAreaDistributionBySource,
   getPriceRangeDistribution,
   getAreaDistribution,
-  getConversionRateBySource,
-  getTopPerformingSources,
   getAveragePriceByPropertyType,
   getStatusDistribution,
   type RequestData,
@@ -305,8 +303,6 @@ export default function DashboardPage() {
   const areaDistributionBySource = useMemo(() => getAreaDistributionBySource(filteredData), [filteredData]);
   const priceRangeDistribution = useMemo(() => getPriceRangeDistribution(filteredData), [filteredData]);
   const areaDistribution = useMemo(() => getAreaDistribution(filteredData), [filteredData]);
-  const conversionRateBySource = useMemo(() => getConversionRateBySource(filteredData), [filteredData]);
-  const topPerformingSources = useMemo(() => getTopPerformingSources(filteredData), [filteredData]);
   const averagePriceByPropertyType = useMemo(() => getAveragePriceByPropertyType(filteredData), [filteredData]);
   const statusDistribution = useMemo(() => getStatusDistribution(filteredData), [filteredData]);
 
@@ -537,28 +533,14 @@ export default function DashboardPage() {
             )}
 
             {/* Performance Metrics Section - Compact layout */}
-            {(conversionRateBySource.length > 0 || topPerformingSources.length > 0 || averagePriceByPropertyType.length > 0) && (
+            {averagePriceByPropertyType.length > 0 && (
               <div className="space-y-2 sm:space-y-3 md:space-y-4 animate-slide-up" style={{ animationDelay: "1500ms" }}>
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   {isRTL ? "مقاييس الأداء" : "Performance Metrics"}
                 </h2>
                 
-                {/* Performance charts side by side */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-                  {conversionRateBySource.length > 0 && (
-                    <div className="animate-slide-in-left" style={{ animationDelay: "1600ms" }}>
-                      <BarChartComponent data={conversionRateBySource} title={t.charts.conversionRateBySource} />
-                    </div>
-                  )}
-                  {topPerformingSources.length > 0 && (
-                    <div className="animate-slide-in-right" style={{ animationDelay: "1700ms" }}>
-                      <BarChartComponent data={topPerformingSources} title={t.charts.topPerformingSources} />
-                    </div>
-                  )}
-                </div>
-
                 {averagePriceByPropertyType.length > 0 && (
-                  <div className="animate-scale-in" style={{ animationDelay: "1800ms" }}>
+                  <div className="animate-scale-in" style={{ animationDelay: "1600ms" }}>
                     <BarChartComponent data={averagePriceByPropertyType} title={t.charts.averagePriceByPropertyType} unitImage="/Bold.png" />
                   </div>
                 )}
