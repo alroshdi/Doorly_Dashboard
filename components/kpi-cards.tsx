@@ -193,21 +193,22 @@ export function KPICards({ metrics }: KPICardsProps) {
       title: t.kpi.avgArea,
       value: metrics.avgArea,
       icon: Home,
-      available: metrics.avgArea > 0,
+      available: metrics.hasAreaColumn, // Show if column exists, even if value is 0
       gradient: "from-violet-500 to-violet-600",
+      isDecimal: true,
     },
     {
       title: t.kpi.minArea,
       value: metrics.minArea,
       icon: Ruler,
-      available: metrics.minArea > 0,
+      available: metrics.hasAreaColumn, // Show if column exists, even if value is 0
       gradient: "from-slate-500 to-slate-600",
     },
     {
       title: t.kpi.maxArea,
       value: metrics.maxArea,
       icon: Ruler,
-      available: metrics.maxArea > 0,
+      available: metrics.hasAreaColumn, // Show if column exists, even if value is 0
       gradient: "from-gray-500 to-gray-600",
     },
   ];
@@ -254,8 +255,8 @@ export function KPICards({ metrics }: KPICardsProps) {
             </CardHeader>
             <CardContent className="relative z-10 px-4 sm:px-6 pb-4 sm:pb-6">
               <div className={`text-2xl sm:text-3xl md:text-4xl font-bold group-hover:scale-105 transition-all duration-300 mb-1 text-foreground group-hover:text-primary`}>
-                {card.title.includes("Price") || card.title.includes("السعر") || card.title.includes("Area") || card.title.includes("المساحة") ? (
-                  formatNumber(card.value, card.value < 1000 ? 2 : 0)
+                {card.isDecimal || card.title.includes("Price") || card.title.includes("السعر") || card.title.includes("Area") || card.title.includes("المساحة") ? (
+                  formatNumber(card.value, card.isDecimal ? 2 : (card.value < 1000 ? 2 : 0))
                 ) : (
                   <AnimatedCounter value={card.value} delay={index * 100} />
                 )}

@@ -34,6 +34,7 @@ export interface KPIMetrics {
   maxArea: number;
   avgArea: number;
   totalArea: number;
+  hasAreaColumn: boolean; // Whether area column exists in data
 }
 
 export interface ChartData {
@@ -97,7 +98,7 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
   const priceMaxColumn = detectColumn(data, ["price_max", "max_price", "أعلى_سعر"]);
   const priceFromColumn = detectColumn(data, ["price_from", "price_from", "من_السعر"]);
   const priceToColumn = detectColumn(data, ["price_to", "price_to", "إلى_السعر"]);
-  const areaColumn = detectColumn(data, ["area", "area", "المساحة"]);
+  const areaColumn = detectColumn(data, ["area", "المساحة", "area_m2", "area_sqm", "surface", "surface_area"]);
 
   let totalRequests = data.length;
   let newToday = 0;
@@ -239,11 +240,15 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
       }
     }
 
-    // Area
-    if (areaColumn && row[areaColumn]) {
-      const area = Number(row[areaColumn]);
-      if (!isNaN(area) && area > 0) {
-        areas.push(area);
+    // Area - allow 0 and positive values, but exclude empty/null/NaN
+    if (areaColumn && row[areaColumn] !== undefined && row[areaColumn] !== null && row[areaColumn] !== "") {
+      const areaValue = String(row[areaColumn]).trim();
+      if (areaValue) {
+        const area = Number(areaValue);
+        // Allow 0 and positive values (area can be 0 in some cases)
+        if (!isNaN(area) && area >= 0) {
+          areas.push(area);
+        }
       }
     }
   });
@@ -278,6 +283,7 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
     maxArea: areas.length > 0 ? Math.max(...areas) : 0,
     avgArea: areas.length > 0 ? areas.reduce((a, b) => a + b, 0) / areas.length : 0,
     totalArea: areas.reduce((a, b) => a + b, 0),
+    hasAreaColumn: areaColumn !== null, // Track if area column exists
   };
 }
 

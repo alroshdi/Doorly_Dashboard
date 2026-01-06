@@ -121,6 +121,7 @@ export async function exportDashboardToPDF(
       maxArea: 0,
       avgArea: 0,
       totalArea: 0,
+      hasAreaColumn: false,
     };
 
     // Calculate percentages
