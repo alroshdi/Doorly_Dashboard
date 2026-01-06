@@ -515,13 +515,15 @@ export default function DashboardPage() {
                 )}
 
                 {/* Status Distribution chart replaces Area Distribution by Source */}
-                {statusDistribution.length > 0 && (
+                {(statusDistribution.length > 0 || areaDistribution.length > 0) && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-                    <div className="animate-slide-in-left h-full flex" style={{ animationDelay: "1300ms" }}>
-                      <div className="w-full flex flex-col">
-                        <PieChartComponent data={statusDistribution} title={t.charts.statusDistribution} />
+                    {statusDistribution.length > 0 && (
+                      <div className="animate-slide-in-left h-full flex" style={{ animationDelay: "1300ms" }}>
+                        <div className="w-full flex flex-col">
+                          <PieChartComponent data={statusDistribution} title={t.charts.statusDistribution} />
+                        </div>
                       </div>
-                    </div>
+                    )}
                     {areaDistribution.length > 0 && (
                       <div className="animate-slide-in-right h-full flex" style={{ animationDelay: "1400ms" }}>
                         <div className="w-full flex flex-col">
