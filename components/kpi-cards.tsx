@@ -162,6 +162,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       available: metrics.totalViewsCount > 0,
       gradient: "from-cyan-500 to-cyan-600",
     },
+    // Price cards grouped together
     {
       title: t.kpi.avgPriceFrom,
       value: metrics.avgPriceFrom,
@@ -189,6 +190,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       isDecimal: true,
       unitImage: "/Bold.png",
     },
+    // Area cards grouped together
     {
       title: t.kpi.avgArea,
       value: metrics.avgArea,
