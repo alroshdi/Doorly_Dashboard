@@ -66,9 +66,9 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       
-      // Add timeout to prevent hanging - reduced to 15 seconds for faster error feedback
+      // Add timeout to prevent hanging - increased to 30 seconds for Vercel
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
       // Add refresh parameter to bypass cache
       const url = forceRefresh ? "/api/requests?refresh=true" : "/api/requests";
@@ -77,13 +77,17 @@ export default function DashboardPage() {
       try {
         response = await fetch(url, {
           signal: controller.signal,
+          cache: 'no-store', // Prevent caching issues
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
         });
       } catch (fetchError: any) {
         clearTimeout(timeoutId);
         if (fetchError.name === "AbortError") {
-          throw new Error("Request timeout. The server is taking too long to respond. Please try again.");
+          throw new Error("Request timeout. The server is taking too long to respond. Please check your Google Sheets connection and try again.");
         }
-        throw new Error(`Network error: ${fetchError.message || "Failed to connect to server"}`);
+        throw new Error(`Network error: ${fetchError.message || "Failed to connect to server. Please check your internet connection."}`);
       }
       
       clearTimeout(timeoutId);

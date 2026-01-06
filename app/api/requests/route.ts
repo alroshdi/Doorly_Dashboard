@@ -67,10 +67,10 @@ export async function GET(request: Request) {
       return NextResponse.json(cache.data);
     }
 
-    // Fetch fresh data with timeout
+    // Fetch fresh data with timeout - increased for Vercel serverless functions
     const fetchPromise = getGoogleSheetsData();
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Request timeout: Google Sheets API took too long")), 10000)
+      setTimeout(() => reject(new Error("Request timeout: Google Sheets API took too long. Please check your credentials and sheet permissions.")), 25000)
     );
     
     const data = await Promise.race([fetchPromise, timeoutPromise]) as any[];
@@ -84,7 +84,18 @@ export async function GET(request: Request) {
     return NextResponse.json(data);
   } catch (error: any) {
     console.error("API Error:", error);
-    const errorMessage = error.message || "Failed to fetch data from Google Sheets";
+    let errorMessage = error.message || "Failed to fetch data from Google Sheets";
+    
+    // Provide more helpful error messages
+    if (errorMessage.includes("Missing Google Sheets credentials")) {
+      errorMessage = "Google Sheets credentials are missing. Please configure GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY, and GOOGLE_SHEET_ID in environment variables.";
+    } else if (errorMessage.includes("timeout")) {
+      errorMessage = "Request timeout. Google Sheets API is taking too long. Please check your sheet permissions and try again.";
+    } else if (errorMessage.includes("permission") || errorMessage.includes("403")) {
+      errorMessage = "Permission denied. Please check that your service account has access to the Google Sheet.";
+    } else if (errorMessage.includes("404") || errorMessage.includes("not found")) {
+      errorMessage = "Google Sheet not found. Please check your GOOGLE_SHEET_ID environment variable.";
+    }
     
     // Return proper error response
     return NextResponse.json(
