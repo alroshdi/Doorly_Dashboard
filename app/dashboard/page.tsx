@@ -438,8 +438,8 @@ export default function DashboardPage() {
               <LineChartComponent data={requestsOverTime} title={t.charts.requestsOverTime} />
             </div>
 
-            {/* Compact grid: Reduced gaps for tighter layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+            {/* Charts side by side: 2 columns on medium screens and up */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
               <div className="animate-slide-in-left" style={{ animationDelay: "600ms" }}>
                 <DonutChartComponent data={requestsByWilaya} title={t.charts.byWilaya} />
               </div>
@@ -448,7 +448,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
               <div className="animate-slide-in-left" style={{ animationDelay: "800ms" }}>
                 <BarChartComponent data={propertyTypeDistribution} title={t.charts.propertyTypeDistribution} />
               </div>
@@ -464,7 +464,8 @@ export default function DashboardPage() {
                   {isRTL ? "تحليل الأسعار والمساحات" : "Price & Area Analysis"}
                 </h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                {/* Price and Area charts side by side */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                   {priceDistributionBySource.length > 0 && (
                     <div className="animate-slide-in-left" style={{ animationDelay: "1100ms" }}>
                       <BarChartComponent data={priceDistributionBySource} title={t.charts.priceDistributionBySource} unitImage="/Bold.png" />
@@ -477,7 +478,7 @@ export default function DashboardPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                   {priceRangeDistribution.length > 0 && (
                     <div className="animate-slide-in-left" style={{ animationDelay: "1300ms" }}>
                       <PieChartComponent data={priceRangeDistribution} title={t.charts.priceRangeDistribution} />
@@ -499,7 +500,8 @@ export default function DashboardPage() {
                   {isRTL ? "مقاييس الأداء" : "Performance Metrics"}
                 </h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                {/* Performance charts side by side */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                   {conversionRateBySource.length > 0 && (
                     <div className="animate-slide-in-left" style={{ animationDelay: "1600ms" }}>
                       <BarChartComponent data={conversionRateBySource} title={t.charts.conversionRateBySource} />
@@ -527,7 +529,8 @@ export default function DashboardPage() {
                   {isRTL ? "تحليل الحالة" : "Status Analysis"}
                 </h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                {/* Status chart - side by side layout */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                   <div className="animate-slide-in-left" style={{ animationDelay: "2000ms" }}>
                     <PieChartComponent data={statusDistribution} title={t.charts.statusDistribution} />
                   </div>
