@@ -98,20 +98,23 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
   const priceMaxColumn = detectColumn(data, ["price_max", "max_price", "أعلى_سعر"]);
   const priceFromColumn = detectColumn(data, ["price_from", "price_from", "من_السعر"]);
   const priceToColumn = detectColumn(data, ["price_to", "price_to", "إلى_السعر"]);
-  // Enhanced area column detection - check for multiple variations
+  // Enhanced area column detection - check for multiple variations including Google Sheets format
+  // Note: Google Sheets API converts headers to lowercase and replaces spaces with underscores
   const areaColumn = detectColumn(data, [
-    "area", 
-    "المساحة", 
+    "area",           // Direct match
+    "aa",             // Column header "AA" from Google Sheets
+    "aa_area",        // If "AA" has sub-header "area"
+    "المساحة",        // Arabic: المساحة
     "area_m2", 
     "area_sqm", 
     "surface", 
     "surface_area",
-    "مساحة", // Without ال prefix
-    "area (m²)",
-    "area (sqm)",
-    "المساحة (م²)",
+    "مساحة",          // Without ال prefix
+    "area_(m²)",      // With parentheses (converted from "area (m²)")
+    "area_(sqm)",     // With parentheses (converted from "area (sqm)")
+    "المساحة_(م²)",   // Arabic with parentheses
     "size",
-    "المساحة بالمتر المربع",
+    "المساحة_بالمتر_المربع", // With underscores (converted from spaces)
     "area_m",
     "area_sq",
     "sqm",
@@ -935,19 +938,22 @@ export function getPriceDistributionBySource(data: RequestData[]): ChartData[] {
 export function getAreaDistributionBySource(data: RequestData[]): ChartData[] {
   const sourceColumn = detectColumn(data, ["source", "channel", "مصدر", "قناة"]);
   // Use same enhanced area column detection as in calculateKPIs
+  // Note: Google Sheets API converts headers to lowercase and replaces spaces with underscores
   const areaColumn = detectColumn(data, [
-    "area", 
-    "المساحة", 
+    "area",           // Direct match
+    "aa",             // Column header "AA" from Google Sheets
+    "aa_area",        // If "AA" has sub-header "area"
+    "المساحة",        // Arabic: المساحة
     "area_m2", 
     "area_sqm", 
     "surface", 
     "surface_area",
-    "مساحة",
-    "area (m²)",
-    "area (sqm)",
-    "المساحة (م²)",
+    "مساحة",          // Without ال prefix
+    "area_(m²)",      // With parentheses (converted from "area (m²)")
+    "area_(sqm)",     // With parentheses (converted from "area (sqm)")
+    "المساحة_(م²)",   // Arabic with parentheses
     "size",
-    "المساحة بالمتر المربع",
+    "المساحة_بالمتر_المربع", // With underscores (converted from spaces)
     "area_m",
     "area_sq",
     "sqm",
@@ -967,11 +973,19 @@ export function getAreaDistributionBySource(data: RequestData[]): ChartData[] {
 
     // Enhanced area parsing - handle various formats
     const areaValue = String(row[areaColumn] || "").trim();
-    if (!areaValue || areaValue === "" || areaValue === "null" || areaValue === "undefined") return;
+    if (!areaValue || areaValue === "" || areaValue === "null" || areaValue === "undefined" || areaValue === "N/A" || areaValue === "n/a") return;
     
-    const cleanedValue = areaValue
-      .replace(/[m²m2sqm\s,]/gi, '')
-      .replace(/[^\d.]/g, '');
+    // Handle both Arabic and English numbers, commas as thousand separators
+    let cleanedValue = areaValue
+      .replace(/[m²m2sqm\s]/gi, '') // Remove units and spaces first
+      .replace(/,/g, '') // Remove commas (thousand separators)
+      .replace(/[^\d.]/g, ''); // Keep only digits and decimal point
+    
+    // If empty after cleaning, try to extract number from mixed content
+    if (!cleanedValue && /[\d]/.test(areaValue)) {
+      cleanedValue = areaValue.match(/[\d.]+/)?.[0] || '';
+    }
+    
     const area = Number(cleanedValue);
     if (!isNaN(area) && area > 0) {
       if (!sourceAreaMap[source]) {
@@ -1047,19 +1061,22 @@ export function getPriceRangeDistribution(data: RequestData[]): ChartData[] {
 // Get area distribution (buckets)
 export function getAreaDistribution(data: RequestData[]): ChartData[] {
   // Use same enhanced area column detection as in calculateKPIs
+  // Note: Google Sheets API converts headers to lowercase and replaces spaces with underscores
   const areaColumn = detectColumn(data, [
-    "area", 
-    "المساحة", 
+    "area",           // Direct match
+    "aa",             // Column header "AA" from Google Sheets
+    "aa_area",        // If "AA" has sub-header "area"
+    "المساحة",        // Arabic: المساحة
     "area_m2", 
     "area_sqm", 
     "surface", 
     "surface_area",
-    "مساحة",
-    "area (m²)",
-    "area (sqm)",
-    "المساحة (م²)",
+    "مساحة",          // Without ال prefix
+    "area_(m²)",      // With parentheses (converted from "area (m²)")
+    "area_(sqm)",     // With parentheses (converted from "area (sqm)")
+    "المساحة_(م²)",   // Arabic with parentheses
     "size",
-    "المساحة بالمتر المربع",
+    "المساحة_بالمتر_المربع", // With underscores (converted from spaces)
     "area_m",
     "area_sq",
     "sqm",
@@ -1082,11 +1099,19 @@ export function getAreaDistribution(data: RequestData[]): ChartData[] {
   data.forEach((row) => {
     // Enhanced area parsing - handle various formats
     const areaValue = String(row[areaColumn] || "").trim();
-    if (!areaValue || areaValue === "" || areaValue === "null" || areaValue === "undefined") return;
+    if (!areaValue || areaValue === "" || areaValue === "null" || areaValue === "undefined" || areaValue === "N/A" || areaValue === "n/a") return;
     
-    const cleanedValue = areaValue
-      .replace(/[m²m2sqm\s,]/gi, '')
-      .replace(/[^\d.]/g, '');
+    // Handle both Arabic and English numbers, commas as thousand separators
+    let cleanedValue = areaValue
+      .replace(/[m²m2sqm\s]/gi, '') // Remove units and spaces first
+      .replace(/,/g, '') // Remove commas (thousand separators)
+      .replace(/[^\d.]/g, ''); // Keep only digits and decimal point
+    
+    // If empty after cleaning, try to extract number from mixed content
+    if (!cleanedValue && /[\d]/.test(areaValue)) {
+      cleanedValue = areaValue.match(/[\d.]+/)?.[0] || '';
+    }
+    
     const area = Number(cleanedValue);
     if (!isNaN(area) && area > 0) {
       if (area < 100) buckets["0-100"]++;
