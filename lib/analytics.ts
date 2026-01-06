@@ -46,10 +46,20 @@ export function detectColumn(data: RequestData[], possibleNames: string[]): stri
   if (!data || data.length === 0) return null;
   const keys = Object.keys(data[0]);
   
+  // Debug: Log available columns in development
+  if (process.env.NODE_ENV === "development" && possibleNames[0] === "area") {
+    console.log("Available columns for area detection:", keys);
+  }
+  
   // First, try exact matches (case-insensitive)
   for (const name of possibleNames) {
     const exactMatch = keys.find(k => k.toLowerCase() === name.toLowerCase());
-    if (exactMatch) return exactMatch;
+    if (exactMatch) {
+      if (process.env.NODE_ENV === "development" && possibleNames[0] === "area") {
+        console.log(`Found area column: "${exactMatch}" (matched "${name}")`);
+      }
+      return exactMatch;
+    }
   }
   
   // Then, try partial matches
@@ -58,7 +68,41 @@ export function detectColumn(data: RequestData[], possibleNames: string[]): stri
       k.toLowerCase().includes(name.toLowerCase()) ||
       name.toLowerCase().includes(k.toLowerCase())
     );
-    if (found) return found;
+    if (found) {
+      if (process.env.NODE_ENV === "development" && possibleNames[0] === "area") {
+        console.log(`Found area column (partial match): "${found}" (matched "${name}")`);
+      }
+      return found;
+    }
+  }
+  
+  // Last resort: Check if any column contains numeric area-like data
+  // This helps when column name doesn't match but contains area values
+  if (possibleNames[0] === "area" && keys.length > 0) {
+    for (const key of keys) {
+      // Check if this column has numeric values that look like area (typically 50-10000 range)
+      const sampleValues = data.slice(0, Math.min(10, data.length))
+        .map(row => {
+          const val = String(row[key] || "").trim();
+          if (!val || val === "" || val === "null" || val === "undefined") return null;
+          const cleaned = val.replace(/[m²m2sqm\s,]/gi, '').replace(/[^\d.]/g, '');
+          const num = Number(cleaned);
+          return (!isNaN(num) && num > 0 && num < 100000) ? num : null;
+        })
+        .filter(v => v !== null);
+      
+      // If we found several numeric values in reasonable area range, this might be the area column
+      if (sampleValues.length >= 3) {
+        if (process.env.NODE_ENV === "development") {
+          console.log(`Found potential area column by data analysis: "${key}" (${sampleValues.length} valid values found)`);
+        }
+        return key;
+      }
+    }
+  }
+  
+  if (process.env.NODE_ENV === "development" && possibleNames[0] === "area") {
+    console.log("No area column found. Available columns:", keys);
   }
   return null;
 }
@@ -292,6 +336,19 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
         if (!isNaN(area) && area > 0 && isFinite(area)) {
           areas.push(area);
         }
+      }
+    } else if (!areaColumn && data.indexOf(row) === 0) {
+      // Log on first row if column not found (only in development to avoid spam)
+      if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
+        const allKeys = Object.keys(row);
+        console.log('Area column not found. Available columns:', allKeys);
+        console.log('Looking for area in columns:', allKeys.filter(k => 
+          k.toLowerCase().includes('area') || 
+          k.toLowerCase().includes('مساحة') || 
+          k.toLowerCase() === 'aa' ||
+          k.toLowerCase().includes('surface') ||
+          k.toLowerCase().includes('size')
+        ));
       }
     }
   });
