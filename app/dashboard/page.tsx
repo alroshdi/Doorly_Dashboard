@@ -25,6 +25,10 @@ import {
   getAreaDistributionBySource,
   getPriceRangeDistribution,
   getAreaDistribution,
+  getConversionRateBySource,
+  getTopPerformingSources,
+  getAveragePriceByPropertyType,
+  getStatusDistribution,
   type RequestData,
 } from "@/lib/analytics";
 import { Loader2, RefreshCw } from "lucide-react";
@@ -291,6 +295,10 @@ export default function DashboardPage() {
   const areaDistributionBySource = useMemo(() => getAreaDistributionBySource(filteredData), [filteredData]);
   const priceRangeDistribution = useMemo(() => getPriceRangeDistribution(filteredData), [filteredData]);
   const areaDistribution = useMemo(() => getAreaDistribution(filteredData), [filteredData]);
+  const conversionRateBySource = useMemo(() => getConversionRateBySource(filteredData), [filteredData]);
+  const topPerformingSources = useMemo(() => getTopPerformingSources(filteredData), [filteredData]);
+  const averagePriceByPropertyType = useMemo(() => getAveragePriceByPropertyType(filteredData), [filteredData]);
+  const statusDistribution = useMemo(() => getStatusDistribution(filteredData), [filteredData]);
 
   const lang = getLanguage();
   const t = getTranslations(lang);
@@ -478,6 +486,49 @@ export default function DashboardPage() {
                       <DonutChartComponent data={areaDistribution} title={t.charts.areaDistribution} />
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Performance Metrics Section */}
+            {(conversionRateBySource.length > 0 || topPerformingSources.length > 0 || averagePriceByPropertyType.length > 0) && (
+              <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-slide-up" style={{ animationDelay: "1500ms" }}>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+                  {isRTL ? "مقاييس الأداء" : "Performance Metrics"}
+                </h2>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                  {conversionRateBySource.length > 0 && (
+                    <div className="animate-slide-in-left" style={{ animationDelay: "1600ms" }}>
+                      <BarChartComponent data={conversionRateBySource} title={t.charts.conversionRateBySource} />
+                    </div>
+                  )}
+                  {topPerformingSources.length > 0 && (
+                    <div className="animate-slide-in-right" style={{ animationDelay: "1700ms" }}>
+                      <BarChartComponent data={topPerformingSources} title={t.charts.topPerformingSources} />
+                    </div>
+                  )}
+                </div>
+
+                {averagePriceByPropertyType.length > 0 && (
+                  <div className="animate-scale-in" style={{ animationDelay: "1800ms" }}>
+                    <BarChartComponent data={averagePriceByPropertyType} title={t.charts.averagePriceByPropertyType} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Status Analysis Section */}
+            {statusDistribution.length > 0 && (
+              <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-slide-up" style={{ animationDelay: "1900ms" }}>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+                  {isRTL ? "تحليل الحالة" : "Status Analysis"}
+                </h2>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                  <div className="animate-slide-in-left" style={{ animationDelay: "2000ms" }}>
+                    <PieChartComponent data={statusDistribution} title={t.charts.statusDistribution} />
+                  </div>
                 </div>
               </div>
             )}

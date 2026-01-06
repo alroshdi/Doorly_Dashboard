@@ -1021,3 +1021,337 @@ export function getAreaDistribution(data: RequestData[]): ChartData[] {
     .filter(item => item.value > 0);
 }
 
+// Status Trends Over Time
+export function getStatusTrendsOverTime(data: RequestData[], period: "daily" | "weekly" | "monthly" = "daily"): { [status: string]: ChartData[] } {
+  const dateColumn = detectColumn(data, ["created_at", "date", "created_at_date"]);
+  if (!dateColumn) return {};
+
+  const statusColumn = "status_ar";
+  const trends: { [status: string]: { [date: string]: number } } = {};
+
+  data.forEach((row) => {
+    if (!row[dateColumn] || !row[statusColumn]) return;
+    const date = parseDate(String(row[dateColumn]));
+    if (!date) return;
+
+    const status = String(row[statusColumn] || "").trim();
+    if (!status) return;
+
+    let key: string;
+    if (period === "daily") {
+      key = format(date, "yyyy-MM-dd");
+    } else if (period === "weekly") {
+      key = format(startOfWeek(date, { weekStartsOn: 6 }), "yyyy-MM-dd");
+    } else {
+      key = format(startOfMonth(date), "yyyy-MM");
+    }
+
+    if (!trends[status]) {
+      trends[status] = {};
+    }
+    trends[status][key] = (trends[status][key] || 0) + 1;
+  });
+
+  const result: { [status: string]: ChartData[] } = {};
+  Object.keys(trends).forEach((status) => {
+    result[status] = Object.entries(trends[status])
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  });
+
+  return result;
+}
+
+// Conversion Rate by Source
+export function getConversionRateBySource(data: RequestData[]): ChartData[] {
+  const sourceColumn = detectColumn(data, ["source", "channel", "مصدر", "قناة"]);
+  if (!sourceColumn) return [];
+
+  const sourceStats: { [source: string]: { total: number; completed: number; verified: number } } = {};
+
+  data.forEach((row) => {
+    const source = String(row[sourceColumn] || "").trim();
+    if (!source) return;
+
+    if (!sourceStats[source]) {
+      sourceStats[source] = { total: 0, completed: 0, verified: 0 };
+    }
+
+    sourceStats[source].total++;
+
+    // Check completed status
+    if (row.status_ar) {
+      const status = String(row.status_ar).trim();
+      if (status === "مكتمل" || status.includes("مكتمل")) {
+        sourceStats[source].completed++;
+      }
+    }
+
+    // Check verified status
+    if (row.verify_status_en) {
+      const verified = String(row.verify_status_en).trim().toLowerCase();
+      if (verified === "verified") {
+        sourceStats[source].verified++;
+      }
+    }
+  });
+
+  return Object.entries(sourceStats)
+    .map(([name, stats]) => ({
+      name,
+      value: stats.total > 0 ? ((stats.completed + stats.verified) / stats.total) * 100 : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
+}
+
+// Top Performing Sources (by completed/verified ratio)
+export function getTopPerformingSources(data: RequestData[]): ChartData[] {
+  const sourceColumn = detectColumn(data, ["source", "channel", "مصدر", "قناة"]);
+  if (!sourceColumn) return [];
+
+  const sourceStats: { [source: string]: { total: number; successful: number } } = {};
+
+  data.forEach((row) => {
+    const source = String(row[sourceColumn] || "").trim();
+    if (!source) return;
+
+    if (!sourceStats[source]) {
+      sourceStats[source] = { total: 0, successful: 0 };
+    }
+
+    sourceStats[source].total++;
+
+    // Count successful (completed or verified)
+    const isCompleted = row.status_ar && String(row.status_ar).trim().includes("مكتمل");
+    const isVerified = row.verify_status_en && String(row.verify_status_en).trim().toLowerCase() === "verified";
+
+    if (isCompleted || isVerified) {
+      sourceStats[source].successful++;
+    }
+  });
+
+  return Object.entries(sourceStats)
+    .map(([name, stats]) => ({
+      name,
+      value: stats.total > 0 ? (stats.successful / stats.total) * 100 : 0,
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+}
+
+// Average Price by Property Type
+export function getAveragePriceByPropertyType(data: RequestData[]): ChartData[] {
+  const propertyTypeColumn = detectColumn(data, ["property_type_ar", "property_type"]);
+  const priceFromColumn = detectColumn(data, ["price_from", "price_min", "السعر_من"]);
+  
+  if (!propertyTypeColumn || !priceFromColumn) return [];
+
+  const typeStats: { [type: string]: { total: number; sum: number } } = {};
+
+  data.forEach((row) => {
+    const type = String(row[propertyTypeColumn] || "").trim();
+    const price = Number(row[priceFromColumn]);
+    
+    if (type && !isNaN(price) && price > 0) {
+      if (!typeStats[type]) {
+        typeStats[type] = { total: 0, sum: 0 };
+      }
+      typeStats[type].total++;
+      typeStats[type].sum += price;
+    }
+  });
+
+  return Object.entries(typeStats)
+    .map(([name, stats]) => ({
+      name,
+      value: stats.total > 0 ? stats.sum / stats.total : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
+}
+
+// Request Status Distribution
+export function getStatusDistribution(data: RequestData[]): ChartData[] {
+  const statusColumn = "status_ar";
+  const grouped: { [status: string]: number } = {};
+
+  data.forEach((row) => {
+    if (row[statusColumn] !== undefined && row[statusColumn] !== null) {
+      const status = String(row[statusColumn] || "").trim();
+      if (status) {
+        grouped[status] = (grouped[status] || 0) + 1;
+      }
+    }
+  });
+
+  return Object.entries(grouped)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+}
+
+// Status Trends Over Time
+export function getStatusTrendsOverTime(data: RequestData[], period: "daily" | "weekly" | "monthly" = "daily"): { [status: string]: ChartData[] } {
+  const dateColumn = detectColumn(data, ["created_at", "date", "created_at_date"]);
+  if (!dateColumn) return {};
+
+  const statusColumn = "status_ar";
+  const trends: { [status: string]: { [date: string]: number } } = {};
+
+  data.forEach((row) => {
+    if (!row[dateColumn] || !row[statusColumn]) return;
+    const date = parseDate(String(row[dateColumn]));
+    if (!date) return;
+
+    const status = String(row[statusColumn] || "").trim();
+    if (!status) return;
+
+    let key: string;
+    if (period === "daily") {
+      key = format(date, "yyyy-MM-dd");
+    } else if (period === "weekly") {
+      key = format(startOfWeek(date, { weekStartsOn: 6 }), "yyyy-MM-dd");
+    } else {
+      key = format(startOfMonth(date), "yyyy-MM");
+    }
+
+    if (!trends[status]) {
+      trends[status] = {};
+    }
+    trends[status][key] = (trends[status][key] || 0) + 1;
+  });
+
+  const result: { [status: string]: ChartData[] } = {};
+  Object.keys(trends).forEach((status) => {
+    result[status] = Object.entries(trends[status])
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  });
+
+  return result;
+}
+
+// Conversion Rate by Source
+export function getConversionRateBySource(data: RequestData[]): ChartData[] {
+  const sourceColumn = detectColumn(data, ["source", "channel", "مصدر", "قناة"]);
+  if (!sourceColumn) return [];
+
+  const sourceStats: { [source: string]: { total: number; completed: number; verified: number } } = {};
+
+  data.forEach((row) => {
+    const source = String(row[sourceColumn] || "").trim();
+    if (!source) return;
+
+    if (!sourceStats[source]) {
+      sourceStats[source] = { total: 0, completed: 0, verified: 0 };
+    }
+
+    sourceStats[source].total++;
+
+    // Check completed status
+    if (row.status_ar) {
+      const status = String(row.status_ar).trim();
+      if (status === "مكتمل" || status.includes("مكتمل")) {
+        sourceStats[source].completed++;
+      }
+    }
+
+    // Check verified status
+    if (row.verify_status_en) {
+      const verified = String(row.verify_status_en).trim().toLowerCase();
+      if (verified === "verified") {
+        sourceStats[source].verified++;
+      }
+    }
+  });
+
+  return Object.entries(sourceStats)
+    .map(([name, stats]) => ({
+      name,
+      value: stats.total > 0 ? ((stats.completed + stats.verified) / stats.total) * 100 : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
+}
+
+// Top Performing Sources (by completed/verified ratio)
+export function getTopPerformingSources(data: RequestData[]): ChartData[] {
+  const sourceColumn = detectColumn(data, ["source", "channel", "مصدر", "قناة"]);
+  if (!sourceColumn) return [];
+
+  const sourceStats: { [source: string]: { total: number; successful: number } } = {};
+
+  data.forEach((row) => {
+    const source = String(row[sourceColumn] || "").trim();
+    if (!source) return;
+
+    if (!sourceStats[source]) {
+      sourceStats[source] = { total: 0, successful: 0 };
+    }
+
+    sourceStats[source].total++;
+
+    // Count successful (completed or verified)
+    const isCompleted = row.status_ar && String(row.status_ar).trim().includes("مكتمل");
+    const isVerified = row.verify_status_en && String(row.verify_status_en).trim().toLowerCase() === "verified";
+
+    if (isCompleted || isVerified) {
+      sourceStats[source].successful++;
+    }
+  });
+
+  return Object.entries(sourceStats)
+    .map(([name, stats]) => ({
+      name,
+      value: stats.total > 0 ? (stats.successful / stats.total) * 100 : 0,
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+}
+
+// Average Price by Property Type
+export function getAveragePriceByPropertyType(data: RequestData[]): ChartData[] {
+  const propertyTypeColumn = detectColumn(data, ["property_type_ar", "property_type"]);
+  const priceFromColumn = detectColumn(data, ["price_from", "price_min", "السعر_من"]);
+  
+  if (!propertyTypeColumn || !priceFromColumn) return [];
+
+  const typeStats: { [type: string]: { total: number; sum: number } } = {};
+
+  data.forEach((row) => {
+    const type = String(row[propertyTypeColumn] || "").trim();
+    const price = Number(row[priceFromColumn]);
+    
+    if (type && !isNaN(price) && price > 0) {
+      if (!typeStats[type]) {
+        typeStats[type] = { total: 0, sum: 0 };
+      }
+      typeStats[type].total++;
+      typeStats[type].sum += price;
+    }
+  });
+
+  return Object.entries(typeStats)
+    .map(([name, stats]) => ({
+      name,
+      value: stats.total > 0 ? stats.sum / stats.total : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
+}
+
+// Request Status Distribution
+export function getStatusDistribution(data: RequestData[]): ChartData[] {
+  const statusColumn = "status_ar";
+  const grouped: { [status: string]: number } = {};
+
+  data.forEach((row) => {
+    if (row[statusColumn] !== undefined && row[statusColumn] !== null) {
+      const status = String(row[statusColumn] || "").trim();
+      if (status) {
+        grouped[status] = (grouped[status] || 0) + 1;
+      }
+    }
+  });
+
+  return Object.entries(grouped)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+}
+
