@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPIMetrics } from "@/lib/analytics";
 import { getTranslations, getLanguage } from "@/lib/i18n";
@@ -174,6 +175,8 @@ export function KPICards({ metrics }: KPICardsProps) {
       icon: DollarSign,
       available: metrics.avgPriceFrom > 0,
       gradient: "from-yellow-500 to-yellow-600",
+      isDecimal: true,
+      unitImage: "/Bold.png",
     },
     {
       title: t.kpi.avgPriceTo,
@@ -181,6 +184,8 @@ export function KPICards({ metrics }: KPICardsProps) {
       icon: DollarSign,
       available: metrics.avgPriceTo > 0,
       gradient: "from-orange-500 to-orange-600",
+      isDecimal: true,
+      unitImage: "/Bold.png",
     },
     {
       title: t.kpi.avgPriceRange,
@@ -188,6 +193,8 @@ export function KPICards({ metrics }: KPICardsProps) {
       icon: DollarSign,
       available: metrics.avgPriceRange > 0,
       gradient: "from-amber-500 to-amber-600",
+      isDecimal: true,
+      unitImage: "/Bold.png",
     },
     {
       title: t.kpi.avgArea,
@@ -261,7 +268,16 @@ export function KPICards({ metrics }: KPICardsProps) {
                 {card.isDecimal || card.title.includes("Price") || card.title.includes("السعر") || card.title.includes("Area") || card.title.includes("المساحة") ? (
                   <>
                     {formatNumber(card.value, card.isDecimal ? 2 : (card.value < 1000 ? 2 : 0))}
-                    {card.unit && (
+                    {card.unitImage ? (
+                      <Image 
+                        src={card.unitImage} 
+                        alt="unit" 
+                        width={24} 
+                        height={24} 
+                        className="inline-block ml-1"
+                        style={{ width: 'auto', height: '1.2em' }}
+                      />
+                    ) : card.unit && (
                       <span className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-normal">
                         {card.unit}
                       </span>
@@ -270,7 +286,16 @@ export function KPICards({ metrics }: KPICardsProps) {
                 ) : (
                   <>
                     <AnimatedCounter value={card.value} delay={index * 100} />
-                    {card.unit && (
+                    {card.unitImage ? (
+                      <Image 
+                        src={card.unitImage} 
+                        alt="unit" 
+                        width={24} 
+                        height={24} 
+                        className="inline-block ml-1"
+                        style={{ width: 'auto', height: '1.2em' }}
+                      />
+                    ) : card.unit && (
                       <span className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-normal">
                         {card.unit}
                       </span>

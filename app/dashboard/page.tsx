@@ -465,7 +465,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                   {priceDistributionBySource.length > 0 && (
                     <div className="animate-slide-in-left" style={{ animationDelay: "1100ms" }}>
-                      <BarChartComponent data={priceDistributionBySource} title={t.charts.priceDistributionBySource} />
+                      <BarChartComponent data={priceDistributionBySource} title={t.charts.priceDistributionBySource} unitImage="/Bold.png" />
                     </div>
                   )}
                   {areaDistributionBySource.length > 0 && (
@@ -512,7 +512,7 @@ export default function DashboardPage() {
 
                 {averagePriceByPropertyType.length > 0 && (
                   <div className="animate-scale-in" style={{ animationDelay: "1800ms" }}>
-                    <BarChartComponent data={averagePriceByPropertyType} title={t.charts.averagePriceByPropertyType} />
+                    <BarChartComponent data={averagePriceByPropertyType} title={t.charts.averagePriceByPropertyType} unitImage="/Bold.png" />
                   </div>
                 )}
               </div>

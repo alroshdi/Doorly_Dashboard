@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartData } from "@/lib/analytics";
@@ -8,6 +9,7 @@ interface BarChartComponentProps {
   data: ChartData[];
   title: string;
   unit?: string;
+  unitImage?: string;
 }
 
 const COLORS = [
@@ -16,7 +18,7 @@ const COLORS = [
   "#A855F7", "#EF4444"
 ];
 
-export function BarChartComponent({ data, title, unit }: BarChartComponentProps) {
+export function BarChartComponent({ data, title, unit, unitImage }: BarChartComponentProps) {
   // Filter out zero values and limit to top 10
   const filteredData = (data || [])
     .filter(item => item.value > 0)
@@ -70,11 +72,12 @@ export function BarChartComponent({ data, title, unit }: BarChartComponentProps)
                 fontSize: '13px',
               }}
               formatter={(value: any, name: any, props: any) => {
-                if (!props || !props.payload) return [`${formatNumber(value || 0)}${unit ? ` ${unit}` : ''}`, ""];
+                if (!props || !props.payload) return [formatNumber(value || 0), ""];
                 const label = props.payload.name || "";
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : "0";
+                const unitDisplay = unitImage ? ' [Bold]' : (unit ? ` ${unit}` : '');
                 return [
-                  `${formatNumber(value || 0)}${unit ? ` ${unit}` : ''} (${percentage}%)`,
+                  `${formatNumber(value || 0)}${unitDisplay} (${percentage}%)`,
                   String(label).trim() || ""
                 ];
               }}
@@ -100,7 +103,7 @@ export function BarChartComponent({ data, title, unit }: BarChartComponentProps)
                     fontSize={11}
                     fontWeight={600}
                   >
-                    {`${formatNumber(value)}${unit ? ` ${unit}` : ''}`}
+                    {formatNumber(value)}
                   </text>
                 );
               }}
@@ -164,7 +167,21 @@ export function BarChartComponent({ data, title, unit }: BarChartComponentProps)
                           {item.name}
                         </div>
                         <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
-                          <span className="text-xs sm:text-sm font-bold text-primary">{`${formatNumber(item.value)}${unit ? ` ${unit}` : ''}`}</span>
+                          <span className="text-xs sm:text-sm font-bold text-primary flex items-center gap-1">
+                            {formatNumber(item.value)}
+                            {unitImage ? (
+                              <Image 
+                                src={unitImage} 
+                                alt="unit" 
+                                width={16} 
+                                height={16} 
+                                className="inline-block"
+                                style={{ width: 'auto', height: '0.9em' }}
+                              />
+                            ) : unit && (
+                              <span>{unit}</span>
+                            )}
+                          </span>
                           <span className="text-xs text-muted-foreground bg-muted/50 px-1.5 sm:px-2 py-0.5 rounded-full">{percentage}%</span>
                         </div>
                       </div>
