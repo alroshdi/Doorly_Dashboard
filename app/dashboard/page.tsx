@@ -58,7 +58,13 @@ export default function DashboardPage() {
       return;
     }
 
+    // Fetch data on mount
     fetchData();
+    
+    // Cleanup function to prevent memory leaks
+    return () => {
+      // Any cleanup if needed
+    };
   }, [router]);
 
   const fetchData = async (forceRefresh = false) => {
@@ -323,6 +329,18 @@ export default function DashboardPage() {
             <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
             <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
             <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+          {/* Add refresh button for manual retry */}
+          <div className="mt-6">
+            <Button
+              onClick={() => fetchData(true)}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              {isRTL ? "تحديث البيانات" : "Refresh Data"}
+            </Button>
           </div>
         </div>
       </div>

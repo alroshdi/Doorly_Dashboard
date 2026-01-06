@@ -70,10 +70,22 @@ export async function GET(request: Request) {
     // Fetch fresh data with timeout - increased for Vercel serverless functions
     const fetchPromise = getGoogleSheetsData();
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Request timeout: Google Sheets API took too long. Please check your credentials and sheet permissions.")), 25000)
+      setTimeout(() => reject(new Error("Request timeout: Google Sheets API took too long. Please check your credentials and sheet permissions.")), 20000) // Reduced to 20s for faster feedback
     );
     
-    const data = await Promise.race([fetchPromise, timeoutPromise]) as any[];
+    let data: any[];
+    try {
+      data = await Promise.race([fetchPromise, timeoutPromise]) as any[];
+    } catch (raceError: any) {
+      // If timeout or error, throw with clear message
+      throw raceError;
+    }
+    
+    // Validate data is an array
+    if (!Array.isArray(data)) {
+      console.warn("Google Sheets returned non-array data, converting to array");
+      data = [];
+    }
     
     // Update cache
     cache = {
