@@ -365,15 +365,16 @@ export default function DashboardPage() {
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
       <Sidebar />
       <div className="flex-1 overflow-y-auto lg:ml-0">
-        <div id="dashboard-content" className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 md:space-y-8 animate-fade-in pt-16 lg:pt-6">
-          {/* Header Section */}
-          <div className="mb-4 sm:mb-6 md:mb-8 animate-slide-down">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+        {/* Compact layout: Reduced padding and spacing for better information density */}
+        <div id="dashboard-content" className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3 md:space-y-4 animate-fade-in pt-16 lg:pt-4">
+          {/* Header Section - Compact spacing */}
+          <div className="mb-2 sm:mb-3 animate-slide-down">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 sm:gap-3 mb-2 sm:mb-3">
               <div className="flex-1">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold gradient-text mb-2 sm:mb-3 animate-fade-in bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold gradient-text mb-1 sm:mb-2 animate-fade-in bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                   {t.sidebar.overview}
                 </h1>
-                <p className="text-muted-foreground text-sm sm:text-base md:text-lg animate-slide-up max-w-2xl" style={{ animationDelay: "100ms" }}>
+                <p className="text-muted-foreground text-xs sm:text-sm md:text-base animate-slide-up max-w-2xl" style={{ animationDelay: "100ms" }}>
                   {isRTL ? "لوحة تحكم شاملة لإدارة وتحليل طلبات العقارات" : "Comprehensive dashboard for real estate request management and analytics"}
                 </p>
               </div>
@@ -400,11 +401,11 @@ export default function DashboardPage() {
             <KPICards metrics={metrics} />
           </div>
 
-          {/* Charts Section */}
-          <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-slide-up" style={{ animationDelay: "400ms" }} data-chart-section>
-            {/* Time Period Toggle for Line Chart */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-2">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{t.charts.requestsOverTime}</h2>
+          {/* Charts Section - Compact spacing for better density */}
+          <div className="space-y-2 sm:space-y-3 md:space-y-4 animate-slide-up" style={{ animationDelay: "400ms" }} data-chart-section>
+            {/* Time Period Toggle for Line Chart - Compact header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 mb-1">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{t.charts.requestsOverTime}</h2>
               <div className="flex gap-1.5 sm:gap-2 bg-muted/50 p-1 rounded-lg backdrop-blur-sm border border-border/50 w-full sm:w-auto">
                 <Button
                   variant={timePeriod === "daily" ? "default" : "ghost"}
@@ -437,7 +438,8 @@ export default function DashboardPage() {
               <LineChartComponent data={requestsOverTime} title={t.charts.requestsOverTime} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+            {/* Compact grid: Reduced gaps for tighter layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
               <div className="animate-slide-in-left" style={{ animationDelay: "600ms" }}>
                 <DonutChartComponent data={requestsByWilaya} title={t.charts.byWilaya} />
               </div>
@@ -446,7 +448,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
               <div className="animate-slide-in-left" style={{ animationDelay: "800ms" }}>
                 <BarChartComponent data={propertyTypeDistribution} title={t.charts.propertyTypeDistribution} />
               </div>
@@ -455,14 +457,14 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Price and Area Analysis Section */}
+            {/* Price and Area Analysis Section - Compact layout */}
             {(priceDistributionBySource.length > 0 || areaDistributionBySource.length > 0 || priceRangeDistribution.length > 0 || areaDistribution.length > 0) && (
-              <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-slide-up" style={{ animationDelay: "1000ms" }}>
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+              <div className="space-y-2 sm:space-y-3 md:space-y-4 animate-slide-up" style={{ animationDelay: "1000ms" }}>
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   {isRTL ? "تحليل الأسعار والمساحات" : "Price & Area Analysis"}
                 </h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                   {priceDistributionBySource.length > 0 && (
                     <div className="animate-slide-in-left" style={{ animationDelay: "1100ms" }}>
                       <BarChartComponent data={priceDistributionBySource} title={t.charts.priceDistributionBySource} unitImage="/Bold.png" />
@@ -475,7 +477,7 @@ export default function DashboardPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                   {priceRangeDistribution.length > 0 && (
                     <div className="animate-slide-in-left" style={{ animationDelay: "1300ms" }}>
                       <PieChartComponent data={priceRangeDistribution} title={t.charts.priceRangeDistribution} />
@@ -490,14 +492,14 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Performance Metrics Section */}
+            {/* Performance Metrics Section - Compact layout */}
             {(conversionRateBySource.length > 0 || topPerformingSources.length > 0 || averagePriceByPropertyType.length > 0) && (
-              <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-slide-up" style={{ animationDelay: "1500ms" }}>
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+              <div className="space-y-2 sm:space-y-3 md:space-y-4 animate-slide-up" style={{ animationDelay: "1500ms" }}>
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   {isRTL ? "مقاييس الأداء" : "Performance Metrics"}
                 </h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                   {conversionRateBySource.length > 0 && (
                     <div className="animate-slide-in-left" style={{ animationDelay: "1600ms" }}>
                       <BarChartComponent data={conversionRateBySource} title={t.charts.conversionRateBySource} />
@@ -518,14 +520,14 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Status Analysis Section */}
+            {/* Status Analysis Section - Compact layout */}
             {statusDistribution.length > 0 && (
-              <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-slide-up" style={{ animationDelay: "1900ms" }}>
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+              <div className="space-y-2 sm:space-y-3 md:space-y-4 animate-slide-up" style={{ animationDelay: "1900ms" }}>
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   {isRTL ? "تحليل الحالة" : "Status Analysis"}
                 </h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                   <div className="animate-slide-in-left" style={{ animationDelay: "2000ms" }}>
                     <PieChartComponent data={statusDistribution} title={t.charts.statusDistribution} />
                   </div>

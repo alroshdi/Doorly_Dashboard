@@ -11,6 +11,11 @@ interface LineChartComponentProps {
 }
 
 export function LineChartComponent({ data, title }: LineChartComponentProps) {
+  // Format numbers with thousand separators
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('ar-DZ').format(num);
+  };
+
   // Filter out zero values and limit to top 10 for time-based data
   const filteredData = (data || [])
     .filter(item => item.value > 0)
@@ -68,11 +73,28 @@ export function LineChartComponent({ data, title }: LineChartComponentProps) {
     return tickItem;
   };
 
+  // Calculate insights for analytical text
+  const sortedData = [...displayData].filter(d => d.value > 0).sort((a, b) => b.value - a.value);
+  const peakValue = sortedData.length > 0 ? sortedData[0] : null;
+  const recentTrend = displayData.length >= 2 
+    ? displayData[displayData.length - 1].value - displayData[displayData.length - 2].value
+    : 0;
+  const insight = peakValue 
+    ? `Peak: ${formatNumber(peakValue.value)} requests on ${peakValue.name}. ${recentTrend > 0 ? 'Recent trend: increasing.' : recentTrend < 0 ? 'Recent trend: decreasing.' : 'Recent trend: stable.'}`
+    : 'No data available for analysis.';
+
   return (
-    <Card className="animate-fade-in hover-lift transition-all duration-500 group border-2 hover:border-primary/30 bg-gradient-to-br from-card to-card/95">
-      <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
+    <Card className="animate-fade-in transition-all duration-300 group border border-border/50 bg-card">
+      {/* Compact header with analytical insight */}
+      <CardHeader className="pb-2 pt-3 px-3 sm:px-4">
+        <CardTitle className="text-base sm:text-lg font-bold group-hover:text-primary transition-colors duration-300">{title}</CardTitle>
+        {/* Analytical insight: 1-2 lines explaining the data */}
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">{insight}</p>
+      </CardHeader>
+      <CardContent className="pt-2 px-3 sm:px-4 pb-3">
         <div className="relative">
-          <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
+          {/* Compact height for better density */}
+          <ResponsiveContainer width="100%" height={200} className="sm:h-[220px]">
             <LineChart data={displayData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground) / 0.2)" />
               <XAxis 

@@ -34,17 +34,30 @@ export function DonutChartComponent({ data, title, unit }: DonutChartComponentPr
   };
 
   const total = displayData.reduce((sum, item) => sum + item.value, 0);
+  
+  // Calculate insights for analytical text
+  const topItem = displayData.length > 0 ? displayData[0] : null;
+  const secondItem = displayData.length > 1 ? displayData[1] : null;
+  const insight = topItem && secondItem 
+    ? `${topItem.name} dominates with ${((topItem.value / total) * 100).toFixed(1)}% (${formatNumber(topItem.value)}${unit ? ` ${unit}` : ''}), while ${secondItem.name} accounts for ${((secondItem.value / total) * 100).toFixed(1)}%.`
+    : topItem 
+    ? `${topItem.name} represents ${((topItem.value / total) * 100).toFixed(1)}% of all entries.`
+    : 'No data available for analysis.';
 
   return (
-    <Card className="transition-all duration-500 hover:shadow-xl animate-fade-in hover-lift border-2 hover:border-primary/30 bg-gradient-to-br from-card to-card/95 group">
-      <CardHeader>
-        <CardTitle className="group-hover:text-primary transition-colors duration-300">{title}</CardTitle>
+    <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in border border-border/50 bg-card group">
+      {/* Compact header with analytical insight */}
+      <CardHeader className="pb-2 pt-3 px-3 sm:px-4">
+        <CardTitle className="text-base sm:text-lg font-bold group-hover:text-primary transition-colors duration-300">{title}</CardTitle>
+        {/* Analytical insight: 1-2 lines explaining the data */}
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">{insight}</p>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
-          {/* Chart - Takes 2 columns */}
+      <CardContent className="px-3 sm:px-4 pb-3">
+        {/* Compact grid: Reduced gaps for tighter layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3">
+          {/* Chart - Compact height for better density */}
           <div className="lg:col-span-2 order-1">
-            <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
+            <ResponsiveContainer width="100%" height={200} className="sm:h-[220px]">
               <PieChart>
                 <Pie
                   data={displayData}
@@ -104,36 +117,37 @@ export function DonutChartComponent({ data, title, unit }: DonutChartComponentPr
             </ResponsiveContainer>
           </div>
           
-          {/* Information Panel - Takes 1 column */}
+          {/* Information Panel - Compact styling */}
           <div className="lg:col-span-1 order-2 lg:order-2">
-            <div className="bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20 rounded-xl p-3 sm:p-4 border-2 border-border/50 shadow-lg h-full max-h-[250px] sm:max-h-[300px] overflow-hidden flex flex-col">
-              <h4 className="font-bold text-xs sm:text-sm mb-3 sm:mb-4 text-foreground flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+            <div className="bg-muted/30 rounded-lg p-2 sm:p-3 border border-border/30 h-full max-h-[200px] sm:max-h-[220px] overflow-hidden flex flex-col">
+              <h4 className="font-semibold text-xs mb-2 text-foreground flex items-center gap-1.5">
+                <div className="w-1 h-1 rounded-full bg-primary"></div>
                 Details
               </h4>
-              <div className="space-y-1.5 sm:space-y-2 overflow-y-auto flex-1 pr-1 sm:pr-2" style={{
+              <div className="space-y-1 overflow-y-auto flex-1 pr-1" style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
               }}>
                 {displayData.map((item, index) => {
                   const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : "0";
                   const color = COLORS[index % COLORS.length];
+                  // Compact detail item
                   return (
                     <div
                       key={index}
-                      className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg hover:bg-primary/5 hover:shadow-md transition-all duration-200 border border-transparent hover:border-primary/20 group"
+                      className="flex items-center gap-1.5 p-1.5 rounded-md hover:bg-primary/5 transition-all duration-200 border border-transparent hover:border-primary/20 group"
                     >
                       <div
-                        className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0 shadow-sm group-hover:scale-110 transition-transform duration-200"
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                         style={{ backgroundColor: color }}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs sm:text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={item.name}>
+                        <div className="text-xs font-medium text-foreground truncate group-hover:text-primary transition-colors" title={item.name}>
                           {item.name}
                         </div>
-                        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
-                          <span className="text-xs sm:text-sm font-bold text-primary">{`${formatNumber(item.value)}${unit ? ` ${unit}` : ''}`}</span>
-                          <span className="text-xs text-muted-foreground bg-muted/50 px-1.5 sm:px-2 py-0.5 rounded-full">{percentage}%</span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="text-xs font-bold text-primary">{`${formatNumber(item.value)}${unit ? ` ${unit}` : ''}`}</span>
+                          <span className="text-xs text-muted-foreground bg-muted/50 px-1 py-0.5 rounded-full">{percentage}%</span>
                         </div>
                       </div>
                     </div>

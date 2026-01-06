@@ -223,62 +223,57 @@ export function KPICards({ metrics }: KPICardsProps) {
     },
   ];
 
+  // Compact grid: Reduced gaps for better information density
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
       {cards.map((card, index) => {
         const Icon = card.icon;
+        // Compact card: Reduced decorative effects, focus on data
         return (
           <Card 
             key={index} 
             className={`
               ${!card.available ? "opacity-60" : ""}
-              transition-all duration-500 ease-out
-              hover:shadow-2xl hover:scale-[1.03]
-              hover:border-primary/50
+              transition-all duration-300
+              hover:shadow-md
               cursor-default
               group
-              bg-gradient-to-br from-card via-card/98 to-card/95
-              backdrop-blur-sm
-              border-2
-              hover:border-primary/40
-              hover-lift
+              bg-card
+              border
+              hover:border-primary/30
               relative overflow-hidden
-              before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/0 before:to-primary/0
-              hover:before:from-primary/5 hover:before:to-primary/10
-              before:transition-all before:duration-500
             `}
             style={{ 
               animationDelay: `${index * 80}ms`,
               animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 80}ms both`
             }}
           >
-            {/* Animated background gradient on hover */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-            
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 sm:pb-4 relative z-10 px-4 sm:px-6 pt-4 sm:pt-6">
+            {/* Compact card header: Reduced padding for density */}
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10 px-3 sm:px-4 pt-3">
               <CardTitle className="text-xs sm:text-sm font-semibold text-foreground/80 group-hover:text-primary transition-all duration-300 leading-tight">
                 {card.title}
               </CardTitle>
-              <div className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
-                <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${getIconColor(card.gradient)} group-hover:scale-125 transition-all duration-300`} />
+              <div className="transition-all duration-300">
+                <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${getIconColor(card.gradient)} transition-all duration-300`} />
               </div>
             </CardHeader>
-            <CardContent className="relative z-10 px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className={`text-2xl sm:text-3xl md:text-4xl font-bold group-hover:scale-105 transition-all duration-300 mb-1 text-foreground group-hover:text-primary flex items-baseline gap-1.5`}>
+            {/* Compact card content: Reduced padding and font sizes */}
+            <CardContent className="relative z-10 px-3 sm:px-4 pb-3 sm:pb-4">
+              <div className={`text-xl sm:text-2xl md:text-3xl font-bold transition-all duration-300 mb-0.5 text-foreground group-hover:text-primary flex items-baseline gap-1`}>
                 {card.isDecimal || card.title.includes("Price") || card.title.includes("السعر") || card.title.includes("Area") || card.title.includes("المساحة") ? (
                   <>
                     {formatNumber(card.value, card.isDecimal ? 2 : (card.value < 1000 ? 2 : 0))}
                     {card.unitImage ? (
                       <Image 
-                        src={card.unitImage} 
+                        src={card.unitImage.startsWith('/') ? card.unitImage : `/${card.unitImage}`} 
                         alt="unit" 
                         width={24} 
                         height={24} 
                         className="inline-block ml-1"
-                        style={{ width: 'auto', height: '1.2em' }}
+                        style={{ width: 'auto', height: '1em' }}
                       />
                     ) : card.unit && (
-                      <span className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-normal">
+                      <span className="text-sm sm:text-base md:text-lg text-muted-foreground font-normal">
                         {card.unit}
                       </span>
                     )}
@@ -288,15 +283,15 @@ export function KPICards({ metrics }: KPICardsProps) {
                     <AnimatedCounter value={card.value} delay={index * 100} />
                     {card.unitImage ? (
                       <Image 
-                        src={card.unitImage} 
+                        src={card.unitImage.startsWith('/') ? card.unitImage : `/${card.unitImage}`} 
                         alt="unit" 
                         width={24} 
                         height={24} 
                         className="inline-block ml-1"
-                        style={{ width: 'auto', height: '1.2em' }}
+                        style={{ width: 'auto', height: '1em' }}
                       />
                     ) : card.unit && (
-                      <span className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-normal">
+                      <span className="text-sm sm:text-base md:text-lg text-muted-foreground font-normal">
                         {card.unit}
                       </span>
                     )}
@@ -304,12 +299,9 @@ export function KPICards({ metrics }: KPICardsProps) {
                 )}
               </div>
               {!card.available && (
-                <p className="text-xs text-muted-foreground mt-2 animate-pulse-slow">{t.kpi.notAvailable}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t.kpi.notAvailable}</p>
               )}
             </CardContent>
-            
-            {/* Shine effect on hover */}
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           </Card>
         );
       })}

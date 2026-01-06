@@ -98,7 +98,28 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
   const priceMaxColumn = detectColumn(data, ["price_max", "max_price", "أعلى_سعر"]);
   const priceFromColumn = detectColumn(data, ["price_from", "price_from", "من_السعر"]);
   const priceToColumn = detectColumn(data, ["price_to", "price_to", "إلى_السعر"]);
-  const areaColumn = detectColumn(data, ["area", "المساحة", "area_m2", "area_sqm", "surface", "surface_area"]);
+  // Enhanced area column detection - check for multiple variations
+  const areaColumn = detectColumn(data, [
+    "area", 
+    "المساحة", 
+    "area_m2", 
+    "area_sqm", 
+    "surface", 
+    "surface_area",
+    "مساحة", // Without ال prefix
+    "area (m²)",
+    "area (sqm)",
+    "المساحة (م²)",
+    "size",
+    "المساحة بالمتر المربع",
+    "area_m",
+    "area_sq",
+    "sqm",
+    "m2",
+    "m²",
+    "square_meters",
+    "square_meters_area"
+  ]);
 
   let totalRequests = data.length;
   let newToday = 0;
@@ -240,11 +261,15 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
       }
     }
 
-    // Area - allow 0 and positive values, but exclude empty/null/NaN
-    if (areaColumn && row[areaColumn] !== undefined && row[areaColumn] !== null && row[areaColumn] !== "") {
+    // Area - enhanced detection: allow 0 and positive values, handle various formats
+    if (areaColumn && row[areaColumn] !== undefined && row[areaColumn] !== null) {
       const areaValue = String(row[areaColumn]).trim();
-      if (areaValue) {
-        const area = Number(areaValue);
+      if (areaValue && areaValue !== "" && areaValue !== "null" && areaValue !== "undefined") {
+        // Remove common units and clean the value
+        const cleanedValue = areaValue
+          .replace(/[m²m2sqm\s,]/gi, '') // Remove units and spaces/commas
+          .replace(/[^\d.]/g, ''); // Keep only digits and decimal point
+        const area = Number(cleanedValue);
         // Allow 0 and positive values (area can be 0 in some cases)
         if (!isNaN(area) && area >= 0) {
           areas.push(area);
@@ -909,7 +934,28 @@ export function getPriceDistributionBySource(data: RequestData[]): ChartData[] {
 // Get area distribution by source
 export function getAreaDistributionBySource(data: RequestData[]): ChartData[] {
   const sourceColumn = detectColumn(data, ["source", "channel", "مصدر", "قناة"]);
-  const areaColumn = detectColumn(data, ["area", "area", "المساحة"]);
+  // Use same enhanced area column detection as in calculateKPIs
+  const areaColumn = detectColumn(data, [
+    "area", 
+    "المساحة", 
+    "area_m2", 
+    "area_sqm", 
+    "surface", 
+    "surface_area",
+    "مساحة",
+    "area (m²)",
+    "area (sqm)",
+    "المساحة (م²)",
+    "size",
+    "المساحة بالمتر المربع",
+    "area_m",
+    "area_sq",
+    "sqm",
+    "m2",
+    "m²",
+    "square_meters",
+    "square_meters_area"
+  ]);
 
   if (!sourceColumn || !areaColumn) return [];
 
@@ -919,7 +965,14 @@ export function getAreaDistributionBySource(data: RequestData[]): ChartData[] {
     const source = String(row[sourceColumn] || "").trim();
     if (!source) return;
 
-    const area = Number(row[areaColumn]);
+    // Enhanced area parsing - handle various formats
+    const areaValue = String(row[areaColumn] || "").trim();
+    if (!areaValue || areaValue === "" || areaValue === "null" || areaValue === "undefined") return;
+    
+    const cleanedValue = areaValue
+      .replace(/[m²m2sqm\s,]/gi, '')
+      .replace(/[^\d.]/g, '');
+    const area = Number(cleanedValue);
     if (!isNaN(area) && area > 0) {
       if (!sourceAreaMap[source]) {
         sourceAreaMap[source] = { total: 0, count: 0 };
@@ -993,7 +1046,28 @@ export function getPriceRangeDistribution(data: RequestData[]): ChartData[] {
 
 // Get area distribution (buckets)
 export function getAreaDistribution(data: RequestData[]): ChartData[] {
-  const areaColumn = detectColumn(data, ["area", "area", "المساحة"]);
+  // Use same enhanced area column detection as in calculateKPIs
+  const areaColumn = detectColumn(data, [
+    "area", 
+    "المساحة", 
+    "area_m2", 
+    "area_sqm", 
+    "surface", 
+    "surface_area",
+    "مساحة",
+    "area (m²)",
+    "area (sqm)",
+    "المساحة (م²)",
+    "size",
+    "المساحة بالمتر المربع",
+    "area_m",
+    "area_sq",
+    "sqm",
+    "m2",
+    "m²",
+    "square_meters",
+    "square_meters_area"
+  ]);
 
   if (!areaColumn) return [];
 
@@ -1006,7 +1080,14 @@ export function getAreaDistribution(data: RequestData[]): ChartData[] {
   };
 
   data.forEach((row) => {
-    const area = Number(row[areaColumn]);
+    // Enhanced area parsing - handle various formats
+    const areaValue = String(row[areaColumn] || "").trim();
+    if (!areaValue || areaValue === "" || areaValue === "null" || areaValue === "undefined") return;
+    
+    const cleanedValue = areaValue
+      .replace(/[m²m2sqm\s,]/gi, '')
+      .replace(/[^\d.]/g, '');
+    const area = Number(cleanedValue);
     if (!isNaN(area) && area > 0) {
       if (area < 100) buckets["0-100"]++;
       else if (area < 300) buckets["100-300"]++;
