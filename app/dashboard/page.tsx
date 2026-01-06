@@ -438,22 +438,30 @@ export default function DashboardPage() {
               <LineChartComponent data={requestsOverTime} title={t.charts.requestsOverTime} />
             </div>
 
-            {/* Charts side by side: 2 columns on medium screens and up */}
+            {/* Charts side by side: 2 columns on medium screens and up - Uniform height */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-              <div className="animate-slide-in-left" style={{ animationDelay: "600ms" }}>
-                <DonutChartComponent data={requestsByWilaya} title={t.charts.byWilaya} />
+              <div className="animate-slide-in-left h-full flex" style={{ animationDelay: "600ms" }}>
+                <div className="w-full flex flex-col">
+                  <DonutChartComponent data={requestsByWilaya} title={t.charts.byWilaya} />
+                </div>
               </div>
-              <div className="animate-slide-in-right" style={{ animationDelay: "700ms" }}>
-                <PieChartComponent data={sourceDistribution} title={t.charts.sourceDistribution} />
+              <div className="animate-slide-in-right h-full flex" style={{ animationDelay: "700ms" }}>
+                <div className="w-full flex flex-col">
+                  <PieChartComponent data={sourceDistribution} title={t.charts.sourceDistribution} />
+                </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-              <div className="animate-slide-in-left" style={{ animationDelay: "800ms" }}>
-                <BarChartComponent data={propertyTypeDistribution} title={t.charts.propertyTypeDistribution} />
+              <div className="animate-slide-in-left h-full flex" style={{ animationDelay: "800ms" }}>
+                <div className="w-full flex flex-col">
+                  <BarChartComponent data={propertyTypeDistribution} title={t.charts.propertyTypeDistribution} />
+                </div>
               </div>
-              <div className="animate-slide-in-right" style={{ animationDelay: "900ms" }}>
-                <BarChartComponent data={usageTypeDistribution} title={t.charts.usageTypeDistribution} />
+              <div className="animate-slide-in-right h-full flex" style={{ animationDelay: "900ms" }}>
+                <div className="w-full flex flex-col">
+                  <BarChartComponent data={usageTypeDistribution} title={t.charts.usageTypeDistribution} />
+                </div>
               </div>
             </div>
 

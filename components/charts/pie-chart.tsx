@@ -45,19 +45,19 @@ export function PieChartComponent({ data, title, unit }: PieChartComponentProps)
     : 'No data available for analysis.';
 
   return (
-    <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in border border-border/50 bg-card group">
+    <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in border border-border/50 bg-card group h-full flex flex-col">
       {/* Compact header with analytical insight */}
-      <CardHeader className="pb-2 pt-3 px-3 sm:px-4">
+      <CardHeader className="pb-2 pt-3 px-3 sm:px-4 flex-shrink-0">
         <CardTitle className="text-base sm:text-lg font-bold group-hover:text-primary transition-colors duration-300">{title}</CardTitle>
         {/* Analytical insight: 1-2 lines explaining the data */}
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">{insight}</p>
       </CardHeader>
-      <CardContent className="px-3 sm:px-4 pb-3">
+      <CardContent className="px-3 sm:px-4 pb-3 flex-1 flex flex-col">
         {/* Compact grid: Reduced gaps for tighter layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3">
-          {/* Chart - Compact height for better density */}
-          <div className="lg:col-span-2 order-1">
-            <ResponsiveContainer width="100%" height={200} className="sm:h-[220px]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 flex-1 min-h-0">
+          {/* Chart - Uniform height for consistency */}
+          <div className="lg:col-span-2 order-1 flex-1 min-h-0">
+            <ResponsiveContainer width="100%" height="100%" className="min-h-[200px] sm:min-h-[220px]">
               <PieChart>
                 <Pie
                   data={displayData}
