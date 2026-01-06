@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPIMetrics } from "@/lib/analytics";
 import { getTranslations, getLanguage } from "@/lib/i18n";
-import { TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, CreditCard, Tag, Eye, DollarSign } from "lucide-react";
+import { TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, CreditCard, Tag, Eye, DollarSign, Home, Ruler } from "lucide-react";
 
 interface KPICardsProps {
   metrics: KPIMetrics;
@@ -76,8 +76,11 @@ export function KPICards({ metrics }: KPICardsProps) {
   const t = getTranslations(lang);
   const isRTL = lang === "ar";
 
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat(isRTL ? "ar-DZ" : "en-US").format(Math.round(num));
+  const formatNumber = (num: number, decimals: number = 0) => {
+    return new Intl.NumberFormat(isRTL ? "ar-DZ" : "en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(num);
   };
 
   const getIconColor = (gradient: string) => {
@@ -165,10 +168,52 @@ export function KPICards({ metrics }: KPICardsProps) {
       available: metrics.avgViews > 0,
       gradient: "from-indigo-500 to-indigo-600",
     },
+    {
+      title: t.kpi.avgPriceFrom,
+      value: metrics.avgPriceFrom,
+      icon: DollarSign,
+      available: metrics.avgPriceFrom > 0,
+      gradient: "from-yellow-500 to-yellow-600",
+    },
+    {
+      title: t.kpi.avgPriceTo,
+      value: metrics.avgPriceTo,
+      icon: DollarSign,
+      available: metrics.avgPriceTo > 0,
+      gradient: "from-orange-500 to-orange-600",
+    },
+    {
+      title: t.kpi.avgPriceRange,
+      value: metrics.avgPriceRange,
+      icon: DollarSign,
+      available: metrics.avgPriceRange > 0,
+      gradient: "from-amber-500 to-amber-600",
+    },
+    {
+      title: t.kpi.avgArea,
+      value: metrics.avgArea,
+      icon: Home,
+      available: metrics.avgArea > 0,
+      gradient: "from-violet-500 to-violet-600",
+    },
+    {
+      title: t.kpi.minArea,
+      value: metrics.minArea,
+      icon: Ruler,
+      available: metrics.minArea > 0,
+      gradient: "from-slate-500 to-slate-600",
+    },
+    {
+      title: t.kpi.maxArea,
+      value: metrics.maxArea,
+      icon: Ruler,
+      available: metrics.maxArea > 0,
+      gradient: "from-gray-500 to-gray-600",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-8">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
@@ -209,7 +254,11 @@ export function KPICards({ metrics }: KPICardsProps) {
             </CardHeader>
             <CardContent className="relative z-10 px-4 sm:px-6 pb-4 sm:pb-6">
               <div className={`text-2xl sm:text-3xl md:text-4xl font-bold group-hover:scale-105 transition-all duration-300 mb-1 text-foreground group-hover:text-primary`}>
-                <AnimatedCounter value={card.value} delay={index * 100} />
+                {card.title.includes("Price") || card.title.includes("السعر") || card.title.includes("Area") || card.title.includes("المساحة") ? (
+                  formatNumber(card.value, card.value < 1000 ? 2 : 0)
+                ) : (
+                  <AnimatedCounter value={card.value} delay={index * 100} />
+                )}
               </div>
               {!card.available && (
                 <p className="text-xs text-muted-foreground mt-2 animate-pulse-slow">{t.kpi.notAvailable}</p>

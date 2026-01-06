@@ -21,6 +21,19 @@ export interface KPIMetrics {
   minPrice: number;
   maxPrice: number;
   avgPrice: number;
+  // Price range metrics (from price_from and price_to columns)
+  minPriceFrom: number;
+  maxPriceFrom: number;
+  avgPriceFrom: number;
+  minPriceTo: number;
+  maxPriceTo: number;
+  avgPriceTo: number;
+  avgPriceRange: number; // Average of (price_to - price_from)
+  // Area metrics
+  minArea: number;
+  maxArea: number;
+  avgArea: number;
+  totalArea: number;
 }
 
 export interface ChartData {
@@ -82,6 +95,9 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
   const viewsColumn = detectColumn(data, ["view_count", "views", "مشاهدات", "views_count"]);
   const priceMinColumn = detectColumn(data, ["price_min", "min_price", "أقل_سعر"]);
   const priceMaxColumn = detectColumn(data, ["price_max", "max_price", "أعلى_سعر"]);
+  const priceFromColumn = detectColumn(data, ["price_from", "price_from", "من_السعر"]);
+  const priceToColumn = detectColumn(data, ["price_to", "price_to", "إلى_السعر"]);
+  const areaColumn = detectColumn(data, ["area", "area", "المساحة"]);
 
   let totalRequests = data.length;
   let newToday = 0;
@@ -97,6 +113,10 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
   let totalViews = 0; // For average calculation
   let viewsCount = 0;
   let prices: number[] = [];
+  let pricesFrom: number[] = [];
+  let pricesTo: number[] = [];
+  let priceRanges: number[] = [];
+  let areas: number[] = [];
 
   // Status mappings from status_ar column
   const STATUS_ACTIVE = "نشط";
@@ -188,7 +208,7 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
       }
     }
 
-    // Prices
+    // Prices (legacy columns)
     if (priceMinColumn && row[priceMinColumn]) {
       const price = Number(row[priceMinColumn]);
       if (!isNaN(price) && price > 0) prices.push(price);
@@ -196,6 +216,35 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
     if (priceMaxColumn && row[priceMaxColumn]) {
       const price = Number(row[priceMaxColumn]);
       if (!isNaN(price) && price > 0) prices.push(price);
+    }
+
+    // Price from/to columns
+    if (priceFromColumn && row[priceFromColumn]) {
+      const priceFrom = Number(row[priceFromColumn]);
+      if (!isNaN(priceFrom) && priceFrom >= 0) {
+        pricesFrom.push(priceFrom);
+      }
+    }
+    if (priceToColumn && row[priceToColumn]) {
+      const priceTo = Number(row[priceToColumn]);
+      if (!isNaN(priceTo) && priceTo >= 0) {
+        pricesTo.push(priceTo);
+        // Calculate price range if both from and to exist
+        if (priceFromColumn && row[priceFromColumn]) {
+          const priceFrom = Number(row[priceFromColumn]);
+          if (!isNaN(priceFrom) && priceFrom >= 0 && priceTo >= priceFrom) {
+            priceRanges.push(priceTo - priceFrom);
+          }
+        }
+      }
+    }
+
+    // Area
+    if (areaColumn && row[areaColumn]) {
+      const area = Number(row[areaColumn]);
+      if (!isNaN(area) && area > 0) {
+        areas.push(area);
+      }
     }
   });
 
@@ -216,6 +265,19 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
     minPrice: prices.length > 0 ? Math.min(...prices) : 0,
     maxPrice: prices.length > 0 ? Math.max(...prices) : 0,
     avgPrice: prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0,
+    // Price range metrics
+    minPriceFrom: pricesFrom.length > 0 ? Math.min(...pricesFrom) : 0,
+    maxPriceFrom: pricesFrom.length > 0 ? Math.max(...pricesFrom) : 0,
+    avgPriceFrom: pricesFrom.length > 0 ? pricesFrom.reduce((a, b) => a + b, 0) / pricesFrom.length : 0,
+    minPriceTo: pricesTo.length > 0 ? Math.min(...pricesTo) : 0,
+    maxPriceTo: pricesTo.length > 0 ? Math.max(...pricesTo) : 0,
+    avgPriceTo: pricesTo.length > 0 ? pricesTo.reduce((a, b) => a + b, 0) / pricesTo.length : 0,
+    avgPriceRange: priceRanges.length > 0 ? priceRanges.reduce((a, b) => a + b, 0) / priceRanges.length : 0,
+    // Area metrics
+    minArea: areas.length > 0 ? Math.min(...areas) : 0,
+    maxArea: areas.length > 0 ? Math.max(...areas) : 0,
+    avgArea: areas.length > 0 ? areas.reduce((a, b) => a + b, 0) / areas.length : 0,
+    totalArea: areas.reduce((a, b) => a + b, 0),
   };
 }
 
@@ -781,5 +843,175 @@ export function getUsageTypeDistribution(data: RequestData[]): ChartData[] {
   return Object.entries(grouped)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value); // Sort by value descending
+}
+
+// Price and Area Analysis Functions
+
+// Get price distribution by source
+export function getPriceDistributionBySource(data: RequestData[]): ChartData[] {
+  const sourceColumn = detectColumn(data, ["source", "channel", "مصدر", "قناة"]);
+  const priceFromColumn = detectColumn(data, ["price_from", "price_from", "من_السعر"]);
+  const priceToColumn = detectColumn(data, ["price_to", "price_to", "إلى_السعر"]);
+
+  if (!sourceColumn || (!priceFromColumn && !priceToColumn)) return [];
+
+  const sourcePriceMap: { [source: string]: { total: number; count: number } } = {};
+
+  data.forEach((row) => {
+    const source = String(row[sourceColumn] || "").trim();
+    if (!source) return;
+
+    let price = 0;
+    if (priceFromColumn && row[priceFromColumn]) {
+      const priceFrom = Number(row[priceFromColumn]);
+      if (!isNaN(priceFrom) && priceFrom > 0) {
+        price = priceFrom;
+      }
+    }
+    if (priceToColumn && row[priceToColumn] && price === 0) {
+      const priceTo = Number(row[priceToColumn]);
+      if (!isNaN(priceTo) && priceTo > 0) {
+        price = priceTo;
+      }
+    }
+    // Use average if both exist
+    if (priceFromColumn && priceToColumn && row[priceFromColumn] && row[priceToColumn]) {
+      const priceFrom = Number(row[priceFromColumn]);
+      const priceTo = Number(row[priceToColumn]);
+      if (!isNaN(priceFrom) && !isNaN(priceTo) && priceFrom > 0 && priceTo > 0) {
+        price = (priceFrom + priceTo) / 2;
+      }
+    }
+
+    if (price > 0) {
+      if (!sourcePriceMap[source]) {
+        sourcePriceMap[source] = { total: 0, count: 0 };
+      }
+      sourcePriceMap[source].total += price;
+      sourcePriceMap[source].count++;
+    }
+  });
+
+  return Object.entries(sourcePriceMap)
+    .map(([name, data]) => ({
+      name,
+      value: data.count > 0 ? data.total / data.count : 0, // Average price
+    }))
+    .sort((a, b) => b.value - a.value);
+}
+
+// Get area distribution by source
+export function getAreaDistributionBySource(data: RequestData[]): ChartData[] {
+  const sourceColumn = detectColumn(data, ["source", "channel", "مصدر", "قناة"]);
+  const areaColumn = detectColumn(data, ["area", "area", "المساحة"]);
+
+  if (!sourceColumn || !areaColumn) return [];
+
+  const sourceAreaMap: { [source: string]: { total: number; count: number } } = {};
+
+  data.forEach((row) => {
+    const source = String(row[sourceColumn] || "").trim();
+    if (!source) return;
+
+    const area = Number(row[areaColumn]);
+    if (!isNaN(area) && area > 0) {
+      if (!sourceAreaMap[source]) {
+        sourceAreaMap[source] = { total: 0, count: 0 };
+      }
+      sourceAreaMap[source].total += area;
+      sourceAreaMap[source].count++;
+    }
+  });
+
+  return Object.entries(sourceAreaMap)
+    .map(([name, data]) => ({
+      name,
+      value: data.count > 0 ? data.total / data.count : 0, // Average area
+    }))
+    .sort((a, b) => b.value - a.value);
+}
+
+// Get price range distribution (buckets)
+export function getPriceRangeDistribution(data: RequestData[]): ChartData[] {
+  const priceFromColumn = detectColumn(data, ["price_from", "price_from", "من_السعر"]);
+  const priceToColumn = detectColumn(data, ["price_to", "price_to", "إلى_السعر"]);
+
+  if (!priceFromColumn && !priceToColumn) return [];
+
+  const buckets: { [range: string]: number } = {
+    "0-10K": 0,
+    "10K-50K": 0,
+    "50K-100K": 0,
+    "100K-200K": 0,
+    "200K-500K": 0,
+    "500K+": 0,
+  };
+
+  data.forEach((row) => {
+    let price = 0;
+    if (priceFromColumn && row[priceFromColumn]) {
+      const priceFrom = Number(row[priceFromColumn]);
+      if (!isNaN(priceFrom) && priceFrom > 0) {
+        price = priceFrom;
+      }
+    }
+    if (priceToColumn && row[priceToColumn] && price === 0) {
+      const priceTo = Number(row[priceToColumn]);
+      if (!isNaN(priceTo) && priceTo > 0) {
+        price = priceTo;
+      }
+    }
+    // Use average if both exist
+    if (priceFromColumn && priceToColumn && row[priceFromColumn] && row[priceToColumn]) {
+      const priceFrom = Number(row[priceFromColumn]);
+      const priceTo = Number(row[priceToColumn]);
+      if (!isNaN(priceFrom) && !isNaN(priceTo) && priceFrom > 0 && priceTo > 0) {
+        price = (priceFrom + priceTo) / 2;
+      }
+    }
+
+    if (price > 0) {
+      if (price < 10000) buckets["0-10K"]++;
+      else if (price < 50000) buckets["10K-50K"]++;
+      else if (price < 100000) buckets["50K-100K"]++;
+      else if (price < 200000) buckets["100K-200K"]++;
+      else if (price < 500000) buckets["200K-500K"]++;
+      else buckets["500K+"]++;
+    }
+  });
+
+  return Object.entries(buckets)
+    .map(([name, value]) => ({ name, value }))
+    .filter(item => item.value > 0);
+}
+
+// Get area distribution (buckets)
+export function getAreaDistribution(data: RequestData[]): ChartData[] {
+  const areaColumn = detectColumn(data, ["area", "area", "المساحة"]);
+
+  if (!areaColumn) return [];
+
+  const buckets: { [range: string]: number } = {
+    "0-100": 0,
+    "100-300": 0,
+    "300-600": 0,
+    "600-900": 0,
+    "900+": 0,
+  };
+
+  data.forEach((row) => {
+    const area = Number(row[areaColumn]);
+    if (!isNaN(area) && area > 0) {
+      if (area < 100) buckets["0-100"]++;
+      else if (area < 300) buckets["100-300"]++;
+      else if (area < 600) buckets["300-600"]++;
+      else if (area < 900) buckets["600-900"]++;
+      else buckets["900+"]++;
+    }
+  });
+
+  return Object.entries(buckets)
+    .map(([name, value]) => ({ name, value }))
+    .filter(item => item.value > 0);
 }
 

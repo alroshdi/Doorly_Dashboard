@@ -21,6 +21,10 @@ import {
   getSourceDistribution,
   getPropertyTypeDistribution,
   getUsageTypeDistribution,
+  getPriceDistributionBySource,
+  getAreaDistributionBySource,
+  getPriceRangeDistribution,
+  getAreaDistribution,
   type RequestData,
 } from "@/lib/analytics";
 import { Loader2, RefreshCw } from "lucide-react";
@@ -261,6 +265,10 @@ export default function DashboardPage() {
   const sourceDistribution = useMemo(() => getSourceDistribution(filteredData), [filteredData]);
   const propertyTypeDistribution = useMemo(() => getPropertyTypeDistribution(filteredData), [filteredData]);
   const usageTypeDistribution = useMemo(() => getUsageTypeDistribution(filteredData), [filteredData]);
+  const priceDistributionBySource = useMemo(() => getPriceDistributionBySource(filteredData), [filteredData]);
+  const areaDistributionBySource = useMemo(() => getAreaDistributionBySource(filteredData), [filteredData]);
+  const priceRangeDistribution = useMemo(() => getPriceRangeDistribution(filteredData), [filteredData]);
+  const areaDistribution = useMemo(() => getAreaDistribution(filteredData), [filteredData]);
 
   const lang = getLanguage();
   const t = getTranslations(lang);
@@ -416,6 +424,41 @@ export default function DashboardPage() {
                 <BarChartComponent data={usageTypeDistribution} title={t.charts.usageTypeDistribution} />
               </div>
             </div>
+
+            {/* Price and Area Analysis Section */}
+            {(priceDistributionBySource.length > 0 || areaDistributionBySource.length > 0 || priceRangeDistribution.length > 0 || areaDistribution.length > 0) && (
+              <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-slide-up" style={{ animationDelay: "1000ms" }}>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+                  {isRTL ? "تحليل الأسعار والمساحات" : "Price & Area Analysis"}
+                </h2>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                  {priceDistributionBySource.length > 0 && (
+                    <div className="animate-slide-in-left" style={{ animationDelay: "1100ms" }}>
+                      <BarChartComponent data={priceDistributionBySource} title={t.charts.priceDistributionBySource} />
+                    </div>
+                  )}
+                  {areaDistributionBySource.length > 0 && (
+                    <div className="animate-slide-in-right" style={{ animationDelay: "1200ms" }}>
+                      <BarChartComponent data={areaDistributionBySource} title={t.charts.areaDistributionBySource} />
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+                  {priceRangeDistribution.length > 0 && (
+                    <div className="animate-slide-in-left" style={{ animationDelay: "1300ms" }}>
+                      <PieChartComponent data={priceRangeDistribution} title={t.charts.priceRangeDistribution} />
+                    </div>
+                  )}
+                  {areaDistribution.length > 0 && (
+                    <div className="animate-slide-in-right" style={{ animationDelay: "1400ms" }}>
+                      <DonutChartComponent data={areaDistribution} title={t.charts.areaDistribution} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Tables Section */}
