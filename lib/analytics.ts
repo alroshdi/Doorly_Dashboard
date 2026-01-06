@@ -264,17 +264,32 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
       }
     }
 
-    // Area - enhanced detection: allow 0 and positive values, handle various formats
+    // Area - enhanced detection: ignore empty, null, or non-numeric values
     if (areaColumn && row[areaColumn] !== undefined && row[areaColumn] !== null) {
       const areaValue = String(row[areaColumn]).trim();
-      if (areaValue && areaValue !== "" && areaValue !== "null" && areaValue !== "undefined") {
+      // Skip empty strings, null, undefined, and common placeholder values
+      if (areaValue && 
+          areaValue !== "" && 
+          areaValue !== "null" && 
+          areaValue !== "undefined" && 
+          areaValue !== "N/A" && 
+          areaValue !== "n/a" &&
+          areaValue !== "-" &&
+          areaValue !== "—") {
         // Remove common units and clean the value
-        const cleanedValue = areaValue
-          .replace(/[m²m2sqm\s,]/gi, '') // Remove units and spaces/commas
+        let cleanedValue = areaValue
+          .replace(/[m²m2sqm\s]/gi, '') // Remove units and spaces first
+          .replace(/,/g, '') // Remove commas (thousand separators)
           .replace(/[^\d.]/g, ''); // Keep only digits and decimal point
+        
+        // If empty after cleaning, try to extract number from mixed content
+        if (!cleanedValue && /[\d]/.test(areaValue)) {
+          cleanedValue = areaValue.match(/[\d.]+/)?.[0] || '';
+        }
+        
         const area = Number(cleanedValue);
-        // Allow 0 and positive values (area can be 0 in some cases)
-        if (!isNaN(area) && area >= 0) {
+        // Only accept valid positive numbers (ignore 0, negative, and NaN)
+        if (!isNaN(area) && area > 0 && isFinite(area)) {
           areas.push(area);
         }
       }
@@ -306,12 +321,16 @@ export function calculateKPIs(data: RequestData[]): KPIMetrics {
     maxPriceTo: pricesTo.length > 0 ? Math.max(...pricesTo) : 0,
     avgPriceTo: pricesTo.length > 0 ? pricesTo.reduce((a, b) => a + b, 0) / pricesTo.length : 0,
     avgPriceRange: priceRanges.length > 0 ? priceRanges.reduce((a, b) => a + b, 0) / priceRanges.length : 0,
-    // Area metrics
+    // Area metrics - calculated from real data only
+    // minArea: Highest area value (Math.max of all areas)
     minArea: areas.length > 0 ? Math.min(...areas) : 0,
+    // maxArea: Highest area value (Math.max of all areas)
     maxArea: areas.length > 0 ? Math.max(...areas) : 0,
+    // avgArea: Average area (sum / count)
     avgArea: areas.length > 0 ? areas.reduce((a, b) => a + b, 0) / areas.length : 0,
     totalArea: areas.reduce((a, b) => a + b, 0),
-    hasAreaColumn: areaColumn !== null, // Track if area column exists
+    // hasAreaColumn: true if column exists AND has valid data
+    hasAreaColumn: areaColumn !== null && areas.length > 0,
   };
 }
 

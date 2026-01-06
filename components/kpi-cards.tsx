@@ -193,7 +193,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       title: t.kpi.avgArea,
       value: metrics.avgArea,
       icon: Home,
-      available: metrics.hasAreaColumn, // Show if column exists, even if value is 0
+      available: metrics.hasAreaColumn, // Show only if column exists AND has valid data
       gradient: "from-violet-500 to-violet-600",
       isDecimal: true,
       unit: "m²",
@@ -202,16 +202,18 @@ export function KPICards({ metrics }: KPICardsProps) {
       title: t.kpi.minArea,
       value: metrics.minArea,
       icon: Ruler,
-      available: metrics.hasAreaColumn, // Show if column exists, even if value is 0
+      available: metrics.hasAreaColumn, // Show only if column exists AND has valid data
       gradient: "from-slate-500 to-slate-600",
+      isDecimal: true, // Allow decimals for area values
       unit: "m²",
     },
     {
       title: t.kpi.maxArea,
       value: metrics.maxArea,
       icon: Ruler,
-      available: metrics.hasAreaColumn, // Show if column exists, even if value is 0
+      available: metrics.hasAreaColumn, // Show only if column exists AND has valid data
       gradient: "from-gray-500 to-gray-600",
+      isDecimal: true, // Allow decimals for area values
       unit: "m²",
     },
   ];
