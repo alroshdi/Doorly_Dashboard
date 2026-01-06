@@ -163,13 +163,6 @@ export function KPICards({ metrics }: KPICardsProps) {
       gradient: "from-cyan-500 to-cyan-600",
     },
     {
-      title: t.kpi.avgViews,
-      value: metrics.avgViews,
-      icon: Eye,
-      available: metrics.avgViews > 0,
-      gradient: "from-indigo-500 to-indigo-600",
-    },
-    {
       title: t.kpi.avgPriceFrom,
       value: metrics.avgPriceFrom,
       icon: DollarSign,
