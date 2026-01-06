@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
 
+// Mark this route as dynamic
+export const dynamic = 'force-dynamic';
+
 let cache: { data: any[]; timestamp: number } | null = null;
 const CACHE_DURATION = 30 * 1000; // 30 seconds (reduced from 60)
 

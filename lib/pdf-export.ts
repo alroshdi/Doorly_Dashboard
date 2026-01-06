@@ -110,6 +110,17 @@ export async function exportDashboardToPDF(
       minPrice: 0,
       maxPrice: 0,
       avgPrice: 0,
+      minPriceFrom: 0,
+      maxPriceFrom: 0,
+      avgPriceFrom: 0,
+      minPriceTo: 0,
+      maxPriceTo: 0,
+      avgPriceTo: 0,
+      avgPriceRange: 0,
+      minArea: 0,
+      maxArea: 0,
+      avgArea: 0,
+      totalArea: 0,
     };
 
     // Calculate percentages
