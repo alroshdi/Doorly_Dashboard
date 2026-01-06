@@ -7,6 +7,7 @@ import { ChartData } from "@/lib/analytics";
 interface PieChartComponentProps {
   data: ChartData[];
   title: string;
+  unit?: string;
 }
 
 const COLORS = [
@@ -15,7 +16,7 @@ const COLORS = [
   "#A855F7", "#EF4444"
 ];
 
-export function PieChartComponent({ data, title }: PieChartComponentProps) {
+export function PieChartComponent({ data, title, unit }: PieChartComponentProps) {
   // Filter out zero values and limit to top 10
   const filteredData = (data || [])
     .filter(item => item.value > 0)
@@ -92,7 +93,7 @@ export function PieChartComponent({ data, title }: PieChartComponentProps) {
                   formatter={(value: any, name: any, props: any) => {
                     const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : "0";
                     return [
-                      `${formatNumber(value)} (${percentage}%)`,
+                      `${formatNumber(value)}${unit ? ` ${unit}` : ''} (${percentage}%)`,
                       props.payload.name || ""
                     ];
                   }}
@@ -129,7 +130,7 @@ export function PieChartComponent({ data, title }: PieChartComponentProps) {
                           {item.name}
                         </div>
                         <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
-                          <span className="text-xs sm:text-sm font-bold text-primary">{formatNumber(item.value)}</span>
+                          <span className="text-xs sm:text-sm font-bold text-primary">{`${formatNumber(item.value)}${unit ? ` ${unit}` : ''}`}</span>
                           <span className="text-xs text-muted-foreground bg-muted/50 px-1.5 sm:px-2 py-0.5 rounded-full">{percentage}%</span>
                         </div>
                       </div>

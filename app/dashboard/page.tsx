@@ -470,7 +470,7 @@ export default function DashboardPage() {
                   )}
                   {areaDistributionBySource.length > 0 && (
                     <div className="animate-slide-in-right" style={{ animationDelay: "1200ms" }}>
-                      <BarChartComponent data={areaDistributionBySource} title={t.charts.areaDistributionBySource} />
+                      <BarChartComponent data={areaDistributionBySource} title={t.charts.areaDistributionBySource} unit="m²" />
                     </div>
                   )}
                 </div>
@@ -483,7 +483,7 @@ export default function DashboardPage() {
                   )}
                   {areaDistribution.length > 0 && (
                     <div className="animate-slide-in-right" style={{ animationDelay: "1400ms" }}>
-                      <DonutChartComponent data={areaDistribution} title={t.charts.areaDistribution} />
+                      <DonutChartComponent data={areaDistribution} title={t.charts.areaDistribution} unit="m²" />
                     </div>
                   )}
                 </div>

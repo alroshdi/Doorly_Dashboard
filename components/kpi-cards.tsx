@@ -196,6 +196,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       available: metrics.hasAreaColumn, // Show if column exists, even if value is 0
       gradient: "from-violet-500 to-violet-600",
       isDecimal: true,
+      unit: "m²",
     },
     {
       title: t.kpi.minArea,
@@ -203,6 +204,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       icon: Ruler,
       available: metrics.hasAreaColumn, // Show if column exists, even if value is 0
       gradient: "from-slate-500 to-slate-600",
+      unit: "m²",
     },
     {
       title: t.kpi.maxArea,
@@ -210,6 +212,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       icon: Ruler,
       available: metrics.hasAreaColumn, // Show if column exists, even if value is 0
       gradient: "from-gray-500 to-gray-600",
+      unit: "m²",
     },
   ];
 
@@ -254,11 +257,25 @@ export function KPICards({ metrics }: KPICardsProps) {
               </div>
             </CardHeader>
             <CardContent className="relative z-10 px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className={`text-2xl sm:text-3xl md:text-4xl font-bold group-hover:scale-105 transition-all duration-300 mb-1 text-foreground group-hover:text-primary`}>
+              <div className={`text-2xl sm:text-3xl md:text-4xl font-bold group-hover:scale-105 transition-all duration-300 mb-1 text-foreground group-hover:text-primary flex items-baseline gap-1.5`}>
                 {card.isDecimal || card.title.includes("Price") || card.title.includes("السعر") || card.title.includes("Area") || card.title.includes("المساحة") ? (
-                  formatNumber(card.value, card.isDecimal ? 2 : (card.value < 1000 ? 2 : 0))
+                  <>
+                    {formatNumber(card.value, card.isDecimal ? 2 : (card.value < 1000 ? 2 : 0))}
+                    {card.unit && (
+                      <span className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-normal">
+                        {card.unit}
+                      </span>
+                    )}
+                  </>
                 ) : (
-                  <AnimatedCounter value={card.value} delay={index * 100} />
+                  <>
+                    <AnimatedCounter value={card.value} delay={index * 100} />
+                    {card.unit && (
+                      <span className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-normal">
+                        {card.unit}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
               {!card.available && (
