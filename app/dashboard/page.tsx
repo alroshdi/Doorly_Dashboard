@@ -476,32 +476,45 @@ export default function DashboardPage() {
                   {isRTL ? "تحليل الأسعار والمساحات" : "Price & Area Analysis"}
                 </h2>
                 
-                {/* Price and Area charts side by side */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-                  {priceDistributionBySource.length > 0 && (
-                    <div className="animate-slide-in-left" style={{ animationDelay: "1100ms" }}>
-                      <BarChartComponent data={priceDistributionBySource} title={t.charts.priceDistributionBySource} unitImage="/Bold.png" />
-                    </div>
-                  )}
-                  {areaDistributionBySource.length > 0 && (
-                    <div className="animate-slide-in-right" style={{ animationDelay: "1200ms" }}>
-                      <BarChartComponent data={areaDistributionBySource} title={t.charts.areaDistributionBySource} unit="m²" />
-                    </div>
-                  )}
-                </div>
+                {/* Price charts side by side: Price Distribution by Source and Price Range Distribution */}
+                {(priceDistributionBySource.length > 0 || priceRangeDistribution.length > 0) && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                    {priceDistributionBySource.length > 0 && (
+                      <div className="animate-slide-in-left h-full flex" style={{ animationDelay: "1100ms" }}>
+                        <div className="w-full flex flex-col">
+                          <BarChartComponent data={priceDistributionBySource} title={t.charts.priceDistributionBySource} unitImage="/Bold.png" />
+                        </div>
+                      </div>
+                    )}
+                    {priceRangeDistribution.length > 0 && (
+                      <div className="animate-slide-in-right h-full flex" style={{ animationDelay: "1200ms" }}>
+                        <div className="w-full flex flex-col">
+                          <PieChartComponent data={priceRangeDistribution} title={t.charts.priceRangeDistribution} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-                  {priceRangeDistribution.length > 0 && (
-                    <div className="animate-slide-in-left" style={{ animationDelay: "1300ms" }}>
-                      <PieChartComponent data={priceRangeDistribution} title={t.charts.priceRangeDistribution} />
-                    </div>
-                  )}
-                  {areaDistribution.length > 0 && (
-                    <div className="animate-slide-in-right" style={{ animationDelay: "1400ms" }}>
-                      <DonutChartComponent data={areaDistribution} title={t.charts.areaDistribution} unit="m²" />
-                    </div>
-                  )}
-                </div>
+                {/* Area charts side by side */}
+                {(areaDistributionBySource.length > 0 || areaDistribution.length > 0) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                    {areaDistributionBySource.length > 0 && (
+                      <div className="animate-slide-in-left h-full flex" style={{ animationDelay: "1300ms" }}>
+                        <div className="w-full flex flex-col">
+                          <BarChartComponent data={areaDistributionBySource} title={t.charts.areaDistributionBySource} unit="m²" />
+                        </div>
+                      </div>
+                    )}
+                    {areaDistribution.length > 0 && (
+                      <div className="animate-slide-in-right h-full flex" style={{ animationDelay: "1400ms" }}>
+                        <div className="w-full flex flex-col">
+                          <DonutChartComponent data={areaDistribution} title={t.charts.areaDistribution} unit="m²" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
