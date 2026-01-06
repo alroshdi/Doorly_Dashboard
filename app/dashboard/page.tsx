@@ -488,7 +488,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Price and Area Analysis Section - Compact layout */}
-            {(priceDistributionBySource.length > 0 || areaDistributionBySource.length > 0 || priceRangeDistribution.length > 0 || areaDistribution.length > 0) && (
+            {(priceDistributionBySource.length > 0 || priceRangeDistribution.length > 0 || areaDistribution.length > 0 || statusDistribution.length > 0) && (
               <div className="space-y-2 sm:space-y-3 md:space-y-4 animate-slide-up" style={{ animationDelay: "1000ms" }}>
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   {isRTL ? "تحليل الأسعار والمساحات" : "Price & Area Analysis"}
@@ -514,16 +514,14 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Area charts side by side */}
-                {(areaDistributionBySource.length > 0 || areaDistribution.length > 0) && (
+                {/* Status Distribution chart replaces Area Distribution by Source */}
+                {statusDistribution.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-                    {areaDistributionBySource.length > 0 && (
-                      <div className="animate-slide-in-left h-full flex" style={{ animationDelay: "1300ms" }}>
-                        <div className="w-full flex flex-col">
-                          <BarChartComponent data={areaDistributionBySource} title={t.charts.areaDistributionBySource} unit="m²" />
-                        </div>
+                    <div className="animate-slide-in-left h-full flex" style={{ animationDelay: "1300ms" }}>
+                      <div className="w-full flex flex-col">
+                        <PieChartComponent data={statusDistribution} title={t.charts.statusDistribution} />
                       </div>
-                    )}
+                    </div>
                     {areaDistribution.length > 0 && (
                       <div className="animate-slide-in-right h-full flex" style={{ animationDelay: "1400ms" }}>
                         <div className="w-full flex flex-col">
@@ -565,21 +563,6 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Status Analysis Section - Compact layout */}
-            {statusDistribution.length > 0 && (
-              <div className="space-y-2 sm:space-y-3 md:space-y-4 animate-slide-up" style={{ animationDelay: "1900ms" }}>
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
-                  {isRTL ? "تحليل الحالة" : "Status Analysis"}
-                </h2>
-                
-                {/* Status chart - side by side layout */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
-                  <div className="animate-slide-in-left" style={{ animationDelay: "2000ms" }}>
-                    <PieChartComponent data={statusDistribution} title={t.charts.statusDistribution} />
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Tables Section */}
