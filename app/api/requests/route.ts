@@ -64,8 +64,13 @@ export async function GET(request: Request) {
       return NextResponse.json(cache.data);
     }
 
-    // Fetch fresh data
-    const data = await getGoogleSheetsData();
+    // Fetch fresh data with timeout
+    const fetchPromise = getGoogleSheetsData();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Request timeout: Google Sheets API took too long")), 10000)
+    );
+    
+    const data = await Promise.race([fetchPromise, timeoutPromise]) as any[];
     
     // Update cache
     cache = {
@@ -76,8 +81,14 @@ export async function GET(request: Request) {
     return NextResponse.json(data);
   } catch (error: any) {
     console.error("API Error:", error);
+    const errorMessage = error.message || "Failed to fetch data from Google Sheets";
+    
+    // Return proper error response
     return NextResponse.json(
-      { error: error.message || "Failed to fetch data" },
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === "development" ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

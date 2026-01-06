@@ -62,39 +62,61 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       
-      // Add timeout to prevent hanging
+      // Add timeout to prevent hanging - reduced to 15 seconds for faster error feedback
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
       
       // Add refresh parameter to bypass cache
       const url = forceRefresh ? "/api/requests?refresh=true" : "/api/requests";
       
-      const response = await fetch(url, {
-        signal: controller.signal,
-      });
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          signal: controller.signal,
+        });
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === "AbortError") {
+          throw new Error("Request timeout. The server is taking too long to respond. Please try again.");
+        }
+        throw new Error(`Network error: ${fetchError.message || "Failed to connect to server"}`);
+      }
       
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: `Server error: ${response.status} ${response.statusText}` };
+        }
         throw new Error(errorData.error || `Failed to fetch data: ${response.status}`);
       }
       
-      const result = await response.json();
+      let result: any;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        throw new Error("Invalid response format from server");
+      }
       
       // Check if response has error property
       if (result.error) {
         throw new Error(result.error);
       }
       
-      setData(Array.isArray(result) ? result : []);
+      // Ensure result is an array
+      if (!Array.isArray(result)) {
+        console.warn("API returned non-array data, converting to array");
+        result = [];
+      }
+      
+      setData(result);
       setError("");
     } catch (err: any) {
-      if (err.name === "AbortError") {
-        setError("Request timeout. Please check your connection and try again.");
-      } else {
-        setError(err.message || "Failed to load data. Please check the console for details.");
-      }
+      const errorMessage = err.message || "Failed to load data. Please check the console for details.";
+      setError(errorMessage);
       console.error("Error fetching data:", err);
       setData([]); // Set empty array on error
     } finally {
