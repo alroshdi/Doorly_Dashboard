@@ -785,29 +785,104 @@ export default function InstagramAnalyticsPage() {
                         </td>
                       </tr>
                     ) : (
-                      paginatedPosts.map((post, index) => (
-                        <tr key={index} className="border-b hover:bg-muted/50">
-                          <td className="p-2 font-mono text-xs">{post.mediaId.substring(0, 8)}...</td>
-                          <td className="p-2">
-                            <Badge variant="outline">
-                              {post.contentType === "IMAGE" ? (isRTL ? "صورة" : "Image") :
-                               post.contentType === "VIDEO" ? (isRTL ? "فيديو" : "Video") :
-                               post.contentType === "REEL" ? (isRTL ? "ريل" : "Reel") : post.contentType}
-                            </Badge>
-                          </td>
-                          <td className="p-2 max-w-xs truncate" title={post.caption}>
-                            {post.caption || "-"}
-                          </td>
-                          <td className="p-2">{post.likes.toLocaleString()}</td>
-                          <td className="p-2">{post.comments.toLocaleString()}</td>
-                          <td className="p-2">{post.saves.toLocaleString()}</td>
-                          <td className="p-2">{post.reach.toLocaleString()}</td>
-                          <td className="p-2">{post.engagementRate}%</td>
-                          <td className="p-2 text-xs">
-                            {post.postDate ? formatDate(parseISO(post.postDate), "yyyy-MM-dd") : "-"}
-                          </td>
-                        </tr>
-                      ))
+                      paginatedPosts.map((post, index) => {
+                        // Check if engagement data is missing (all zeros)
+                        const hasNoEngagement = post.likes === 0 && post.comments === 0 && post.saves === 0 && post.reach === 0;
+                        const engagementRate = parseFloat(post.engagementRate) || 0;
+                        
+                        // Determine engagement rate color
+                        let engagementRateColor = "";
+                        if (engagementRate === 0 || hasNoEngagement) {
+                          engagementRateColor = ""; // Default for missing data
+                        } else if (engagementRate < 1) {
+                          engagementRateColor = "text-red-500 font-semibold";
+                        } else if (engagementRate < 3) {
+                          engagementRateColor = "text-orange-500 font-semibold";
+                        } else {
+                          engagementRateColor = "text-green-500 font-semibold";
+                        }
+
+                        return (
+                          <tr key={index} className="border-b hover:bg-muted/50">
+                            <td className="p-2 font-mono text-xs">{post.mediaId.substring(0, 8)}...</td>
+                            <td className="p-2">
+                              <Badge variant="outline">
+                                {post.contentType === "IMAGE" ? (isRTL ? "صورة" : "Image") :
+                                 post.contentType === "VIDEO" ? (isRTL ? "فيديو" : "Video") :
+                                 post.contentType === "REEL" ? (isRTL ? "ريل" : "Reel") : post.contentType}
+                              </Badge>
+                            </td>
+                            <td className="p-2 max-w-xs truncate" title={post.caption}>
+                              {post.caption || "-"}
+                            </td>
+                            <td className="p-2">
+                              {hasNoEngagement ? (
+                                <span 
+                                  className="text-muted-foreground italic text-xs"
+                                  title={isRTL ? "يتطلب حساب إنستغرام للأعمال" : "Instagram Insights require Business account"}
+                                >
+                                  {isRTL ? "غير متوفر" : "Insights not available"}
+                                </span>
+                              ) : (
+                                post.likes.toLocaleString()
+                              )}
+                            </td>
+                            <td className="p-2">
+                              {hasNoEngagement ? (
+                                <span 
+                                  className="text-muted-foreground italic text-xs"
+                                  title={isRTL ? "يتطلب حساب إنستغرام للأعمال" : "Instagram Insights require Business account"}
+                                >
+                                  {isRTL ? "غير متوفر" : "Insights not available"}
+                                </span>
+                              ) : (
+                                post.comments.toLocaleString()
+                              )}
+                            </td>
+                            <td className="p-2">
+                              {hasNoEngagement ? (
+                                <span 
+                                  className="text-muted-foreground italic text-xs"
+                                  title={isRTL ? "يتطلب حساب إنستغرام للأعمال" : "Instagram Insights require Business account"}
+                                >
+                                  {isRTL ? "غير متوفر" : "Insights not available"}
+                                </span>
+                              ) : (
+                                post.saves.toLocaleString()
+                              )}
+                            </td>
+                            <td className="p-2">
+                              {hasNoEngagement ? (
+                                <span 
+                                  className="text-muted-foreground italic text-xs"
+                                  title={isRTL ? "يتطلب حساب إنستغرام للأعمال" : "Instagram Insights require Business account"}
+                                >
+                                  {isRTL ? "غير متوفر" : "Insights not available"}
+                                </span>
+                              ) : (
+                                post.reach.toLocaleString()
+                              )}
+                            </td>
+                            <td className="p-2">
+                              {hasNoEngagement ? (
+                                <span 
+                                  className="text-muted-foreground italic text-xs"
+                                  title={isRTL ? "يتطلب حساب إنستغرام للأعمال" : "Instagram Insights require Business account"}
+                                >
+                                  {isRTL ? "غير متوفر" : "Insights not available"}
+                                </span>
+                              ) : (
+                                <span className={engagementRateColor}>
+                                  {post.engagementRate}%
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-2 text-xs">
+                              {post.postDate ? formatDate(parseISO(post.postDate), "yyyy-MM-dd") : "-"}
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
