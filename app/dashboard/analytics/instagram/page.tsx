@@ -22,7 +22,7 @@ import {
   getInstagramPosts,
   type InstagramData,
 } from "@/lib/analytics";
-import { Loader2, RefreshCw, Search, TrendingUp, TrendingDown, Clock, Image as ImageIcon, Video, Film } from "lucide-react";
+import { Loader2, RefreshCw, Search, TrendingUp, TrendingDown, Clock, Image as ImageIcon, Video, Film, Instagram } from "lucide-react";
 import { parseISO, isWithinInterval, format as formatDate } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -91,7 +91,16 @@ export default function InstagramAnalyticsPage() {
         throw new Error(result.error);
       }
       
-      setData(Array.isArray(result) ? result : []);
+      const dataArray = Array.isArray(result) ? result : [];
+      
+      // Debug logs
+      console.log("📊 Instagram Data Fetched:", {
+        count: dataArray.length,
+        sample: dataArray[0],
+        columns: dataArray[0] ? Object.keys(dataArray[0]) : [],
+      });
+      
+      setData(dataArray);
       setError("");
     } catch (err: any) {
       setError(err.message || "Failed to load Instagram data");
@@ -236,12 +245,41 @@ export default function InstagramAnalyticsPage() {
     return filtered;
   }, [data, filters]);
 
-  const kpis = useMemo(() => calculateInstagramKPIs(filteredData), [filteredData]);
-  const engagementOverTime = useMemo(() => getEngagementOverTime(filteredData, timePeriod), [filteredData, timePeriod]);
-  const contentTypePerformance = useMemo(() => getContentTypePerformance(filteredData), [filteredData]);
-  const bestPostingTime = useMemo(() => getBestPostingTime(filteredData), [filteredData]);
-  const reachVsEngagement = useMemo(() => getReachVsEngagement(filteredData), [filteredData]);
-  const posts = useMemo(() => getInstagramPosts(filteredData), [filteredData]);
+  const kpis = useMemo(() => {
+    const calculated = calculateInstagramKPIs(filteredData);
+    console.log("📈 Instagram KPIs:", calculated);
+    return calculated;
+  }, [filteredData]);
+  
+  const engagementOverTime = useMemo(() => {
+    const result = getEngagementOverTime(filteredData, timePeriod);
+    console.log("📉 Engagement Over Time:", result.length, "data points", result.slice(0, 3));
+    return result;
+  }, [filteredData, timePeriod]);
+  
+  const contentTypePerformance = useMemo(() => {
+    const result = getContentTypePerformance(filteredData);
+    console.log("📊 Content Type Performance:", result);
+    return result;
+  }, [filteredData]);
+  
+  const bestPostingTime = useMemo(() => {
+    const result = getBestPostingTime(filteredData);
+    console.log("⏰ Best Posting Time:", result.slice(0, 5));
+    return result;
+  }, [filteredData]);
+  
+  const reachVsEngagement = useMemo(() => {
+    const result = getReachVsEngagement(filteredData);
+    console.log("🎯 Reach vs Engagement:", result.length, "points");
+    return result;
+  }, [filteredData]);
+  
+  const posts = useMemo(() => {
+    const result = getInstagramPosts(filteredData);
+    console.log("📝 Posts:", result.length);
+    return result;
+  }, [filteredData]);
 
   // Smart Insights calculations (must be before early returns)
   const bestDay = useMemo(() => {
@@ -388,6 +426,9 @@ export default function InstagramAnalyticsPage() {
   }
 
 
+  // Empty state check
+  const hasData = filteredData.length > 0;
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -403,10 +444,38 @@ export default function InstagramAnalyticsPage() {
             </p>
           </div>
 
+          {/* Empty State */}
+          {!hasData && !loading && (
+            <Card className="animate-fade-in">
+              <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Instagram className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
+                  {isRTL ? "لا توجد بيانات حالياً" : "No Data Available"}
+                </h3>
+                <p className="text-sm sm:text-base text-muted-foreground text-center max-w-md">
+                  {isRTL 
+                    ? "سيتم عرض التحليلات عند توفر بيانات إنستغرام"
+                    : "Analytics will be displayed when Instagram data is available"}
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => fetchData(true)}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {isRTL ? "تحديث البيانات" : "Refresh Data"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Filters */}
-          <InstagramFilters filters={filters} onFiltersChange={setFilters} data={data} />
+          {hasData && <InstagramFilters filters={filters} onFiltersChange={setFilters} data={data} />}
 
           {/* KPI Cards */}
+          {hasData && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
             <Card className="animate-fade-in">
               <CardContent className="p-4">
@@ -457,8 +526,10 @@ export default function InstagramAnalyticsPage() {
               </CardContent>
             </Card>
           </div>
+          )}
 
           {/* Charts Section */}
+          {hasData && (
           <div className="space-y-4">
             {/* Engagement Over Time */}
             {engagementOverTime.length > 0 && (
@@ -523,8 +594,10 @@ export default function InstagramAnalyticsPage() {
               />
             )}
           </div>
+          )}
 
           {/* Smart Insights */}
+          {hasData && (
           <div className="space-y-4">
             <h2 className="text-lg sm:text-xl font-bold">
               {isRTL ? "رؤى ذكية" : "Smart Insights"}
@@ -587,8 +660,10 @@ export default function InstagramAnalyticsPage() {
               </Card>
             </div>
           </div>
+          )}
 
           {/* Recommendations */}
+          {hasData && (
           <Card>
             <CardHeader>
               <CardTitle>{isRTL ? "توصيات قابلة للتنفيذ" : "Actionable Recommendations"}</CardTitle>
@@ -636,8 +711,10 @@ export default function InstagramAnalyticsPage() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* Posts Performance Table */}
+          {hasData && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -773,6 +850,7 @@ export default function InstagramAnalyticsPage() {
               )}
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
     </div>

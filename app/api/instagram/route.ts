@@ -1,8 +1,53 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
+import { subDays, format } from "date-fns";
 
 // Mark this route as dynamic
 export const dynamic = 'force-dynamic';
+
+// Generate mock Instagram data for testing
+function generateMockInstagramData() {
+  const mockData: any[] = [];
+  const now = new Date();
+  const types = ["IMAGE", "VIDEO", "REEL"];
+  
+  // Generate 35 posts spread across last 30 days
+  for (let i = 0; i < 35; i++) {
+    const daysAgo = Math.floor(Math.random() * 30);
+    const postDate = subDays(now, daysAgo);
+    const hour = Math.floor(Math.random() * 24);
+    postDate.setHours(hour, Math.floor(Math.random() * 60), 0, 0);
+    
+    const type = types[Math.floor(Math.random() * types.length)];
+    const baseEngagement = type === "REEL" ? 500 : type === "VIDEO" ? 300 : 200;
+    
+    const likes = Math.floor(baseEngagement * (0.7 + Math.random() * 0.6));
+    const comments = Math.floor(likes * (0.05 + Math.random() * 0.1));
+    const saves = Math.floor(likes * (0.02 + Math.random() * 0.05));
+    const reach = Math.floor(likes * (1.5 + Math.random() * 1.5));
+    
+    mockData.push({
+      media_id: `mock_${i + 1}_${Date.now()}`,
+      media_type: type,
+      caption: `Mock Instagram post ${i + 1} - ${type.toLowerCase()} content with engaging caption text`,
+      likes: likes,
+      comments: comments,
+      saves: saves,
+      reach: reach,
+      timestamp: postDate.toISOString(),
+      // Also support lowercase column names from Google Sheets
+      media_id_lower: `mock_${i + 1}_${Date.now()}`,
+      media_type_lower: type.toLowerCase(),
+      likes_lower: likes,
+      comments_lower: comments,
+      saves_lower: saves,
+      reach_lower: reach,
+      timestamp_lower: postDate.toISOString(),
+    });
+  }
+  
+  return mockData;
+}
 
 let cache: { data: any[]; timestamp: number } | null = null;
 const CACHE_DURATION = 30 * 1000; // 30 seconds
@@ -84,6 +129,12 @@ export async function GET(request: Request) {
     if (!Array.isArray(data)) {
       console.warn("Google Sheets returned non-array data, converting to array");
       data = [];
+    }
+    
+    // If no data or empty array, return mock data for testing
+    if (data.length === 0) {
+      console.log("No Instagram data found, returning mock data for testing");
+      data = generateMockInstagramData();
     }
     
     // Update cache
