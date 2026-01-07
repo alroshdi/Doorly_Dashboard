@@ -1706,9 +1706,69 @@ export function getBestPostingTime(data: InstagramData[]): ChartData[] {
 
   if (!timestampColumn) return [];
 
-  const hourStats: { [hour: string]: { engagement: number; count: number } } = {};
+  // Group by hour: { hour: { totalEngagement, count, posts } }
+  const hourStats: { [hour: string]: { totalEngagement: number; count: number; posts: number } } = {};
 
   data.forEach((row) => {
+    // Extract hour from timestamp
+    const date = parseDate(String(row[timestampColumn] || ""));
+    if (!date) return;
+
+    const hour = date.getHours().toString().padStart(2, "0");
+    
+    // Get engagement values (real or estimated)
+    const engagementData = getEngagementValues(
+      row,
+      likesColumn,
+      commentsColumn,
+      savesColumn,
+      reachColumn,
+      captionColumn
+    );
+
+    const engagement = engagementData.likes + engagementData.comments + engagementData.saves;
+
+    // Initialize hour stats if not exists
+    if (!hourStats[hour]) {
+      hourStats[hour] = { totalEngagement: 0, count: 0, posts: 0 };
+    }
+
+    // Accumulate engagement and count posts
+    hourStats[hour].totalEngagement += engagement;
+    hourStats[hour].count++;
+    hourStats[hour].posts++;
+  });
+
+  // Calculate average engagement per hour
+  const hourData = Object.entries(hourStats)
+    .map(([hour, stats]) => ({
+      name: `${hour}:00`,
+      value: stats.count > 0 ? stats.totalEngagement / stats.count : 0, // Average engagement per post
+      totalEngagement: stats.totalEngagement,
+      postCount: stats.posts,
+    }))
+    .sort((a, b) => Number(a.name.split(":")[0]) - Number(b.name.split(":")[0]));
+
+  // Return chart data (only name and value for chart component)
+  return hourData.map(({ name, value }) => ({ name, value }));
+}
+
+// Get peak engagement time (hour with highest average engagement)
+export function getPeakEngagementTime(data: InstagramData[]): { hour: string; avgEngagement: number; totalEngagement: number; postCount: number } | null {
+  const timestampColumn = detectColumn(data, ["timestamp", "created_time", "date", "post_date"]);
+  const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count"]);
+  const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count"]);
+  const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count"]);
+  const reachColumn = detectColumn(data, ["reach", "reach_count", "impressions"]);
+  const captionColumn = detectColumn(data, ["caption", "text", "description", "نص"]);
+
+  if (!timestampColumn) return null;
+
+  // Group by hour
+  const hourStats: { [hour: string]: { totalEngagement: number; count: number } } = {};
+
+  data.forEach((row) => {
+    // Extract hour from timestamp
     const date = parseDate(String(row[timestampColumn] || ""));
     if (!date) return;
 
@@ -1727,20 +1787,37 @@ export function getBestPostingTime(data: InstagramData[]): ChartData[] {
     const engagement = engagementData.likes + engagementData.comments + engagementData.saves;
 
     if (!hourStats[hour]) {
-      hourStats[hour] = { engagement: 0, count: 0 };
+      hourStats[hour] = { totalEngagement: 0, count: 0 };
     }
 
-    hourStats[hour].engagement += engagement;
+    hourStats[hour].totalEngagement += engagement;
     hourStats[hour].count++;
   });
 
-  // Calculate average engagement per hour
-  return Object.entries(hourStats)
-    .map(([hour, stats]) => ({
-      name: `${hour}:00`,
-      value: stats.count > 0 ? stats.engagement / stats.count : 0,
-    }))
-    .sort((a, b) => Number(a.name.split(":")[0]) - Number(b.name.split(":")[0]));
+  // Find peak hour (highest average engagement)
+  let peakHour: string | null = null;
+  let maxAvgEngagement = 0;
+  let peakTotalEngagement = 0;
+  let peakPostCount = 0;
+
+  Object.entries(hourStats).forEach(([hour, stats]) => {
+    const avgEngagement = stats.count > 0 ? stats.totalEngagement / stats.count : 0;
+    if (avgEngagement > maxAvgEngagement) {
+      maxAvgEngagement = avgEngagement;
+      peakHour = hour;
+      peakTotalEngagement = stats.totalEngagement;
+      peakPostCount = stats.count;
+    }
+  });
+
+  if (!peakHour) return null;
+
+  return {
+    hour: `${peakHour}:00`,
+    avgEngagement: maxAvgEngagement,
+    totalEngagement: peakTotalEngagement,
+    postCount: peakPostCount,
+  };
 }
 
 // Reach vs Engagement (Scatter plot data)

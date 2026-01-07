@@ -22,6 +22,7 @@ import {
   getInstagramPosts,
   getAvgEngagementPerType,
   getBestPerformingType,
+  getPeakEngagementTime,
   type InstagramData,
 } from "@/lib/analytics";
 import { Loader2, RefreshCw, Search, TrendingUp, TrendingDown, Clock, Image as ImageIcon, Video, Film, Instagram } from "lucide-react";
@@ -283,6 +284,12 @@ export default function InstagramAnalyticsPage() {
     return result;
   }, [filteredData]);
   
+  const peakEngagementTime = useMemo(() => {
+    const result = getPeakEngagementTime(filteredData);
+    console.log("⏰ Peak Engagement Time:", result);
+    return result;
+  }, [filteredData]);
+  
   const reachVsEngagement = useMemo(() => {
     const result = getReachVsEngagement(filteredData);
     console.log("🎯 Reach vs Engagement:", result.length, "points");
@@ -536,7 +543,14 @@ export default function InstagramAnalyticsPage() {
                 <div className="text-sm text-muted-foreground mb-1">
                   {isRTL ? "أفضل وقت للنشر" : "Best Posting Time"}
                 </div>
-                <div className="text-2xl font-bold">{kpis.bestPostingTime}</div>
+                <div className="text-2xl font-bold">
+                  {peakEngagementTime ? peakEngagementTime.hour : kpis.bestPostingTime}
+                </div>
+                {peakEngagementTime && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {Math.round(peakEngagementTime.avgEngagement).toLocaleString()} {isRTL ? "متوسط تفاعل" : "avg engagement"}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -599,12 +613,24 @@ export default function InstagramAnalyticsPage() {
               )}
             </div>
 
-            {/* Best Posting Time */}
+            {/* Best Posting Time - Peak Engagement by Hour */}
             {bestPostingTime.length > 0 && (
-              <BarChartComponent 
-                data={bestPostingTime} 
-                title={isRTL ? "أفضل وقت للنشر" : "Best Posting Time"}
-              />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg sm:text-xl font-bold">
+                    {isRTL ? "أفضل وقت للنشر" : "Best Posting Time"}
+                  </h2>
+                  {peakEngagementTime && (
+                    <div className="text-sm text-muted-foreground">
+                      {isRTL ? "ذروة التفاعل:" : "Peak:"} <span className="font-semibold text-primary">{peakEngagementTime.hour}</span>
+                    </div>
+                  )}
+                </div>
+                <BarChartComponent 
+                  data={bestPostingTime} 
+                  title={isRTL ? "متوسط التفاعل حسب الساعة" : "Average Engagement by Hour"}
+                />
+              </div>
             )}
 
             {/* Reach vs Engagement */}
