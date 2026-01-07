@@ -1391,6 +1391,53 @@ export interface ScatterData {
   engagement: number;
 }
 
+// Helper function to get engagement values (real or estimated)
+// Uses heuristics when likes, comments, and reach are all zero or missing
+function getEngagementValues(
+  row: InstagramData,
+  likesColumn: string | null,
+  commentsColumn: string | null,
+  savesColumn: string | null,
+  reachColumn: string | null,
+  captionColumn: string | null
+): { likes: number; comments: number; saves: number; reach: number; isEstimated: boolean } {
+  const rawLikes = Number(row[likesColumn || ""] || 0);
+  const rawComments = Number(row[commentsColumn || ""] || 0);
+  const rawSaves = Number(row[savesColumn || ""] || 0);
+  const rawReach = Number(row[reachColumn || ""] || 0);
+  
+  // Check if all engagement metrics are zero or missing
+  const hasNoEngagement = rawLikes === 0 && rawComments === 0 && rawReach === 0;
+  
+  if (hasNoEngagement && captionColumn) {
+    // Get caption and calculate estimated values
+    const caption = String(row[captionColumn] || "").trim();
+    if (caption.length > 0) {
+      const estimatedLikes = Math.round(caption.length * 0.4);
+      const estimatedComments = Math.round(caption.length * 0.05);
+      const estimatedSaves = Math.round(estimatedLikes * 0.02); // Estimate saves as 2% of likes
+      const estimatedReach = Math.round(estimatedLikes * 15);
+      
+      return {
+        likes: estimatedLikes,
+        comments: estimatedComments,
+        saves: estimatedSaves,
+        reach: estimatedReach,
+        isEstimated: true,
+      };
+    }
+  }
+  
+  // Return real values (or zeros if missing)
+  return {
+    likes: rawLikes,
+    comments: rawComments,
+    saves: rawSaves,
+    reach: rawReach,
+    isEstimated: false,
+  };
+}
+
 // Calculate Instagram KPIs
 export function calculateInstagramKPIs(data: InstagramData[]): InstagramKPIs {
   if (!data || data.length === 0) {
@@ -1411,6 +1458,7 @@ export function calculateInstagramKPIs(data: InstagramData[]): InstagramKPIs {
   const reachColumn = detectColumn(data, ["reach", "reach_count", "impressions", "وصول"]);
   const timestampColumn = detectColumn(data, ["timestamp", "created_time", "date", "post_date", "تاريخ"]);
   const mediaTypeColumn = detectColumn(data, ["media_type", "type", "content_type", "نوع_المحتوى"]);
+  const captionColumn = detectColumn(data, ["caption", "text", "description", "نص"]);
 
   let totalPosts = data.length;
   let totalEngagement = 0;
@@ -1418,10 +1466,20 @@ export function calculateInstagramKPIs(data: InstagramData[]): InstagramKPIs {
   const hourEngagement: { [hour: string]: { count: number; engagement: number } } = {};
 
   data.forEach((row) => {
-    const likes = Number(row[likesColumn || ""] || 0);
-    const comments = Number(row[commentsColumn || ""] || 0);
-    const saves = Number(row[savesColumn || ""] || 0);
-    const reach = Number(row[reachColumn || ""] || 0);
+    // Get engagement values (real or estimated)
+    const engagementData = getEngagementValues(
+      row,
+      likesColumn,
+      commentsColumn,
+      savesColumn,
+      reachColumn,
+      captionColumn
+    );
+
+    const likes = engagementData.likes;
+    const comments = engagementData.comments;
+    const saves = engagementData.saves;
+    const reach = engagementData.reach;
 
     const engagement = likes + comments + saves;
     totalEngagement += engagement;
@@ -1474,7 +1532,9 @@ export function getEngagementOverTime(data: InstagramData[], period: "daily" | "
   const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count"]);
   const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count"]);
   const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count"]);
+  const reachColumn = detectColumn(data, ["reach", "reach_count", "impressions"]);
   const timestampColumn = detectColumn(data, ["timestamp", "created_time", "date", "post_date"]);
+  const captionColumn = detectColumn(data, ["caption", "text", "description", "نص"]);
 
   if (!timestampColumn) return [];
 
@@ -1484,10 +1544,17 @@ export function getEngagementOverTime(data: InstagramData[], period: "daily" | "
     const date = parseDate(String(row[timestampColumn] || ""));
     if (!date) return;
 
-    const likes = Number(row[likesColumn || ""] || 0);
-    const comments = Number(row[commentsColumn || ""] || 0);
-    const saves = Number(row[savesColumn || ""] || 0);
-    const engagement = likes + comments + saves;
+    // Get engagement values (real or estimated)
+    const engagementData = getEngagementValues(
+      row,
+      likesColumn,
+      commentsColumn,
+      savesColumn,
+      reachColumn,
+      captionColumn
+    );
+
+    const engagement = engagementData.likes + engagementData.comments + engagementData.saves;
 
     let key: string;
     if (period === "daily") {
@@ -1513,6 +1580,7 @@ export function getContentTypePerformance(data: InstagramData[]): ChartData[] {
   const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count"]);
   const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count"]);
   const reachColumn = detectColumn(data, ["reach", "reach_count", "impressions"]);
+  const captionColumn = detectColumn(data, ["caption", "text", "description", "نص"]);
 
   if (!mediaTypeColumn) return [];
 
@@ -1522,11 +1590,18 @@ export function getContentTypePerformance(data: InstagramData[]): ChartData[] {
     const type = String(row[mediaTypeColumn] || "").trim().toUpperCase();
     if (!type) return;
 
-    const likes = Number(row[likesColumn || ""] || 0);
-    const comments = Number(row[commentsColumn || ""] || 0);
-    const saves = Number(row[savesColumn || ""] || 0);
-    const reach = Number(row[reachColumn || ""] || 0);
-    const engagement = likes + comments + saves;
+    // Get engagement values (real or estimated)
+    const engagementData = getEngagementValues(
+      row,
+      likesColumn,
+      commentsColumn,
+      savesColumn,
+      reachColumn,
+      captionColumn
+    );
+
+    const engagement = engagementData.likes + engagementData.comments + engagementData.saves;
+    const reach = engagementData.reach;
 
     if (!typeStats[type]) {
       typeStats[type] = { totalEngagement: 0, totalReach: 0, count: 0 };
@@ -1551,6 +1626,8 @@ export function getBestPostingTime(data: InstagramData[]): ChartData[] {
   const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count"]);
   const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count"]);
   const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count"]);
+  const reachColumn = detectColumn(data, ["reach", "reach_count", "impressions"]);
+  const captionColumn = detectColumn(data, ["caption", "text", "description", "نص"]);
 
   if (!timestampColumn) return [];
 
@@ -1561,10 +1638,18 @@ export function getBestPostingTime(data: InstagramData[]): ChartData[] {
     if (!date) return;
 
     const hour = date.getHours().toString().padStart(2, "0");
-    const likes = Number(row[likesColumn || ""] || 0);
-    const comments = Number(row[commentsColumn || ""] || 0);
-    const saves = Number(row[savesColumn || ""] || 0);
-    const engagement = likes + comments + saves;
+    
+    // Get engagement values (real or estimated)
+    const engagementData = getEngagementValues(
+      row,
+      likesColumn,
+      commentsColumn,
+      savesColumn,
+      reachColumn,
+      captionColumn
+    );
+
+    const engagement = engagementData.likes + engagementData.comments + engagementData.saves;
 
     if (!hourStats[hour]) {
       hourStats[hour] = { engagement: 0, count: 0 };
@@ -1623,23 +1708,42 @@ export function getInstagramPosts(data: InstagramData[]): any[] {
   const timestampColumn = detectColumn(data, ["timestamp", "created_time", "date", "post_date"]);
 
   return data.map((row) => {
-    const likes = Number(row[likesColumn || ""] || 0);
-    const comments = Number(row[commentsColumn || ""] || 0);
-    const saves = Number(row[savesColumn || ""] || 0);
-    const reach = Number(row[reachColumn || ""] || 0);
-    const engagement = likes + comments + saves;
-    const engagementRate = reach > 0 ? (engagement / reach) * 100 : 0;
+    // Get engagement values (real or estimated) - but keep raw values for display
+    const engagementData = getEngagementValues(
+      row,
+      likesColumn,
+      commentsColumn,
+      savesColumn,
+      reachColumn,
+      captionColumn
+    );
+
+    // Use estimated values for engagement rate calculation
+    const engagement = engagementData.likes + engagementData.comments + engagementData.saves;
+    const engagementRate = engagementData.reach > 0 ? (engagement / engagementData.reach) * 100 : 0;
+    
+    // For display, show raw values (or estimated if no raw data)
+    const rawLikes = Number(row[likesColumn || ""] || 0);
+    const rawComments = Number(row[commentsColumn || ""] || 0);
+    const rawSaves = Number(row[savesColumn || ""] || 0);
+    const rawReach = Number(row[reachColumn || ""] || 0);
+    
+    const displayLikes = rawLikes || engagementData.likes;
+    const displayComments = rawComments || engagementData.comments;
+    const displaySaves = rawSaves || engagementData.saves;
+    const displayReach = rawReach || engagementData.reach;
 
     return {
       mediaId: String(row[mediaIdColumn || ""] || ""),
       contentType: String(row[mediaTypeColumn || ""] || "").toUpperCase(),
       caption: String(row[captionColumn || ""] || "").substring(0, 100),
-      likes,
-      comments,
-      saves,
-      reach,
+      likes: displayLikes,
+      comments: displayComments,
+      saves: displaySaves,
+      reach: displayReach,
       engagementRate: engagementRate.toFixed(2),
       postDate: row[timestampColumn || ""] || "",
+      isEstimated: engagementData.isEstimated,
     };
   });
 }
