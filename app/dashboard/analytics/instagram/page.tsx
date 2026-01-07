@@ -388,15 +388,6 @@ export default function InstagramAnalyticsPage() {
               <p className="text-muted-foreground">
                 {isRTL ? "جاري التحميل..." : "Loading..."}
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchData(true)}
-                className="mt-4"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {isRTL ? "تحديث البيانات" : "Refresh Data"}
-              </Button>
             </div>
           </div>
         </div>
