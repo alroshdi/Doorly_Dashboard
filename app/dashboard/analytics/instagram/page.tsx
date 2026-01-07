@@ -20,6 +20,8 @@ import {
   getBestPostingTime,
   getReachVsEngagement,
   getInstagramPosts,
+  getAvgEngagementPerType,
+  getBestPerformingType,
   type InstagramData,
 } from "@/lib/analytics";
 import { Loader2, RefreshCw, Search, TrendingUp, TrendingDown, Clock, Image as ImageIcon, Video, Film, Instagram } from "lucide-react";
@@ -263,6 +265,18 @@ export default function InstagramAnalyticsPage() {
     return result;
   }, [filteredData]);
   
+  const avgEngagementPerType = useMemo(() => {
+    const result = getAvgEngagementPerType(filteredData);
+    console.log("📊 Average Engagement Per Type:", result);
+    return result;
+  }, [filteredData]);
+  
+  const bestPerformingType = useMemo(() => {
+    const result = getBestPerformingType(filteredData);
+    console.log("🏆 Best Performing Type:", result);
+    return result;
+  }, [filteredData]);
+  
   const bestPostingTime = useMemo(() => {
     const result = getBestPostingTime(filteredData);
     console.log("⏰ Best Posting Time:", result.slice(0, 5));
@@ -369,6 +383,15 @@ export default function InstagramAnalyticsPage() {
     : null;
 
   const bestContentType = contentTypePerformance.length > 0 ? contentTypePerformance[0] : null;
+  
+  // Format best performing type for display
+  const bestTypeDisplay = bestPerformingType ? (
+    bestPerformingType.type === "IMAGE" ? (isRTL ? "صورة" : "Image") :
+    bestPerformingType.type === "VIDEO" ? (isRTL ? "فيديو" : "Video") :
+    bestPerformingType.type === "REEL" ? (isRTL ? "ريل" : "Reel") :
+    bestPerformingType.type === "CAROUSEL_ALBUM" ? (isRTL ? "ألبوم" : "Carousel Album") :
+    bestPerformingType.type
+  ) : null;
   const lowPerformingPosts = posts
     .filter(post => {
       const engagement = post.likes + post.comments + post.saves;
@@ -560,21 +583,29 @@ export default function InstagramAnalyticsPage() {
               </div>
             )}
 
-            {/* Content Type Performance and Best Posting Time */}
+            {/* Content Type Performance and Average Engagement Per Type */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {contentTypePerformance.length > 0 && (
                 <BarChartComponent 
                   data={contentTypePerformance} 
-                  title={isRTL ? "أداء أنواع المحتوى" : "Content Type Performance"}
+                  title={isRTL ? "أداء أنواع المحتوى (معدل التفاعل)" : "Content Type Performance (Engagement Rate)"}
                 />
               )}
-              {bestPostingTime.length > 0 && (
+              {avgEngagementPerType.length > 0 && (
                 <BarChartComponent 
-                  data={bestPostingTime} 
-                  title={isRTL ? "أفضل وقت للنشر" : "Best Posting Time"}
+                  data={avgEngagementPerType} 
+                  title={isRTL ? "متوسط التفاعل حسب النوع" : "Average Engagement Per Type"}
                 />
               )}
             </div>
+
+            {/* Best Posting Time */}
+            {bestPostingTime.length > 0 && (
+              <BarChartComponent 
+                data={bestPostingTime} 
+                title={isRTL ? "أفضل وقت للنشر" : "Best Posting Time"}
+              />
+            )}
 
             {/* Reach vs Engagement */}
             {reachVsEngagement.length > 0 && (

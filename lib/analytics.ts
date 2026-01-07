@@ -1614,10 +1614,85 @@ export function getContentTypePerformance(data: InstagramData[]): ChartData[] {
 
   return Object.entries(typeStats)
     .map(([name, stats]) => ({
-      name: name === "IMAGE" ? "صورة" : name === "VIDEO" ? "فيديو" : name === "REEL" ? "ريل" : name,
+      name: name === "IMAGE" ? "صورة" : 
+            name === "VIDEO" ? "فيديو" : 
+            name === "REEL" ? "ريل" : 
+            name === "CAROUSEL_ALBUM" ? "ألبوم" : name,
       value: stats.totalReach > 0 ? (stats.totalEngagement / stats.totalReach) * 100 : 0, // Engagement rate
     }))
     .sort((a, b) => b.value - a.value);
+}
+
+// Get average engagement per media type
+export function getAvgEngagementPerType(data: InstagramData[]): ChartData[] {
+  const mediaTypeColumn = detectColumn(data, ["media_type", "type", "content_type"]);
+  const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count"]);
+  const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count"]);
+  const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count"]);
+  const reachColumn = detectColumn(data, ["reach", "reach_count", "impressions"]);
+  const captionColumn = detectColumn(data, ["caption", "text", "description", "نص"]);
+
+  if (!mediaTypeColumn) return [];
+
+  const typeStats: { [type: string]: { totalEngagement: number; count: number } } = {};
+
+  data.forEach((row) => {
+    const type = String(row[mediaTypeColumn] || "").trim().toUpperCase();
+    if (!type) return;
+
+    // Get engagement values (real or estimated)
+    const engagementData = getEngagementValues(
+      row,
+      likesColumn,
+      commentsColumn,
+      savesColumn,
+      reachColumn,
+      captionColumn
+    );
+
+    const engagement = engagementData.likes + engagementData.comments + engagementData.saves;
+
+    if (!typeStats[type]) {
+      typeStats[type] = { totalEngagement: 0, count: 0 };
+    }
+
+    typeStats[type].totalEngagement += engagement;
+    typeStats[type].count++;
+  });
+
+  return Object.entries(typeStats)
+    .map(([name, stats]) => ({
+      name: name === "IMAGE" ? "صورة" : 
+            name === "VIDEO" ? "فيديو" : 
+            name === "REEL" ? "ريل" : 
+            name === "CAROUSEL_ALBUM" ? "ألبوم" : name,
+      value: stats.count > 0 ? stats.totalEngagement / stats.count : 0, // Average engagement per post
+    }))
+    .sort((a, b) => b.value - a.value);
+}
+
+// Get best performing media type
+export function getBestPerformingType(data: InstagramData[]): { type: string; avgEngagement: number } | null {
+  const avgEngagement = getAvgEngagementPerType(data);
+  
+  if (avgEngagement.length === 0) {
+    return null;
+  }
+
+  const bestType = avgEngagement[0];
+  
+  // Convert Arabic name back to English for consistency
+  const typeMap: { [key: string]: string } = {
+    "صورة": "IMAGE",
+    "فيديو": "VIDEO",
+    "ريل": "REEL",
+    "ألبوم": "CAROUSEL_ALBUM",
+  };
+
+  return {
+    type: typeMap[bestType.name] || bestType.name,
+    avgEngagement: bestType.value,
+  };
 }
 
 // Best Posting Time (by hour)
