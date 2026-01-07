@@ -1370,3 +1370,277 @@ export function getStatusDistribution(data: RequestData[]): ChartData[] {
     .sort((a, b) => b.value - a.value);
 }
 
+// ==================== INSTAGRAM ANALYTICS ====================
+
+export interface InstagramData {
+  [key: string]: any;
+}
+
+export interface InstagramKPIs {
+  totalPosts: number;
+  totalEngagement: number; // likes + comments + saves
+  engagementRate: number; // percentage
+  totalReach: number;
+  avgEngagementPerPost: number;
+  bestPostingTime: string; // hour of day
+}
+
+export interface ScatterData {
+  name: string;
+  reach: number;
+  engagement: number;
+}
+
+// Calculate Instagram KPIs
+export function calculateInstagramKPIs(data: InstagramData[]): InstagramKPIs {
+  if (!data || data.length === 0) {
+    return {
+      totalPosts: 0,
+      totalEngagement: 0,
+      engagementRate: 0,
+      totalReach: 0,
+      avgEngagementPerPost: 0,
+      bestPostingTime: "غير متوفر",
+    };
+  }
+
+  // Detect columns
+  const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count", "إعجابات"]);
+  const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count", "تعليقات"]);
+  const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count", "حفظ"]);
+  const reachColumn = detectColumn(data, ["reach", "reach_count", "impressions", "وصول"]);
+  const timestampColumn = detectColumn(data, ["timestamp", "created_time", "date", "post_date", "تاريخ"]);
+  const mediaTypeColumn = detectColumn(data, ["media_type", "type", "content_type", "نوع_المحتوى"]);
+
+  let totalPosts = data.length;
+  let totalEngagement = 0;
+  let totalReach = 0;
+  const hourEngagement: { [hour: string]: { count: number; engagement: number } } = {};
+
+  data.forEach((row) => {
+    const likes = Number(row[likesColumn || ""] || 0);
+    const comments = Number(row[commentsColumn || ""] || 0);
+    const saves = Number(row[savesColumn || ""] || 0);
+    const reach = Number(row[reachColumn || ""] || 0);
+
+    const engagement = likes + comments + saves;
+    totalEngagement += engagement;
+    totalReach += reach;
+
+    // Extract hour from timestamp
+    if (timestampColumn && row[timestampColumn]) {
+      try {
+        const date = parseDate(String(row[timestampColumn]));
+        if (date) {
+          const hour = date.getHours().toString().padStart(2, "0");
+          if (!hourEngagement[hour]) {
+            hourEngagement[hour] = { count: 0, engagement: 0 };
+          }
+          hourEngagement[hour].count++;
+          hourEngagement[hour].engagement += engagement;
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
+    }
+  });
+
+  const avgEngagementPerPost = totalPosts > 0 ? totalEngagement / totalPosts : 0;
+  const engagementRate = totalReach > 0 ? (totalEngagement / totalReach) * 100 : 0;
+
+  // Find best posting time (hour with highest average engagement)
+  let bestHour = "غير متوفر";
+  let maxAvgEngagement = 0;
+  Object.entries(hourEngagement).forEach(([hour, stats]) => {
+    const avgEngagement = stats.count > 0 ? stats.engagement / stats.count : 0;
+    if (avgEngagement > maxAvgEngagement) {
+      maxAvgEngagement = avgEngagement;
+      bestHour = `${hour}:00`;
+    }
+  });
+
+  return {
+    totalPosts,
+    totalEngagement,
+    engagementRate,
+    totalReach,
+    avgEngagementPerPost,
+    bestPostingTime: bestHour,
+  };
+}
+
+// Engagement Over Time
+export function getEngagementOverTime(data: InstagramData[], period: "daily" | "weekly" | "monthly" = "daily"): ChartData[] {
+  const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count"]);
+  const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count"]);
+  const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count"]);
+  const timestampColumn = detectColumn(data, ["timestamp", "created_time", "date", "post_date"]);
+
+  if (!timestampColumn) return [];
+
+  const grouped: { [key: string]: number } = {};
+
+  data.forEach((row) => {
+    const date = parseDate(String(row[timestampColumn] || ""));
+    if (!date) return;
+
+    const likes = Number(row[likesColumn || ""] || 0);
+    const comments = Number(row[commentsColumn || ""] || 0);
+    const saves = Number(row[savesColumn || ""] || 0);
+    const engagement = likes + comments + saves;
+
+    let key: string;
+    if (period === "daily") {
+      key = format(date, "yyyy-MM-dd");
+    } else if (period === "weekly") {
+      key = format(startOfWeek(date, { weekStartsOn: 6 }), "yyyy-MM-dd");
+    } else {
+      key = format(startOfMonth(date), "yyyy-MM");
+    }
+
+    grouped[key] = (grouped[key] || 0) + engagement;
+  });
+
+  return Object.entries(grouped)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// Content Type Performance
+export function getContentTypePerformance(data: InstagramData[]): ChartData[] {
+  const mediaTypeColumn = detectColumn(data, ["media_type", "type", "content_type"]);
+  const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count"]);
+  const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count"]);
+  const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count"]);
+  const reachColumn = detectColumn(data, ["reach", "reach_count", "impressions"]);
+
+  if (!mediaTypeColumn) return [];
+
+  const typeStats: { [type: string]: { totalEngagement: number; totalReach: number; count: number } } = {};
+
+  data.forEach((row) => {
+    const type = String(row[mediaTypeColumn] || "").trim().toUpperCase();
+    if (!type) return;
+
+    const likes = Number(row[likesColumn || ""] || 0);
+    const comments = Number(row[commentsColumn || ""] || 0);
+    const saves = Number(row[savesColumn || ""] || 0);
+    const reach = Number(row[reachColumn || ""] || 0);
+    const engagement = likes + comments + saves;
+
+    if (!typeStats[type]) {
+      typeStats[type] = { totalEngagement: 0, totalReach: 0, count: 0 };
+    }
+
+    typeStats[type].totalEngagement += engagement;
+    typeStats[type].totalReach += reach;
+    typeStats[type].count++;
+  });
+
+  return Object.entries(typeStats)
+    .map(([name, stats]) => ({
+      name: name === "IMAGE" ? "صورة" : name === "VIDEO" ? "فيديو" : name === "REEL" ? "ريل" : name,
+      value: stats.totalReach > 0 ? (stats.totalEngagement / stats.totalReach) * 100 : 0, // Engagement rate
+    }))
+    .sort((a, b) => b.value - a.value);
+}
+
+// Best Posting Time (by hour)
+export function getBestPostingTime(data: InstagramData[]): ChartData[] {
+  const timestampColumn = detectColumn(data, ["timestamp", "created_time", "date", "post_date"]);
+  const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count"]);
+  const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count"]);
+  const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count"]);
+
+  if (!timestampColumn) return [];
+
+  const hourStats: { [hour: string]: { engagement: number; count: number } } = {};
+
+  data.forEach((row) => {
+    const date = parseDate(String(row[timestampColumn] || ""));
+    if (!date) return;
+
+    const hour = date.getHours().toString().padStart(2, "0");
+    const likes = Number(row[likesColumn || ""] || 0);
+    const comments = Number(row[commentsColumn || ""] || 0);
+    const saves = Number(row[savesColumn || ""] || 0);
+    const engagement = likes + comments + saves;
+
+    if (!hourStats[hour]) {
+      hourStats[hour] = { engagement: 0, count: 0 };
+    }
+
+    hourStats[hour].engagement += engagement;
+    hourStats[hour].count++;
+  });
+
+  // Calculate average engagement per hour
+  return Object.entries(hourStats)
+    .map(([hour, stats]) => ({
+      name: `${hour}:00`,
+      value: stats.count > 0 ? stats.engagement / stats.count : 0,
+    }))
+    .sort((a, b) => Number(a.name.split(":")[0]) - Number(b.name.split(":")[0]));
+}
+
+// Reach vs Engagement (Scatter plot data)
+export function getReachVsEngagement(data: InstagramData[]): ScatterData[] {
+  const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count"]);
+  const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count"]);
+  const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count"]);
+  const reachColumn = detectColumn(data, ["reach", "reach_count", "impressions"]);
+  const mediaIdColumn = detectColumn(data, ["media_id", "id", "post_id"]);
+
+  if (!reachColumn) return [];
+
+  return data
+    .map((row) => {
+      const likes = Number(row[likesColumn || ""] || 0);
+      const comments = Number(row[commentsColumn || ""] || 0);
+      const saves = Number(row[savesColumn || ""] || 0);
+      const reach = Number(row[reachColumn || ""] || 0);
+      const engagement = likes + comments + saves;
+      const name = String(row[mediaIdColumn || ""] || "").substring(0, 8) || "Post";
+
+      return {
+        name,
+        reach,
+        engagement,
+      };
+    })
+    .filter((item) => item.reach > 0 || item.engagement > 0);
+}
+
+// Get Instagram posts for table
+export function getInstagramPosts(data: InstagramData[]): any[] {
+  const mediaIdColumn = detectColumn(data, ["media_id", "id", "post_id"]);
+  const mediaTypeColumn = detectColumn(data, ["media_type", "type", "content_type"]);
+  const captionColumn = detectColumn(data, ["caption", "text", "description"]);
+  const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count"]);
+  const commentsColumn = detectColumn(data, ["comments", "comment_count", "comments_count"]);
+  const savesColumn = detectColumn(data, ["saves", "save_count", "saves_count"]);
+  const reachColumn = detectColumn(data, ["reach", "reach_count", "impressions"]);
+  const timestampColumn = detectColumn(data, ["timestamp", "created_time", "date", "post_date"]);
+
+  return data.map((row) => {
+    const likes = Number(row[likesColumn || ""] || 0);
+    const comments = Number(row[commentsColumn || ""] || 0);
+    const saves = Number(row[savesColumn || ""] || 0);
+    const reach = Number(row[reachColumn || ""] || 0);
+    const engagement = likes + comments + saves;
+    const engagementRate = reach > 0 ? (engagement / reach) * 100 : 0;
+
+    return {
+      mediaId: String(row[mediaIdColumn || ""] || ""),
+      contentType: String(row[mediaTypeColumn || ""] || "").toUpperCase(),
+      caption: String(row[captionColumn || ""] || "").substring(0, 100),
+      likes,
+      comments,
+      saves,
+      reach,
+      engagementRate: engagementRate.toFixed(2),
+      postDate: row[timestampColumn || ""] || "",
+    };
+  });
+}
+

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { LogOut, Moon, Sun, Languages, BarChart3, Home, Users, Settings, ChevronDown, ChevronRight, Linkedin, Menu, X } from "lucide-react";
+import { LogOut, Moon, Sun, Languages, BarChart3, Home, Users, Settings, ChevronDown, ChevronRight, Linkedin, Menu, X, Instagram } from "lucide-react";
 import { clearAuth } from "@/lib/auth";
 import { getTranslations, getLanguage, setLanguage, type Language } from "@/lib/i18n";
 import { useTheme } from "next-themes";
@@ -166,6 +166,19 @@ export function Sidebar() {
               >
                 <Users className={cn("h-4 w-4 transition-transform duration-300 group-hover:scale-110", isRTL ? "mr-2" : "ml-2")} />
                 {t.sidebar.brokers}
+              </Button>
+              <Button
+                variant={pathname === "/dashboard/analytics/instagram" ? "default" : "ghost"}
+                className={cn(
+                  "w-full justify-start text-sm transition-all duration-300 hover:scale-[1.02] active:scale-95 min-h-[44px]",
+                  pathname === "/dashboard/analytics/instagram" 
+                    ? "bg-primary text-primary-foreground shadow-md hover:shadow-lg" 
+                    : "hover:bg-primary/10 hover:text-primary"
+                )}
+                onClick={() => router.push("/dashboard/analytics/instagram")}
+              >
+                <Instagram className={cn("h-4 w-4 transition-transform duration-300 group-hover:scale-110", isRTL ? "mr-2" : "ml-2")} />
+                {t.sidebar.instagram}
               </Button>
             </div>
           )}
