@@ -23,6 +23,7 @@ import {
   getAvgEngagementPerType,
   getBestPerformingType,
   getPeakEngagementTime,
+  generateInsightText,
   type InstagramData,
 } from "@/lib/analytics";
 import { Loader2, RefreshCw, Search, TrendingUp, TrendingDown, Clock, Image as ImageIcon, Video, Film, Instagram } from "lucide-react";
@@ -379,6 +380,12 @@ export default function InstagramAnalyticsPage() {
   const lang = getLanguage();
   const t = getTranslations(lang);
   const isRTL = lang === "ar";
+  
+  const insightText = useMemo(() => {
+    const result = generateInsightText(filteredData, isRTL);
+    console.log("💡 Insight Text:", result);
+    return result;
+  }, [filteredData, isRTL]);
 
   // Smart Insights
   const topPost = posts.length > 0 
@@ -708,6 +715,23 @@ export default function InstagramAnalyticsPage() {
               </Card>
             </div>
           </div>
+          )}
+
+          {/* Key Insight */}
+          {hasData && insightText && (
+          <Card className="bg-primary/5 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                {isRTL ? "رؤية رئيسية" : "Key Insight"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-base font-medium leading-relaxed">
+                {insightText}
+              </p>
+            </CardContent>
+          </Card>
           )}
 
           {/* Recommendations */}

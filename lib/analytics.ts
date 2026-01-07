@@ -1820,6 +1820,106 @@ export function getPeakEngagementTime(data: InstagramData[]): { hour: string; av
   };
 }
 
+// Generate insight text comparing video vs image engagement
+export function getVideoImageEngagementRatio(data: InstagramData[]): { ratio: number; videoAvg: number; imageAvg: number } | null {
+  const avgEngagementPerType = getAvgEngagementPerType(data);
+  
+  if (avgEngagementPerType.length === 0) return null;
+  
+  // Find video and image averages
+  let videoAvg = 0;
+  let imageAvg = 0;
+  
+  avgEngagementPerType.forEach((item) => {
+    if (item.name === "فيديو" || item.name === "Video" || item.name === "VIDEO") {
+      videoAvg = item.value;
+    } else if (item.name === "صورة" || item.name === "Image" || item.name === "IMAGE") {
+      imageAvg = item.value;
+    }
+  });
+  
+  // If either is missing or zero, return null
+  if (videoAvg === 0 || imageAvg === 0) return null;
+  
+  const ratio = videoAvg / imageAvg;
+  
+  return {
+    ratio,
+    videoAvg,
+    imageAvg,
+  };
+}
+
+// Get best posting window (range of hours with high engagement)
+export function getBestPostingWindow(data: InstagramData[], thresholdPercent: number = 0.8): { start: string; end: string } | null {
+  const bestPostingTime = getBestPostingTime(data);
+  
+  if (bestPostingTime.length === 0) return null;
+  
+  // Find the peak engagement value
+  const peakValue = Math.max(...bestPostingTime.map(item => item.value));
+  
+  // Find hours that are within thresholdPercent of peak (e.g., 80% of peak)
+  const threshold = peakValue * thresholdPercent;
+  const highEngagementHours = bestPostingTime
+    .filter(item => item.value >= threshold)
+    .map(item => {
+      const hour = parseInt(item.name.split(":")[0]);
+      return { hour, value: item.value };
+    })
+    .sort((a, b) => a.hour - b.hour);
+  
+  if (highEngagementHours.length === 0) return null;
+  
+  // Find the continuous range
+  const startHour = highEngagementHours[0].hour;
+  const endHour = highEngagementHours[highEngagementHours.length - 1].hour;
+  
+  // Format hours (convert to 12-hour format for display)
+  const formatHour = (hour: number): string => {
+    if (hour === 0) return "12 AM";
+    if (hour < 12) return `${hour} AM`;
+    if (hour === 12) return "12 PM";
+    return `${hour - 12} PM`;
+  };
+  
+  return {
+    start: formatHour(startHour),
+    end: formatHour(endHour),
+  };
+}
+
+// Generate insight text
+export function generateInsightText(data: InstagramData[], isRTL: boolean = false): string | null {
+  const ratioData = getVideoImageEngagementRatio(data);
+  const postingWindow = getBestPostingWindow(data);
+  
+  if (!ratioData && !postingWindow) return null;
+  
+  const parts: string[] = [];
+  
+  // Add video vs image comparison
+  if (ratioData) {
+    const ratio = ratioData.ratio.toFixed(1);
+    if (isRTL) {
+      parts.push(`منشورات الفيديو تحقق تفاعلاً أعلى ${ratio}x مقارنة بالصور.`);
+    } else {
+      parts.push(`Video posts achieve ${ratio}x engagement compared to images.`);
+    }
+  }
+  
+  // Add best posting window
+  if (postingWindow) {
+    if (isRTL) {
+      parts.push(`أفضل وقت للنشر: ${postingWindow.start} - ${postingWindow.end}.`);
+    } else {
+      parts.push(`Best posting window: ${postingWindow.start} - ${postingWindow.end}.`);
+    }
+  }
+  
+  return parts.length > 0 ? parts.join(" ") : null;
+}
+
 // Reach vs Engagement (Scatter plot data)
 export function getReachVsEngagement(data: InstagramData[]): ScatterData[] {
   const likesColumn = detectColumn(data, ["likes", "like_count", "likes_count"]);
