@@ -116,3 +116,4 @@ export function ScatterChartComponent({ data, title, description }: ScatterChart
   );
 }
 
+
