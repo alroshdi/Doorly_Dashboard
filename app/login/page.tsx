@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { setAuth, isAuthenticated } from "@/lib/auth";
-import { verifyUser } from "@/lib/user-management";
 import { getTranslations, getLanguage, setLanguage, type Language } from "@/lib/i18n";
 
 function LogoImage() {
@@ -22,8 +21,8 @@ function LogoImage() {
     <Image
       src="/logo.png"
       alt="Doorly Logo"
-      width={180}
-      height={180}
+      width={120}
+      height={120}
       className="object-contain"
       priority
       onError={() => setImgError(true)}
@@ -50,9 +49,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    const user = verifyUser(email, password);
-    if (user) {
-      setAuth(user.email, user.id, user.role);
+    if (email === "admin@admin.com" && password === "admin123") {
+      setAuth(email);
       router.push("/dashboard");
     } else {
       setError(getTranslations(lang).login.error);
@@ -70,11 +68,11 @@ export default function LoginPage() {
   const t = getTranslations(lang);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-secondary/20 p-4 sm:p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-secondary/20 p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex items-center justify-center">
+            <div className="w-32 h-32 bg-primary/10 rounded-lg flex items-center justify-center">
               <LogoImage />
             </div>
           </div>
@@ -137,7 +135,7 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full min-h-[44px]">
+            <Button type="submit" className="w-full">
               {t.login.submit}
             </Button>
           </form>

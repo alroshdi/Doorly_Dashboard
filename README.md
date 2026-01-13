@@ -4,8 +4,7 @@ A modern, bilingual (Arabic/English) admin dashboard for Doorly with Google Shee
 
 ## Features
 
-- 🔐 **Authentication**: User login system with role-based access control
-- 👥 **User Management**: Admin can add, edit, and manage users with specific permissions
+- 🔐 **Authentication**: Simple login system with localStorage
 - 📊 **Analytics Dashboard**: Real-time KPIs, charts, and data visualization
 - 📈 **Google Sheets Integration**: Automatic data fetching from Google Sheets
 - 💼 **LinkedIn Insights**: Comprehensive LinkedIn analytics with Excel file parsing
@@ -85,12 +84,8 @@ Place your LinkedIn Excel files in the `linkedin` folder:
 
 ## Login Credentials
 
-**Default Admin Account:**
 - **Email**: `admin@admin.com`
 - **Password**: `admin123`
-- **Role**: Admin (full access)
-
-**Note**: Admins can create additional users with different roles (Admin, Editor, Viewer) and customize permissions from the Settings page.
 
 ## Project Structure
 
@@ -110,20 +105,11 @@ DoorlyDashboard_/
 │   ├── charts/                # Chart components
 │   ├── ui/                    # UI components
 │   ├── linkedin-kpi-cards.tsx # LinkedIn KPIs
-│   ├── user-management.tsx # User management component
 │   └── ...
 ├── lib/
 │   ├── linkedin-analytics.ts  # LinkedIn data processing
 │   ├── pdf-export.ts          # PDF export functionality
-│   ├── user-management.ts    # User management utilities
-│   ├── auth.ts                # Authentication utilities
 │   └── ...
-├── scripts/                   # Deployment and utility scripts
-│   ├── start-dev.bat          # Start development server
-│   ├── push-to-github.bat     # Push to GitHub
-│   └── ...
-├── public/                    # Static assets
-│   └── logo.png
 └── linkedin/                  # LinkedIn Excel files
 ```
 

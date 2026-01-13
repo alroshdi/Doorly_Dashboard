@@ -202,31 +202,46 @@ export function LinkedInKPICards({ kpis }: LinkedInKPICardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
-          <Card
-            key={index}
-            className="transition-all duration-500 ease-out hover:shadow-2xl hover:scale-[1.03] hover:border-primary/50 cursor-default group bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-sm border-2 hover:border-primary/40 hover-lift relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/0 before:to-primary/0 hover:before:from-primary/5 hover:before:to-primary/10 before:transition-all before:duration-500"
-            style={{
+          <Card 
+            key={index} 
+            className={`
+              transition-all duration-500 ease-out
+              hover:shadow-2xl hover:scale-[1.03]
+              hover:border-primary/50
+              cursor-default
+              group
+              bg-gradient-to-br from-card via-card/98 to-card/95
+              backdrop-blur-sm
+              border-2
+              hover:border-primary/40
+              hover-lift
+              relative overflow-hidden
+              before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/0 before:to-primary/0
+              hover:before:from-primary/5 hover:before:to-primary/10
+              before:transition-all before:duration-500
+            `}
+            style={{ 
               animationDelay: `${index * 80}ms`,
-              animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 80}ms both`,
+              animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 80}ms both`
             }}
           >
-            <div
-              className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
-            />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 sm:pb-3 relative z-10 px-4 sm:px-6 pt-4 sm:pt-6">
-              <CardTitle className="text-xs sm:text-sm font-semibold group-hover:text-primary transition-all duration-300 group-hover:scale-105">
+            {/* Animated background gradient on hover */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+            
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
+              <CardTitle className="text-sm font-semibold group-hover:text-primary transition-all duration-300 group-hover:scale-105">
                 {card.title}
               </CardTitle>
-              <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm">
                 <Icon className="h-4 w-4 text-primary group-hover:scale-125 transition-all duration-300" />
               </div>
             </CardHeader>
-            <CardContent className="relative z-10 px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="text-2xl sm:text-3xl font-bold group-hover:text-primary transition-all duration-300 mb-1 group-hover:scale-105 inline-block">
+            <CardContent className="relative z-10">
+              <div className="text-3xl font-bold group-hover:text-primary transition-all duration-300 mb-1 group-hover:scale-105 inline-block">
                 {card.isPercentage ? (
                   formatPercentage(card.value)
                 ) : (
@@ -234,6 +249,8 @@ export function LinkedInKPICards({ kpis }: LinkedInKPICardsProps) {
                 )}
               </div>
             </CardContent>
+            
+            {/* Shine effect on hover */}
             <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           </Card>
         );
@@ -241,3 +258,5 @@ export function LinkedInKPICards({ kpis }: LinkedInKPICardsProps) {
     </div>
   );
 }
+
+

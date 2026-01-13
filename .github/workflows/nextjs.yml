@@ -33,6 +33,7 @@ jobs:
 
       - name: Build Next.js
         run: npm run build
+<<<<<<< HEAD:.github/workflows/deploy.yml
         env:
           NEXT_PUBLIC_BASE_PATH: /Doorly_Dashboard
           NODE_ENV: production
@@ -50,6 +51,9 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
+=======
+
+>>>>>>> c9f224e11e1e750008f0c770910526ae9f66e3cc:.github/workflows/nextjs.yml
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

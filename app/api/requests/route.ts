@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
 
-// Mark this route as dynamic
-export const dynamic = 'force-dynamic';
-
 let cache: { data: any[]; timestamp: number } | null = null;
-const CACHE_DURATION = 30 * 1000; // 30 seconds (reduced from 60)
+const CACHE_DURATION = 60 * 1000; // 60 seconds
 
 async function getGoogleSheetsData() {
   try {
@@ -56,36 +53,15 @@ async function getGoogleSheetsData() {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    // Check for cache bypass parameter
-    const { searchParams } = new URL(request.url);
-    const bypassCache = searchParams.get("refresh") === "true" || searchParams.get("nocache") === "true";
-    
-    // Check cache (unless bypassed)
-    if (!bypassCache && cache && Date.now() - cache.timestamp < CACHE_DURATION) {
+    // Check cache
+    if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
       return NextResponse.json(cache.data);
     }
 
-    // Fetch fresh data with timeout - increased for Vercel serverless functions
-    const fetchPromise = getGoogleSheetsData();
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Request timeout: Google Sheets API took too long. Please check your credentials and sheet permissions.")), 20000) // Reduced to 20s for faster feedback
-    );
-    
-    let data: any[];
-    try {
-      data = await Promise.race([fetchPromise, timeoutPromise]) as any[];
-    } catch (raceError: any) {
-      // If timeout or error, throw with clear message
-      throw raceError;
-    }
-    
-    // Validate data is an array
-    if (!Array.isArray(data)) {
-      console.warn("Google Sheets returned non-array data, converting to array");
-      data = [];
-    }
+    // Fetch fresh data
+    const data = await getGoogleSheetsData();
     
     // Update cache
     cache = {
@@ -96,25 +72,8 @@ export async function GET(request: Request) {
     return NextResponse.json(data);
   } catch (error: any) {
     console.error("API Error:", error);
-    let errorMessage = error.message || "Failed to fetch data from Google Sheets";
-    
-    // Provide more helpful error messages
-    if (errorMessage.includes("Missing Google Sheets credentials")) {
-      errorMessage = "Google Sheets credentials are missing. Please configure GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY, and GOOGLE_SHEET_ID in environment variables.";
-    } else if (errorMessage.includes("timeout")) {
-      errorMessage = "Request timeout. Google Sheets API is taking too long. Please check your sheet permissions and try again.";
-    } else if (errorMessage.includes("permission") || errorMessage.includes("403")) {
-      errorMessage = "Permission denied. Please check that your service account has access to the Google Sheet.";
-    } else if (errorMessage.includes("404") || errorMessage.includes("not found")) {
-      errorMessage = "Google Sheet not found. Please check your GOOGLE_SHEET_ID environment variable.";
-    }
-    
-    // Return proper error response
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === "development" ? error.stack : undefined
-      },
+      { error: error.message || "Failed to fetch data" },
       { status: 500 }
     );
   }

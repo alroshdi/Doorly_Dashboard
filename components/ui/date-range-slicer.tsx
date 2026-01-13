@@ -139,12 +139,26 @@ export function DateRangeSlicer({
             )} />
           </div>
           <div className="flex-1 text-sm min-w-0">
-            <div className="flex flex-col">
-              <span className="font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                {isRTL ? "اختر التاريخ" : "Choose Date"}
-              </span>
-              <span className="text-xs text-muted-foreground/70">{isRTL ? "انقر للاختيار" : "Click to select"}</span>
-            </div>
+            {startDate && endDate ? (
+              <div className="flex flex-col">
+                <span className="font-semibold text-foreground truncate">
+                  {formatDisplayDate(startDate)} - {formatDisplayDate(endDate)}
+                </span>
+                <span className="text-xs text-muted-foreground">{isRTL ? "نطاق محدد" : "Range selected"}</span>
+              </div>
+            ) : startDate ? (
+              <div className="flex flex-col">
+                <span className="font-semibold text-foreground truncate">{formatDisplayDate(startDate)}</span>
+                <span className="text-xs text-muted-foreground">{isRTL ? "تاريخ البداية" : "Start date"}</span>
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                <span className="font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                  {isRTL ? "اختر التاريخ" : "Choose Date"}
+                </span>
+                <span className="text-xs text-muted-foreground/70">{isRTL ? "انقر للاختيار" : "Click to select"}</span>
+              </div>
+            )}
           </div>
           {hasDates && (
             <Button

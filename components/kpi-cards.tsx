@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPIMetrics } from "@/lib/analytics";
 import { getTranslations, getLanguage } from "@/lib/i18n";
-import { TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, CreditCard, Tag, Eye, DollarSign, Home, Ruler } from "lucide-react";
+import { TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, CreditCard, Tag, Eye, DollarSign } from "lucide-react";
 
 interface KPICardsProps {
   metrics: KPIMetrics;
@@ -77,25 +76,8 @@ export function KPICards({ metrics }: KPICardsProps) {
   const t = getTranslations(lang);
   const isRTL = lang === "ar";
 
-  const formatNumber = (num: number, decimals: number = 0) => {
-    return new Intl.NumberFormat(isRTL ? "ar-DZ" : "en-US", {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(num);
-  };
-
-  const getIconColor = (gradient: string) => {
-    if (gradient.includes('blue')) return 'text-blue-500';
-    if (gradient.includes('teal')) return 'text-teal-500';
-    if (gradient.includes('green')) return 'text-green-500';
-    if (gradient.includes('emerald')) return 'text-emerald-500';
-    if (gradient.includes('amber')) return 'text-amber-500';
-    if (gradient.includes('red')) return 'text-red-500';
-    if (gradient.includes('purple')) return 'text-purple-500';
-    if (gradient.includes('pink')) return 'text-pink-500';
-    if (gradient.includes('cyan')) return 'text-cyan-500';
-    if (gradient.includes('indigo')) return 'text-indigo-500';
-    return 'text-primary';
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat(isRTL ? "ar-DZ" : "en-US").format(Math.round(num));
   };
 
   const cards = [
@@ -117,7 +99,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       title: t.kpi.verified,
       value: metrics.verified,
       icon: TrendingUp,
-      available: true, // Always show value, even if 0
+      available: metrics.verified > 0 || metrics.totalRequests > 0,
       gradient: "from-green-500 to-green-600",
     },
     {
@@ -128,10 +110,10 @@ export function KPICards({ metrics }: KPICardsProps) {
       gradient: "from-emerald-500 to-emerald-600",
     },
     {
-      title: t.kpi.completed,
-      value: metrics.completed,
+      title: t.kpi.pending,
+      value: metrics.pending,
       icon: Clock,
-      available: metrics.completed > 0 || metrics.totalRequests > 0,
+      available: metrics.pending > 0 || metrics.totalRequests > 0,
       gradient: "from-amber-500 to-amber-600",
     },
     {
@@ -152,7 +134,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       title: t.kpi.totalOffers,
       value: metrics.totalOffers,
       icon: Tag,
-      available: true, // Always show value, even if 0
+      available: metrics.totalOffers > 0,
       gradient: "from-pink-500 to-pink-600",
     },
     {
@@ -162,143 +144,66 @@ export function KPICards({ metrics }: KPICardsProps) {
       available: metrics.totalViewsCount > 0,
       gradient: "from-cyan-500 to-cyan-600",
     },
-    // Price cards grouped together
     {
-      title: t.kpi.avgPriceFrom,
-      value: metrics.avgPriceFrom,
-      icon: DollarSign,
-      available: metrics.avgPriceFrom > 0,
-      gradient: "from-yellow-500 to-yellow-600",
-      isDecimal: true,
-      unitImage: "/Bold.png",
-    },
-    {
-      title: t.kpi.avgPriceTo,
-      value: metrics.avgPriceTo,
-      icon: DollarSign,
-      available: metrics.avgPriceTo > 0,
-      gradient: "from-orange-500 to-orange-600",
-      isDecimal: true,
-      unitImage: "/Bold.png",
-    },
-    {
-      title: t.kpi.avgPriceRange,
-      value: metrics.avgPriceRange,
-      icon: DollarSign,
-      available: metrics.avgPriceRange > 0,
-      gradient: "from-amber-500 to-amber-600",
-      isDecimal: true,
-      unitImage: "/Bold.png",
-    },
-    // Area cards grouped together
-    {
-      title: t.kpi.avgArea,
-      value: metrics.avgArea,
-      icon: Home,
-      available: metrics.hasAreaColumn, // Show only if column exists AND has valid data
-      gradient: "from-violet-500 to-violet-600",
-      isDecimal: true,
-      unit: "m²",
-    },
-    {
-      title: t.kpi.minArea,
-      value: metrics.minArea,
-      icon: Ruler,
-      available: metrics.hasAreaColumn, // Show only if column exists AND has valid data
-      gradient: "from-slate-500 to-slate-600",
-      isDecimal: true, // Allow decimals for area values
-      unit: "m²",
-    },
-    {
-      title: t.kpi.maxArea,
-      value: metrics.maxArea,
-      icon: Ruler,
-      available: metrics.hasAreaColumn, // Show only if column exists AND has valid data
-      gradient: "from-gray-500 to-gray-600",
-      isDecimal: true, // Allow decimals for area values
-      unit: "m²",
+      title: t.kpi.avgViews,
+      value: metrics.avgViews,
+      icon: Eye,
+      available: metrics.avgViews > 0,
+      gradient: "from-indigo-500 to-indigo-600",
     },
   ];
 
-  // Compact grid: Reduced gaps for better information density
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
       {cards.map((card, index) => {
         const Icon = card.icon;
-        // Compact card: Reduced decorative effects, focus on data
         return (
           <Card 
             key={index} 
             className={`
               ${!card.available ? "opacity-60" : ""}
-              transition-all duration-300
-              hover:shadow-md
+              transition-all duration-500 ease-out
+              hover:shadow-2xl hover:scale-[1.03]
+              hover:border-primary/50
               cursor-default
               group
-              bg-card
-              border
-              hover:border-primary/30
+              bg-gradient-to-br from-card via-card/98 to-card/95
+              backdrop-blur-sm
+              border-2
+              hover:border-primary/40
+              hover-lift
               relative overflow-hidden
+              before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/0 before:to-primary/0
+              hover:before:from-primary/5 hover:before:to-primary/10
+              before:transition-all before:duration-500
             `}
             style={{ 
               animationDelay: `${index * 80}ms`,
               animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 80}ms both`
             }}
           >
-            {/* Compact card header: Reduced padding for density */}
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10 px-3 sm:px-4 pt-3">
-              <CardTitle className="text-xs sm:text-sm font-semibold text-foreground/80 group-hover:text-primary transition-all duration-300 leading-tight">
+            {/* Animated background gradient on hover */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
+            
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
+              <CardTitle className="text-sm font-semibold group-hover:text-primary transition-all duration-300 group-hover:scale-105">
                 {card.title}
               </CardTitle>
-              <div className="transition-all duration-300">
-                <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${getIconColor(card.gradient)} transition-all duration-300`} />
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm">
+                <Icon className="h-4 w-4 text-primary group-hover:scale-125 transition-all duration-300" />
               </div>
             </CardHeader>
-            {/* Compact card content: Reduced padding and font sizes */}
-            <CardContent className="relative z-10 px-3 sm:px-4 pb-3 sm:pb-4">
-              <div className={`text-xl sm:text-2xl md:text-3xl font-bold transition-all duration-300 mb-0.5 text-foreground group-hover:text-primary flex items-baseline gap-1`}>
-                {card.isDecimal || card.title.includes("Price") || card.title.includes("السعر") || card.title.includes("Area") || card.title.includes("المساحة") ? (
-                  <>
-                    {formatNumber(card.value, card.isDecimal ? 2 : (card.value < 1000 ? 2 : 0))}
-                    {card.unitImage ? (
-                      <Image 
-                        src={card.unitImage.startsWith('/') ? card.unitImage : `/${card.unitImage}`} 
-                        alt="unit" 
-                        width={24} 
-                        height={24} 
-                        className="inline-block ml-1"
-                        style={{ width: 'auto', height: '1em' }}
-                      />
-                    ) : card.unit && (
-                      <span className="text-sm sm:text-base md:text-lg text-muted-foreground font-normal">
-                        {card.unit}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <AnimatedCounter value={card.value} delay={index * 100} />
-                    {card.unitImage ? (
-                      <Image 
-                        src={card.unitImage.startsWith('/') ? card.unitImage : `/${card.unitImage}`} 
-                        alt="unit" 
-                        width={24} 
-                        height={24} 
-                        className="inline-block ml-1"
-                        style={{ width: 'auto', height: '1em' }}
-                      />
-                    ) : card.unit && (
-                      <span className="text-sm sm:text-base md:text-lg text-muted-foreground font-normal">
-                        {card.unit}
-                      </span>
-                    )}
-                  </>
-                )}
+            <CardContent className="relative z-10">
+              <div className="text-3xl font-bold group-hover:text-primary transition-all duration-300 mb-1 group-hover:scale-105 inline-block">
+                <AnimatedCounter value={card.value} delay={index * 100} />
               </div>
               {!card.available && (
-                <p className="text-xs text-muted-foreground mt-1">{t.kpi.notAvailable}</p>
+                <p className="text-xs text-muted-foreground mt-1 animate-pulse-slow">{t.kpi.notAvailable}</p>
               )}
             </CardContent>
+            
+            {/* Shine effect on hover */}
+            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           </Card>
         );
       })}

@@ -5,13 +5,12 @@ import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { isAuthenticated, isAdmin, getCurrentUser } from "@/lib/auth";
+import { isAuthenticated } from "@/lib/auth";
 import { getTranslations, getLanguage, setLanguage, type Language } from "@/lib/i18n";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Languages, Save, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { UserManagement } from "@/components/user-management";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -62,25 +61,18 @@ export default function SettingsPage() {
 
   const t = getTranslations(lang);
   const isRTL = lang === "ar";
-  const currentUser = getCurrentUser();
-  const userIsAdmin = isAdmin();
 
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
-      <div className="flex-1 overflow-y-auto lg:ml-0">
-        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 pt-16 lg:pt-6">
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6 space-y-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">{t.sidebar.settings}</h1>
-            <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+            <h1 className="text-3xl font-bold">{t.sidebar.settings}</h1>
+            <p className="text-muted-foreground mt-2">
               {isRTL ? "إدارة إعدادات التطبيق" : "Manage application settings"}
             </p>
           </div>
-
-          {/* User Management - Only for Admins */}
-          {userIsAdmin && (
-            <UserManagement isRTL={isRTL} />
-          )}
 
           {/* Language Settings */}
           <Card>
@@ -132,7 +124,7 @@ export default function SettingsPage() {
                   <Button
                     variant={theme === "light" ? "default" : "outline"}
                     onClick={() => handleThemeChange("light")}
-                    className="flex-1 min-h-[44px]"
+                    className="flex-1"
                   >
                     <Sun className="h-4 w-4 ml-2" />
                     {isRTL ? "فاتح" : "Light"}
@@ -140,7 +132,7 @@ export default function SettingsPage() {
                   <Button
                     variant={theme === "dark" ? "default" : "outline"}
                     onClick={() => handleThemeChange("dark")}
-                    className="flex-1 min-h-[44px]"
+                    className="flex-1"
                   >
                     <Moon className="h-4 w-4 ml-2" />
                     {isRTL ? "داكن" : "Dark"}
@@ -155,7 +147,7 @@ export default function SettingsPage() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="min-w-[120px] min-h-[44px]"
+              className="min-w-[120px]"
             >
               {saving ? (
                 <>

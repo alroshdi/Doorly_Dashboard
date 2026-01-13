@@ -1,141 +1,208 @@
 import { NextResponse } from "next/server";
-import { google } from "googleapis";
-import { subDays, format } from "date-fns";
 
-// Mark this route as dynamic
-export const dynamic = 'force-dynamic';
+const INSTAGRAM_BUSINESS_ID = "17841451550237400";
+const INSTAGRAM_GRAPH_API_BASE = "https://graph.facebook.com/v18.0";
 
-// Generate mock Instagram data for testing
-function generateMockInstagramData() {
-  const mockData: any[] = [];
-  const now = new Date();
-  const types = ["IMAGE", "VIDEO", "REEL"];
-  
-  // Generate 35 posts spread across last 30 days
-  for (let i = 0; i < 35; i++) {
-    const daysAgo = Math.floor(Math.random() * 30);
-    const postDate = subDays(now, daysAgo);
-    const hour = Math.floor(Math.random() * 24);
-    postDate.setHours(hour, Math.floor(Math.random() * 60), 0, 0);
-    
-    const type = types[Math.floor(Math.random() * types.length)];
-    const baseEngagement = type === "REEL" ? 500 : type === "VIDEO" ? 300 : 200;
-    
-    const likes = Math.floor(baseEngagement * (0.7 + Math.random() * 0.6));
-    const comments = Math.floor(likes * (0.05 + Math.random() * 0.1));
-    const saves = Math.floor(likes * (0.02 + Math.random() * 0.05));
-    const reach = Math.floor(likes * (1.5 + Math.random() * 1.5));
-    
-    mockData.push({
-      media_id: `mock_${i + 1}_${Date.now()}`,
-      media_type: type,
-      caption: `Mock Instagram post ${i + 1} - ${type.toLowerCase()} content with engaging caption text`,
-      likes: likes,
-      comments: comments,
-      saves: saves,
-      reach: reach,
-      timestamp: postDate.toISOString(),
-      // Also support lowercase column names from Google Sheets
-      media_id_lower: `mock_${i + 1}_${Date.now()}`,
-      media_type_lower: type.toLowerCase(),
-      likes_lower: likes,
-      comments_lower: comments,
-      saves_lower: saves,
-      reach_lower: reach,
-      timestamp_lower: postDate.toISOString(),
-    });
-  }
-  
-  return mockData;
+let cache: { data: any; timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+interface MediaItem {
+  id: string;
+  caption?: string;
+  media_type: string;
+  timestamp: string;
+  like_count?: number;
+  comments_count?: number;
 }
 
-let cache: { data: any[]; timestamp: number } | null = null;
-const CACHE_DURATION = 30 * 1000; // 30 seconds
+interface InsightValue {
+  value: number;
+}
+
+interface InsightsResponse {
+  data: Array<{
+    name: string;
+    values: InsightValue[];
+    title: string;
+    description: string;
+  }>;
+}
+
+async function getAccessToken(): Promise<string> {
+  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+  if (!token) {
+    throw new Error("INSTAGRAM_ACCESS_TOKEN environment variable is not set");
+  }
+  return token;
+}
+
+async function fetchMediaList(accessToken: string): Promise<MediaItem[]> {
+  const url = `${INSTAGRAM_GRAPH_API_BASE}/${INSTAGRAM_BUSINESS_ID}/media`;
+  const params = new URLSearchParams({
+    fields: "id,caption,media_type,timestamp,like_count,comments_count",
+    access_token: accessToken,
+    limit: "100", // Maximum allowed per request
+  });
+
+  const allMedia: MediaItem[] = [];
+  let nextUrl: string | null = `${url}?${params}`;
+
+  // Handle pagination
+  while (nextUrl) {
+    const response: Response = await fetch(nextUrl);
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: { message: "Unknown error" } }));
+      throw new Error(`Failed to fetch media list: ${error.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (data.data && Array.isArray(data.data)) {
+      allMedia.push(...data.data);
+    }
+
+    // Check for next page
+    nextUrl = data.paging?.next || null;
+  }
+
+  return allMedia;
+}
+
+async function fetchMediaInsights(
+  mediaId: string,
+  mediaType: string,
+  accessToken: string
+): Promise<{
+  impressions?: number;
+  reach?: number;
+  engagement?: number;
+  saved?: number;
+  plays?: number;
+  total_interactions?: number;
+}> {
+  let metrics: string;
+  
+  if (mediaType === "IMAGE" || mediaType === "CAROUSEL_ALBUM") {
+    metrics = "impressions,reach,engagement,saved";
+  } else if (mediaType === "VIDEO") {
+    metrics = "impressions,reach,plays,total_interactions";
+  } else {
+    // Default for other types
+    metrics = "impressions,reach,engagement";
+  }
+
+  const url = `${INSTAGRAM_GRAPH_API_BASE}/${mediaId}/insights`;
+  const params = new URLSearchParams({
+    metric: metrics,
+    access_token: accessToken,
+  });
+
+  const response = await fetch(`${url}?${params}`);
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: "Unknown error" } }));
+    console.error(`Failed to fetch insights for ${mediaId}:`, error);
+    return {};
+  }
+
+  const insightsData: InsightsResponse = await response.json();
+  const insights: any = {};
+
+  // Parse insights response
+  if (insightsData.data) {
+    insightsData.data.forEach((item) => {
+      const value = item.values?.[0]?.value || 0;
+      insights[item.name] = value;
+    });
+  }
+
+  return insights;
+}
 
 async function getInstagramData() {
   try {
-    const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY?.replace(/\\n/g, "\n");
-    const sheetId = process.env.GOOGLE_SHEET_ID;
-    const range = "insta!A:Z"; // Fetch from "insta" sheet
-
-    if (!serviceAccountEmail || !serviceAccountKey || !sheetId) {
-      throw new Error("Missing Google Sheets credentials");
-    }
-
-    const auth = new google.auth.JWT({
-      email: serviceAccountEmail,
-      key: serviceAccountKey,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    });
-
-    const sheets = google.sheets({ version: "v4", auth });
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: sheetId,
-      range: range,
-    });
-
-    const rows = response.data.values;
-    if (!rows || rows.length === 0) {
-      return [];
-    }
-
-    // First row is headers
-    const headers = rows[0].map((h: string) => 
-      h.toLowerCase().replace(/\s+/g, "_").trim()
-    );
+    const accessToken = await getAccessToken();
     
-    // Convert rows to objects
-    const data = rows.slice(1).map((row: any[]) => {
-      const obj: any = {};
-      headers.forEach((header: string, index: number) => {
-        obj[header] = row[index] || "";
-      });
-      return obj;
-    });
+    // Fetch media list
+    const mediaList = await fetchMediaList(accessToken);
+    
+    // Fetch insights for each media item
+    const postsWithInsights = await Promise.all(
+      mediaList.map(async (media) => {
+        try {
+          const insights = await fetchMediaInsights(media.id, media.media_type, accessToken);
+          
+          // Map API response to our data structure
+          const reach = insights.reach || 0;
+          const impressions = insights.impressions || 0;
+          const saved = insights.saved || 0;
+          
+          // For engagement, use the appropriate field based on media type
+          let engagement = 0;
+          if (media.media_type === "VIDEO") {
+            engagement = insights.total_interactions || 0;
+          } else {
+            engagement = insights.engagement || 0;
+          }
+          
+          // Calculate engagement rate
+          const engagementRate = reach > 0 ? (engagement / reach) * 100 : 0;
+          
+          // Get likes and comments from media item
+          const likes = media.like_count || 0;
+          const comments = media.comments_count || 0;
+          
+          return {
+            id: media.id,
+            type: media.media_type,
+            caption: media.caption || "",
+            reach: reach,
+            impressions: impressions,
+            saved: saved,
+            engagement: engagement,
+            engagementRate: engagementRate,
+            timestamp: media.timestamp,
+            likes: likes,
+            comments: comments,
+          };
+        } catch (error: any) {
+          console.error(`Error fetching insights for media ${media.id}:`, error);
+          // Return media with default values if insights fail
+          return {
+            id: media.id,
+            type: media.media_type,
+            caption: media.caption || "",
+            reach: 0,
+            impressions: 0,
+            saved: 0,
+            engagement: 0,
+            engagementRate: 0,
+            timestamp: media.timestamp,
+            likes: media.like_count || 0,
+            comments: media.comments_count || 0,
+          };
+        }
+      })
+    );
 
-    return data;
+    return {
+      posts: postsWithInsights,
+      timestamp: new Date().toISOString(),
+    };
   } catch (error: any) {
-    console.error("Error fetching Instagram data from Google Sheets:", error);
+    console.error("Error fetching Instagram data:", error);
     throw error;
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    // Check for cache bypass parameter
-    const { searchParams } = new URL(request.url);
-    const bypassCache = searchParams.get("refresh") === "true" || searchParams.get("nocache") === "true";
-    
-    // Check cache (unless bypassed)
-    if (!bypassCache && cache && Date.now() - cache.timestamp < CACHE_DURATION) {
+    // Check cache
+    if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
       return NextResponse.json(cache.data);
     }
 
-    // Fetch fresh data with timeout
-    const fetchPromise = getInstagramData();
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Request timeout: Google Sheets API took too long. Please check your credentials and sheet permissions.")), 20000)
-    );
-    
-    let data: any[];
-    try {
-      data = await Promise.race([fetchPromise, timeoutPromise]) as any[];
-    } catch (raceError: any) {
-      throw raceError;
-    }
-    
-    // Validate data is an array
-    if (!Array.isArray(data)) {
-      console.warn("Google Sheets returned non-array data, converting to array");
-      data = [];
-    }
-    
-    // If no data or empty array, return mock data for testing
-    if (data.length === 0) {
-      console.log("No Instagram data found, returning mock data for testing");
-      data = generateMockInstagramData();
-    }
+    const data = await getInstagramData();
     
     // Update cache
     cache = {
@@ -145,28 +212,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error("API Error:", error);
-    let errorMessage = error.message || "Failed to fetch Instagram data from Google Sheets";
-    
-    // Provide more helpful error messages
-    if (errorMessage.includes("Missing Google Sheets credentials")) {
-      errorMessage = "Google Sheets credentials are missing. Please configure GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY, and GOOGLE_SHEET_ID in environment variables.";
-    } else if (errorMessage.includes("timeout")) {
-      errorMessage = "Request timeout. Google Sheets API is taking too long. Please check your sheet permissions and try again.";
-    } else if (errorMessage.includes("permission") || errorMessage.includes("403")) {
-      errorMessage = "Permission denied. Please check that your service account has access to the Google Sheet.";
-    } else if (errorMessage.includes("404") || errorMessage.includes("not found")) {
-      errorMessage = "Google Sheet not found. Please check your GOOGLE_SHEET_ID environment variable.";
-    }
-    
-    // Return proper error response
+    console.error("Error in Instagram API:", error);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === "development" ? error.stack : undefined
-      },
+      { error: error.message || "Failed to fetch Instagram data" },
       { status: 500 }
     );
   }
 }
-

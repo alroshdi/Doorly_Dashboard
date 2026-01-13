@@ -11,11 +11,6 @@ interface LineChartComponentProps {
 }
 
 export function LineChartComponent({ data, title }: LineChartComponentProps) {
-  // Format numbers with thousand separators
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('ar-DZ').format(num);
-  };
-
   // Filter out zero values and limit to top 10 for time-based data
   const filteredData = (data || [])
     .filter(item => item.value > 0)
@@ -73,47 +68,30 @@ export function LineChartComponent({ data, title }: LineChartComponentProps) {
     return tickItem;
   };
 
-  // Calculate insights for analytical text
-  const sortedData = [...displayData].filter(d => d.value > 0).sort((a, b) => b.value - a.value);
-  const peakValue = sortedData.length > 0 ? sortedData[0] : null;
-  const recentTrend = displayData.length >= 2 
-    ? displayData[displayData.length - 1].value - displayData[displayData.length - 2].value
-    : 0;
-  const insight = peakValue 
-    ? `Peak: ${formatNumber(peakValue.value)} requests on ${peakValue.name}. ${recentTrend > 0 ? 'Recent trend: increasing.' : recentTrend < 0 ? 'Recent trend: decreasing.' : 'Recent trend: stable.'}`
-    : 'No data available for analysis.';
-
   return (
-    <Card className="animate-fade-in transition-all duration-300 group border border-border/50 bg-card">
-      {/* Compact header with analytical insight */}
-      <CardHeader className="pb-2 pt-3 px-3 sm:px-4">
-        <CardTitle className="text-base sm:text-lg font-bold group-hover:text-primary transition-colors duration-300">{title}</CardTitle>
-        {/* Analytical insight: 1-2 lines explaining the data */}
-        <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">{insight}</p>
-      </CardHeader>
-      <CardContent className="pt-2 px-3 sm:px-4 pb-3">
+    <Card className="animate-fade-in hover-lift transition-all duration-500 group border-2 hover:border-primary/30 bg-gradient-to-br from-card to-card/95">
+      <CardContent className="pt-6">
         <div className="relative">
-          {/* Compact height for better density */}
-          <ResponsiveContainer width="100%" height={200} className="sm:h-[220px]">
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart data={displayData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground) / 0.2)" />
               <XAxis 
                 dataKey="name" 
                 angle={-45}
                 textAnchor="end"
-                height={60}
+                height={80}
                 tickFormatter={formatXAxisLabel}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                 style={{ transition: 'all 0.3s ease' }}
               />
               <YAxis 
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                 tickFormatter={(value) => {
                   // Format numbers with thousand separators
                   return new Intl.NumberFormat('ar-DZ').format(value);
                 }}
-                width={50}
-                tickMargin={8}
+                width={70}
+                tickMargin={10}
                 axisLine={false}
                 tickLine={false}
               />
@@ -188,7 +166,7 @@ export function LineChartComponent({ data, title }: LineChartComponentProps) {
             </LineChart>
           </ResponsiveContainer>
           {year && (
-            <div className="text-center text-lg sm:text-xl font-bold text-foreground mt-1 animate-fade-in">
+            <div className="text-center text-xl font-bold text-foreground mt-1 animate-fade-in">
               {year}
             </div>
           )}
