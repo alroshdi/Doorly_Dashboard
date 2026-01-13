@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { isAuthenticated } from "@/lib/auth";
 import { getTranslations, getLanguage, setLanguage, type Language } from "@/lib/i18n";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Languages, Save, Loader2 } from "lucide-react";
+import { Moon, Sun, Languages, Save, Loader2, Snowflake } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { toggleSnow } from "@/components/snow-effect";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function SettingsPage() {
   const [lang, setLangState] = useState<Language>("ar");
   const [mounted, setMounted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [snowEnabled, setSnowEnabled] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -26,6 +28,10 @@ export default function SettingsPage() {
     }
     setMounted(true);
     setLangState(getLanguage());
+    
+    // Check snow preference
+    const snowPreference = localStorage.getItem("doorly_snow_enabled");
+    setSnowEnabled(snowPreference === "true");
   }, [router]);
 
   const handleLanguageChange = (newLang: Language) => {
@@ -38,6 +44,11 @@ export default function SettingsPage() {
 
   const handleThemeChange = (newTheme: "light" | "dark") => {
     setTheme(newTheme);
+  };
+
+  const handleSnowToggle = (enabled: boolean) => {
+    setSnowEnabled(enabled);
+    toggleSnow(enabled);
   };
 
   const handleSave = async () => {
@@ -138,6 +149,35 @@ export default function SettingsPage() {
                     {isRTL ? "داكن" : "Dark"}
                   </Button>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Snow Effect Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Snowflake className="h-5 w-5" />
+                {isRTL ? "تأثير الثلج" : "Snow Effect"}
+              </CardTitle>
+              <CardDescription>
+                {isRTL ? "تفعيل تأثير الثلج على الصفحة" : "Enable snow effect on the page"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>{isRTL ? "تفعيل الثلج" : "Let it snow"}</Label>
+                <Button
+                  variant={snowEnabled ? "default" : "outline"}
+                  onClick={() => handleSnowToggle(!snowEnabled)}
+                  className="flex items-center gap-2"
+                >
+                  <Snowflake className="h-4 w-4" />
+                  {snowEnabled 
+                    ? (isRTL ? "مفعل" : "Enabled") 
+                    : (isRTL ? "معطل" : "Disabled")
+                  }
+                </Button>
               </div>
             </CardContent>
           </Card>

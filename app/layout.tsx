@@ -3,6 +3,7 @@ import { Inter, Cairo } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/components/language-provider";
+import { SnowEffect } from "@/components/snow-effect";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -40,6 +41,7 @@ export default function RootLayout({
         >
           <LanguageProvider>
             {children}
+            <SnowEffect />
           </LanguageProvider>
         </ThemeProvider>
       </body>
