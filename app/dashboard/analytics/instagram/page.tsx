@@ -110,20 +110,52 @@ export default function InstagramAnalyticsPage() {
     }
 
     if (error) {
+      const isConfigError = error.includes("INSTAGRAM_ACCESS_TOKEN") || error.includes("environment variable");
+      
       return (
         <div className="flex-1 flex items-center justify-center p-6">
           <Card className="max-w-md animate-fade-in">
             <CardHeader>
-              <CardTitle className="text-destructive">Error</CardTitle>
+              <CardTitle className="text-destructive">
+                {isRTL ? "خطأ في الإعدادات" : "Configuration Error"}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground mb-4">{error}</p>
-              <button
-                onClick={fetchData}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                {isRTL ? "إعادة المحاولة" : "Retry"}
-              </button>
+              {isConfigError ? (
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">
+                    {isRTL 
+                      ? "لم يتم تكوين رمز الوصول إلى Instagram. يرجى إضافة متغير البيئة INSTAGRAM_ACCESS_TOKEN في إعدادات Vercel."
+                      : "Instagram access token is not configured. Please add the INSTAGRAM_ACCESS_TOKEN environment variable in Vercel settings."}
+                  </p>
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-sm font-semibold mb-2">
+                      {isRTL ? "خطوات الإعداد:" : "Setup Steps:"}
+                    </p>
+                    <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                      <li>{isRTL ? "انتقل إلى إعدادات المشروع في Vercel" : "Go to your Vercel project settings"}</li>
+                      <li>{isRTL ? "اختر Environment Variables" : "Select Environment Variables"}</li>
+                      <li>{isRTL ? "أضف INSTAGRAM_ACCESS_TOKEN مع رمز الوصول الخاص بك" : "Add INSTAGRAM_ACCESS_TOKEN with your access token"}</li>
+                      <li>{isRTL ? "أعد نشر المشروع" : "Redeploy the project"}</li>
+                    </ol>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {isRTL 
+                      ? "راجع ملف INSTAGRAM_API_SETUP.md للحصول على تعليمات مفصلة."
+                      : "See INSTAGRAM_API_SETUP.md for detailed instructions."}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-muted-foreground mb-4">{error}</p>
+              )}
+              <div className="mt-4">
+                <button
+                  onClick={fetchData}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors w-full"
+                >
+                  {isRTL ? "إعادة المحاولة" : "Retry"}
+                </button>
+              </div>
             </CardContent>
           </Card>
         </div>
