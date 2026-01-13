@@ -145,11 +145,19 @@ export default function InstagramAnalyticsPage() {
       let errorMessage = error || data?.error?.message || "Failed to fetch Instagram data";
       
       if (isMetaError) {
-        if (errorCode === "META_190" || errorCode === "META_463") {
+        if (errorCode === "META_190" || errorCode === "META_463" || errorCode === "META_TOKEN_EXPIRED" || errorCode === "META_INVALID_TOKEN") {
           errorTitle = isRTL ? "انتهت صلاحية الرمز" : "Token Expired";
-          errorMessage = isRTL 
-            ? "انتهت صلاحية رمز الوصول إلى Instagram. يرجى إنشاء رمز جديد."
-            : "Instagram access token has expired. Please generate a new token.";
+          // Extract the expiration message if available
+          const expirationMatch = errorMessage.match(/Session has expired on (.+?)\./);
+          if (expirationMatch) {
+            errorMessage = isRTL 
+              ? `انتهت صلاحية رمز الوصول إلى Instagram في ${expirationMatch[1]}. يرجى إنشاء رمز جديد.`
+              : `Instagram access token expired on ${expirationMatch[1]}. Please generate a new token.`;
+          } else {
+            errorMessage = isRTL 
+              ? "انتهت صلاحية رمز الوصول إلى Instagram. يرجى إنشاء رمز جديد."
+              : "Instagram access token has expired. Please generate a new token.";
+          }
         } else if (errorCode === "META_PERMISSION_DENIED") {
           errorTitle = isRTL ? "خطأ في الصلاحيات" : "Permission Error";
           errorMessage = isRTL

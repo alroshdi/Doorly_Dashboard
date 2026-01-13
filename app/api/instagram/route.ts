@@ -52,9 +52,35 @@ function getAccessToken(): { token: string; error: null } | { token: null; error
 }
 
 function parseMetaAPIError(error: any): TokenError | null {
-  if (!error || typeof error !== "object") return null;
+  if (!error) return null;
+
+  // Handle string errors (like "Failed to fetch media list: Error validating access token: Session has expired...")
+  if (typeof error === "string") {
+    const errorLower = error.toLowerCase();
+    if (errorLower.includes("session has expired") || 
+        errorLower.includes("token has expired") || 
+        errorLower.includes("expired") ||
+        errorLower.includes("error validating access token")) {
+      return {
+        code: "META_TOKEN_EXPIRED",
+        message: error,
+        isExpired: true,
+        isMissing: false,
+      };
+    }
+    if (errorLower.includes("invalid") && errorLower.includes("token")) {
+      return {
+        code: "META_INVALID_TOKEN",
+        message: error,
+        isExpired: false,
+        isMissing: false,
+      };
+    }
+  }
 
   // Check for Meta API error structure
+  if (typeof error !== "object") return null;
+
   const errorData = error.error || error;
   const errorCode = errorData.code || errorData.error_code || errorData.error_subcode;
   const errorMessage = errorData.message || errorData.error_user_msg || errorData.error_user_title || "";
@@ -69,6 +95,19 @@ function parseMetaAPIError(error: any): TokenError | null {
     return {
       code: `META_${errorCode}`,
       message: errorMessage || (errorCode === 190 ? "Invalid OAuth 2.0 Access Token" : "Access token has expired"),
+      isExpired: true,
+      isMissing: false,
+    };
+  }
+
+  // Check error message for expiration keywords even if code doesn't match
+  const messageLower = errorMessage.toLowerCase();
+  if (messageLower.includes("session has expired") || 
+      messageLower.includes("token has expired") || 
+      messageLower.includes("expired")) {
+    return {
+      code: "META_TOKEN_EXPIRED",
+      message: errorMessage,
       isExpired: true,
       isMissing: false,
     };
@@ -111,8 +150,25 @@ async function fetchMediaList(accessToken: string): Promise<{ data: MediaItem[];
         return { data: null, error: metaError };
       }
       
+      // Also check the error message string for expiration
+      const errorMessage = errorData.error?.message || errorData.message || response.statusText;
+      const stringError = parseMetaAPIError(errorMessage);
+      if (stringError) {
+        console.error(`[Instagram API] Meta API Error ${stringError.code}: ${stringError.message}`);
+        return { data: null, error: stringError };
+      }
+      
+      // If error message contains expiration keywords, parse it
+      if (errorMessage && typeof errorMessage === "string") {
+        const messageError = parseMetaAPIError(`Failed to fetch media list: ${errorMessage}`);
+        if (messageError) {
+          console.error(`[Instagram API] Meta API Error ${messageError.code}: ${messageError.message}`);
+          return { data: null, error: messageError };
+        }
+      }
+      
       console.error(`[Instagram API] Failed to fetch media list:`, errorData);
-      throw new Error(`Failed to fetch media list: ${errorData.error?.message || response.statusText}`);
+      throw new Error(`Failed to fetch media list: ${errorMessage}`);
     }
 
     const data = await response.json();
