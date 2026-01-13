@@ -42,18 +42,39 @@ export default function InstagramAnalyticsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError("");
       // Add cache-busting parameter to ensure fresh data
       const response = await fetch(`/api/instagram?t=${Date.now()}`);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to fetch Instagram data");
-      }
       const result = await response.json();
+      
+      // Check if API returned an error object
+      if (result.error) {
+        const errorObj = result.error;
+        let errorMessage = errorObj.message || "Failed to fetch Instagram data";
+        
+        // Add specific error codes to message for logging
+        if (errorObj.code) {
+          console.error(`[Instagram API] Error ${errorObj.code}: ${errorMessage}`);
+          errorMessage = `${errorObj.code}: ${errorMessage}`;
+        }
+        
+        setError(errorMessage);
+        setData({ ...result, error: errorObj }); // Store data with error for conditional rendering
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error(result.error?.message || "Failed to fetch Instagram data");
+      }
+      
       setData(result);
       setError("");
     } catch (err: any) {
-      setError(err.message || "Failed to load Instagram data");
-      console.error("Error fetching Instagram data:", err);
+      const errorMessage = err.message || "Failed to load Instagram data";
+      setError(errorMessage);
+      console.error("[Instagram Page] Error fetching data:", err);
+      // Set empty data to prevent crashes
+      setData({ posts: [], timestamp: new Date().toISOString(), error: null });
     } finally {
       setLoading(false);
     }
@@ -109,25 +130,58 @@ export default function InstagramAnalyticsPage() {
       );
     }
 
-    if (error) {
-      const isConfigError = error.includes("INSTAGRAM_ACCESS_TOKEN") || error.includes("environment variable");
+    // Check for token errors (missing or expired)
+    const hasTokenError = data?.error && (data.error.isMissing || data.error.isExpired);
+    const errorCode = data?.error?.code || "";
+    const isMetaError = errorCode.startsWith("META_");
+    
+    if (error || hasTokenError) {
+      const isConfigError = error.includes("INSTAGRAM_ACCESS_TOKEN") || 
+                           error.includes("environment variable") || 
+                           hasTokenError;
+      
+      // Determine error type and message
+      let errorTitle = isRTL ? "خطأ في الإعدادات" : "Configuration Error";
+      let errorMessage = error || data?.error?.message || "Failed to fetch Instagram data";
+      
+      if (isMetaError) {
+        if (errorCode === "META_190" || errorCode === "META_463") {
+          errorTitle = isRTL ? "انتهت صلاحية الرمز" : "Token Expired";
+          errorMessage = isRTL 
+            ? "انتهت صلاحية رمز الوصول إلى Instagram. يرجى إنشاء رمز جديد."
+            : "Instagram access token has expired. Please generate a new token.";
+        } else if (errorCode === "META_PERMISSION_DENIED") {
+          errorTitle = isRTL ? "خطأ في الصلاحيات" : "Permission Error";
+          errorMessage = isRTL
+            ? "لا توجد صلاحيات كافية. يرجى التحقق من صلاحيات الرمز."
+            : "Insufficient permissions. Please check your token permissions.";
+        }
+      }
       
       return (
         <div className="flex-1 flex items-center justify-center p-6">
           <Card className="max-w-md animate-fade-in">
             <CardHeader>
-              <CardTitle className="text-destructive">
-                {isRTL ? "خطأ في الإعدادات" : "Configuration Error"}
-              </CardTitle>
+              <CardTitle className="text-destructive">{errorTitle}</CardTitle>
             </CardHeader>
             <CardContent>
               {isConfigError ? (
                 <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    {isRTL 
-                      ? "لم يتم تكوين رمز الوصول إلى Instagram. يرجى إضافة متغير البيئة INSTAGRAM_ACCESS_TOKEN في إعدادات Vercel."
-                      : "Instagram access token is not configured. Please add the INSTAGRAM_ACCESS_TOKEN environment variable in Vercel settings."}
-                  </p>
+                  <p className="text-muted-foreground">{errorMessage}</p>
+                  
+                  {isMetaError && (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 rounded-lg">
+                      <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-1">
+                        {isRTL ? "كود الخطأ:" : "Error Code:"} {errorCode}
+                      </p>
+                      <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                        {isRTL 
+                          ? "تم تسجيل هذا الخطأ في سجلات الخادم للمراجعة."
+                          : "This error has been logged in server logs for review."}
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="bg-muted p-4 rounded-lg">
                     <p className="text-sm font-semibold mb-2">
                       {isRTL ? "خطوات الإعداد:" : "Setup Steps:"}
@@ -135,7 +189,7 @@ export default function InstagramAnalyticsPage() {
                     <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
                       <li>{isRTL ? "انتقل إلى إعدادات المشروع في Vercel" : "Go to your Vercel project settings"}</li>
                       <li>{isRTL ? "اختر Environment Variables" : "Select Environment Variables"}</li>
-                      <li>{isRTL ? "أضف INSTAGRAM_ACCESS_TOKEN مع رمز الوصول الخاص بك" : "Add INSTAGRAM_ACCESS_TOKEN with your access token"}</li>
+                      <li>{isRTL ? "أضف أو حدث INSTAGRAM_ACCESS_TOKEN" : "Add or update INSTAGRAM_ACCESS_TOKEN"}</li>
                       <li>{isRTL ? "أعد نشر المشروع" : "Redeploy the project"}</li>
                     </ol>
                   </div>
@@ -146,7 +200,7 @@ export default function InstagramAnalyticsPage() {
                   </p>
                 </div>
               ) : (
-                <p className="text-muted-foreground mb-4">{error}</p>
+                <p className="text-muted-foreground mb-4">{errorMessage}</p>
               )}
               <div className="mt-4">
                 <button
@@ -162,12 +216,22 @@ export default function InstagramAnalyticsPage() {
       );
     }
 
-    if (!data) {
+    if (!data || !data.posts || data.posts.length === 0) {
+      // Don't show "no data" if there's an error - error is already handled above
+      if (data?.error) {
+        return null; // Error already rendered above
+      }
+      
       return (
         <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground">{isRTL ? "لا توجد بيانات" : "No data available"}</p>
         </div>
       );
+    }
+
+    // Prevent rendering analytics if there's any error
+    if (data.error) {
+      return null; // Error already rendered above
     }
 
     const kpis = calculateInstagramKPIs(data);

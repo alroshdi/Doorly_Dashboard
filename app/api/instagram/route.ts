@@ -28,15 +28,65 @@ interface InsightsResponse {
   }>;
 }
 
-async function getAccessToken(): Promise<string> {
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-  if (!token) {
-    throw new Error("INSTAGRAM_ACCESS_TOKEN environment variable is not set");
-  }
-  return token;
+interface TokenError {
+  code: string;
+  message: string;
+  isExpired: boolean;
+  isMissing: boolean;
 }
 
-async function fetchMediaList(accessToken: string): Promise<MediaItem[]> {
+function getAccessToken(): { token: string; error: null } | { token: null; error: TokenError } {
+  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+  if (!token || token.trim() === "") {
+    return {
+      token: null,
+      error: {
+        code: "MISSING_TOKEN",
+        message: "INSTAGRAM_ACCESS_TOKEN environment variable is not set",
+        isExpired: false,
+        isMissing: true,
+      },
+    };
+  }
+  return { token, error: null };
+}
+
+function parseMetaAPIError(error: any): TokenError | null {
+  if (!error || typeof error !== "object") return null;
+
+  // Check for Meta API error structure
+  const errorData = error.error || error;
+  const errorCode = errorData.code || errorData.error_code || errorData.error_subcode;
+  const errorMessage = errorData.message || errorData.error_user_msg || errorData.error_user_title || "";
+
+  // Meta API error codes:
+  // 190: Invalid OAuth 2.0 Access Token
+  // 463: Expired access token
+  // 10: Permission denied
+  // 200: Requires extended permission
+  
+  if (errorCode === 190 || errorCode === 463) {
+    return {
+      code: `META_${errorCode}`,
+      message: errorMessage || (errorCode === 190 ? "Invalid OAuth 2.0 Access Token" : "Access token has expired"),
+      isExpired: true,
+      isMissing: false,
+    };
+  }
+
+  if (errorCode === 10) {
+    return {
+      code: "META_PERMISSION_DENIED",
+      message: errorMessage || "Permission denied. Please check your token permissions.",
+      isExpired: false,
+      isMissing: false,
+    };
+  }
+
+  return null;
+}
+
+async function fetchMediaList(accessToken: string): Promise<{ data: MediaItem[]; error: null } | { data: null; error: TokenError }> {
   const url = `${INSTAGRAM_GRAPH_API_BASE}/${INSTAGRAM_BUSINESS_ID}/media`;
   const params = new URLSearchParams({
     fields: "id,caption,media_type,timestamp,like_count,comments_count",
@@ -52,11 +102,30 @@ async function fetchMediaList(accessToken: string): Promise<MediaItem[]> {
     const response: Response = await fetch(nextUrl);
     
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: { message: "Unknown error" } }));
-      throw new Error(`Failed to fetch media list: ${error.error?.message || response.statusText}`);
+      const errorData = await response.json().catch(() => ({ error: { message: "Unknown error" } }));
+      
+      // Check for Meta API specific errors
+      const metaError = parseMetaAPIError(errorData);
+      if (metaError) {
+        console.error(`[Instagram API] Meta API Error ${metaError.code}: ${metaError.message}`);
+        return { data: null, error: metaError };
+      }
+      
+      console.error(`[Instagram API] Failed to fetch media list:`, errorData);
+      throw new Error(`Failed to fetch media list: ${errorData.error?.message || response.statusText}`);
     }
 
     const data = await response.json();
+    
+    // Check for errors in response
+    if (data.error) {
+      const metaError = parseMetaAPIError(data);
+      if (metaError) {
+        console.error(`[Instagram API] Meta API Error ${metaError.code}: ${metaError.message}`);
+        return { data: null, error: metaError };
+      }
+    }
+    
     if (data.data && Array.isArray(data.data)) {
       allMedia.push(...data.data);
     }
@@ -65,7 +134,7 @@ async function fetchMediaList(accessToken: string): Promise<MediaItem[]> {
     nextUrl = data.paging?.next || null;
   }
 
-  return allMedia;
+  return { data: allMedia, error: null };
 }
 
 async function fetchMediaInsights(
@@ -73,12 +142,15 @@ async function fetchMediaInsights(
   mediaType: string,
   accessToken: string
 ): Promise<{
-  impressions?: number;
-  reach?: number;
-  engagement?: number;
-  saved?: number;
-  plays?: number;
-  total_interactions?: number;
+  insights: {
+    impressions?: number;
+    reach?: number;
+    engagement?: number;
+    saved?: number;
+    plays?: number;
+    total_interactions?: number;
+  };
+  error: TokenError | null;
 }> {
   let metrics: string;
   
@@ -100,9 +172,17 @@ async function fetchMediaInsights(
   const response = await fetch(`${url}?${params}`);
   
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: { message: "Unknown error" } }));
-    console.error(`Failed to fetch insights for ${mediaId}:`, error);
-    return {};
+    const errorData = await response.json().catch(() => ({ error: { message: "Unknown error" } }));
+    
+    // Check for Meta API specific errors
+    const metaError = parseMetaAPIError(errorData);
+    if (metaError) {
+      console.error(`[Instagram API] Meta API Error ${metaError.code} for media ${mediaId}: ${metaError.message}`);
+      return { insights: {}, error: metaError };
+    }
+    
+    console.error(`[Instagram API] Failed to fetch insights for ${mediaId}:`, errorData);
+    return { insights: {}, error: null };
   }
 
   const insightsData: InsightsResponse = await response.json();
@@ -116,21 +196,68 @@ async function fetchMediaInsights(
     });
   }
 
-  return insights;
+  return { insights, error: null };
 }
 
 async function getInstagramData() {
   try {
-    const accessToken = await getAccessToken();
+    // Check token first
+    const tokenResult = getAccessToken();
+    if (tokenResult.error) {
+      console.error(`[Instagram API] ${tokenResult.error.code}: ${tokenResult.error.message}`);
+      return {
+        posts: [],
+        timestamp: new Date().toISOString(),
+        error: tokenResult.error,
+      };
+    }
+
+    const accessToken = tokenResult.token;
     
     // Fetch media list
-    const mediaList = await fetchMediaList(accessToken);
+    const mediaListResult = await fetchMediaList(accessToken);
+    if (mediaListResult.error) {
+      console.error(`[Instagram API] ${mediaListResult.error.code}: ${mediaListResult.error.message}`);
+      return {
+        posts: [],
+        timestamp: new Date().toISOString(),
+        error: mediaListResult.error,
+      };
+    }
+
+    const mediaList = mediaListResult.data;
+    let hasTokenError = false;
+    let tokenError: TokenError | null = null;
     
     // Fetch insights for each media item
     const postsWithInsights = await Promise.all(
       mediaList.map(async (media) => {
         try {
-          const insights = await fetchMediaInsights(media.id, media.media_type, accessToken);
+          const insightsResult = await fetchMediaInsights(media.id, media.media_type, accessToken);
+          
+          // Check for token errors in insights
+          if (insightsResult.error) {
+            if (!hasTokenError) {
+              hasTokenError = true;
+              tokenError = insightsResult.error;
+            }
+            // Return default values if token error
+            return {
+              id: media.id,
+              type: media.media_type,
+              caption: media.caption || "",
+              reach: 0,
+              impressions: 0,
+              saved: 0,
+              engagement: 0,
+              engagementRate: 0,
+              timestamp: media.timestamp,
+              likes: media.like_count || 0,
+              comments: media.comments_count || 0,
+            };
+          }
+          
+          const insights = insightsResult.insights;
           
           // Map API response to our data structure
           const reach = insights.reach || 0;
@@ -185,36 +312,87 @@ async function getInstagramData() {
       })
     );
 
+    // If we encountered a token error during insights fetching, return error
+    if (hasTokenError && tokenError) {
+      return {
+        posts: [],
+        timestamp: new Date().toISOString(),
+        error: tokenError,
+      };
+    }
+
     return {
       posts: postsWithInsights,
       timestamp: new Date().toISOString(),
+      error: null,
     };
   } catch (error: any) {
-    console.error("Error fetching Instagram data:", error);
-    throw error;
+    console.error("[Instagram API] Unexpected error:", error);
+    
+    // Try to parse as Meta API error
+    const metaError = parseMetaAPIError(error);
+    if (metaError) {
+      return {
+        posts: [],
+        timestamp: new Date().toISOString(),
+        error: metaError,
+      };
+    }
+    
+    // Generic error
+    return {
+      posts: [],
+      timestamp: new Date().toISOString(),
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: error.message || "Failed to fetch Instagram data",
+        isExpired: false,
+        isMissing: false,
+      },
+    };
   }
 }
 
 export async function GET() {
   try {
-    // Check cache
-    if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
+    // Check cache (but not for errors)
+    if (cache && Date.now() - cache.timestamp < CACHE_DURATION && !cache.data.error) {
       return NextResponse.json(cache.data);
     }
 
     const data = await getInstagramData();
     
-    // Update cache
-    cache = {
-      data,
-      timestamp: Date.now(),
-    };
+    // Only cache successful responses
+    if (!data.error) {
+      cache = {
+        data,
+        timestamp: Date.now(),
+      };
+    } else {
+      // Clear cache on error
+      cache = null;
+    }
+
+    // Return appropriate status code based on error type
+    if (data.error) {
+      const statusCode = data.error.isMissing || data.error.isExpired ? 401 : 500;
+      return NextResponse.json(data, { status: statusCode });
+    }
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error("Error in Instagram API:", error);
+    console.error("[Instagram API] Unexpected error in GET handler:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch Instagram data" },
+      { 
+        posts: [],
+        timestamp: new Date().toISOString(),
+        error: {
+          code: "UNEXPECTED_ERROR",
+          message: error.message || "Failed to fetch Instagram data",
+          isExpired: false,
+          isMissing: false,
+        }
+      },
       { status: 500 }
     );
   }

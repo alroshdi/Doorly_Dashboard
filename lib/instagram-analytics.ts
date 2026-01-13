@@ -13,6 +13,12 @@ export interface InstagramData {
     comments: number;
   }>;
   timestamp: string;
+  error?: {
+    code: string;
+    message: string;
+    isExpired: boolean;
+    isMissing: boolean;
+  } | null;
 }
 
 export interface InstagramKPIs {
