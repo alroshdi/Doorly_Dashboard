@@ -184,8 +184,9 @@ export function KPICards({ metrics }: KPICardsProps) {
     },
   ];
 
-  // Remove isPriceRange flag and include all cards together
-  const allCards = cards;
+  // Separate price range cards from regular cards
+  const priceRangeCards = cards.filter(card => card.isPriceRange === true);
+  const regularCards = cards.filter(card => !card.isPriceRange);
 
   // Render a single card
   const renderCard = (card: CardItem, index: number) => {
@@ -269,11 +270,18 @@ export function KPICards({ metrics }: KPICardsProps) {
   };
 
   return (
-    <div className="mb-3">
-      {/* All cards in one grid - responsive layout */}
+    <div className="mb-3 space-y-2">
+      {/* Regular cards - standard grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
-        {allCards.map((card, index) => renderCard(card, index))}
+        {regularCards.map((card, index) => renderCard(card, index))}
       </div>
+      
+      {/* Price range cards - full width, side by side */}
+      {priceRangeCards.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {priceRangeCards.map((card, index) => renderCard(card, index))}
+        </div>
+      )}
     </div>
   );
 }
