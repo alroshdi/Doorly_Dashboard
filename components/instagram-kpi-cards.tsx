@@ -114,7 +114,7 @@ export function InstagramKPICards({ kpis }: InstagramKPICardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 mb-3">
       {cards.map((card, index) => {
         const Icon = card.icon;
         return (
@@ -122,40 +122,22 @@ export function InstagramKPICards({ kpis }: InstagramKPICardsProps) {
             key={index} 
             className={`
               ${!card.available ? "opacity-60" : ""}
-              transition-all duration-500 ease-out
-              hover:shadow-2xl hover:scale-[1.03]
+              border border-border
+              bg-card
               hover:border-primary/50
-              cursor-default
-              group
-              bg-gradient-to-br from-card via-card/98 to-card/95
-              backdrop-blur-sm
-              border-2
-              hover:border-primary/40
-              hover-lift
-              relative overflow-hidden
-              before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/0 before:to-primary/0
-              hover:before:from-primary/5 hover:before:to-primary/10
-              before:transition-all before:duration-500
+              transition-colors
             `}
-            style={{ 
-              animationDelay: `${index * 80}ms`,
-              animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 80}ms both`
-            }}
           >
-            <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-            
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {card.title}
-                </CardTitle>
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${card.gradient} opacity-80 group-hover:opacity-100 transition-opacity`}>
-                  <Icon className="h-4 w-4 text-white" />
-                </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs font-semibold">
+                {card.title}
+              </CardTitle>
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <Icon className="h-3.5 w-3.5 text-primary" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="pt-0">
+              <div className="text-xl font-bold">
                 {card.isText ? (
                   <span className="text-foreground">{card.value}</span>
                 ) : card.isPercentage ? (

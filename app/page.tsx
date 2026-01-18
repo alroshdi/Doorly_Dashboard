@@ -33,12 +33,14 @@ export default function Home() {
 
   // Show loading state while checking authentication
   if (!mounted || loading) {
+    // Use consistent text during SSR to prevent hydration mismatch
+    const loadingText = mounted ? (getLanguage() === "ar" ? "جاري التحميل..." : "Loading...") : "جاري التحميل...";
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-secondary/20">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
           <p className="text-muted-foreground">
-            {getLanguage() === "ar" ? "جاري التحميل..." : "Loading..."}
+            {loadingText}
           </p>
         </div>
       </div>

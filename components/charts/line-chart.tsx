@@ -4,23 +4,44 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartData } from "@/lib/analytics";
 import { parseISO, format as formatDate } from "date-fns";
+import { getLanguage } from "@/lib/i18n";
+import { formatNumber } from "@/lib/chart-utils";
 
 interface LineChartComponentProps {
   data: ChartData[];
   title: string;
+  subtitle?: string;
+  insight?: string | null;
 }
 
-export function LineChartComponent({ data, title }: LineChartComponentProps) {
+export function LineChartComponent({ data, title, subtitle, insight }: LineChartComponentProps) {
+  const lang = getLanguage();
+  const isRTL = lang === "ar";
+
   // Filter out zero values and limit to top 10 for time-based data
   const filteredData = (data || [])
     .filter(item => item.value > 0)
     .sort((a, b) => a.name.localeCompare(b.name))
     .slice(-10); // Last 10 for time series
 
-  // If no data, show a single "0" value
-  const displayData = filteredData.length === 0 
-    ? [{ name: "No Data", value: 0 }]
-    : filteredData;
+  // If no data, show empty state
+  if (filteredData.length === 0) {
+    return (
+      <Card className="border border-border bg-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+          {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+        </CardHeader>
+        <CardContent className="pt-2">
+          <div className="text-center text-muted-foreground py-8">
+            {isRTL ? "لا توجد بيانات متاحة" : "No data available"}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const displayData = filteredData;
 
   // Find the last date with data (value > 0)
   const lastDateWithData = displayData
@@ -68,28 +89,43 @@ export function LineChartComponent({ data, title }: LineChartComponentProps) {
     return tickItem;
   };
 
+  // Calculate insights if not provided
+  const calculatedInsight = insight || (() => {
+    if (displayData.length === 0 || displayData[0].value === 0) return null;
+    const values = displayData.filter(d => d.value > 0).map(d => d.value);
+    if (values.length === 0) return null;
+    const maxValue = Math.max(...values);
+    const minValue = Math.min(...values);
+    const maxDate = displayData.find(d => d.value === maxValue)?.name || "";
+    const trend = maxValue > minValue ? (isRTL ? "زيادة" : "Increase") : (isRTL ? "انخفاض" : "Decrease");
+    return isRTL
+      ? `الذروة: ${formatNumber(maxValue)} في ${maxDate}. الاتجاه: ${trend}`
+      : `Peak: ${formatNumber(maxValue)} on ${maxDate}. Trend: ${trend}`;
+  })();
+
   return (
-    <Card className="animate-fade-in hover-lift transition-all duration-500 group border-2 hover:border-primary/30 bg-gradient-to-br from-card to-card/95">
-      <CardContent className="pt-6">
+    <Card className="border border-border bg-card shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+        {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+        {calculatedInsight && (
+          <p className="text-xs text-muted-foreground mt-2 font-medium">
+            {calculatedInsight}
+          </p>
+        )}
+      </CardHeader>
+      <CardContent className="pt-0">
         <div className="relative">
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <LineChart data={displayData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground) / 0.2)" />
               <XAxis 
                 dataKey="name" 
-                angle={-45}
-                textAnchor="end"
-                height={80}
-                tickFormatter={formatXAxisLabel}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                style={{ transition: 'all 0.3s ease' }}
+                hide={true}
               />
               <YAxis 
                 tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                tickFormatter={(value) => {
-                  // Format numbers with thousand separators
-                  return new Intl.NumberFormat('ar-DZ').format(value);
-                }}
+                tickFormatter={(value) => formatNumber(value)}
                 width={70}
                 tickMargin={10}
                 axisLine={false}
@@ -126,7 +162,7 @@ export function LineChartComponent({ data, title }: LineChartComponentProps) {
                   return String(label);
                 }}
                 formatter={(value: any) => {
-                  return [new Intl.NumberFormat('ar-DZ').format(value), 'الطلبات'];
+                  return [formatNumber(value), isRTL ? 'الطلبات' : 'Requests'];
                 }}
                 cursor={{ stroke: '#3B82F6', strokeWidth: 2, strokeDasharray: '5 5', opacity: 0.5 }}
                 animationDuration={200}
@@ -134,7 +170,7 @@ export function LineChartComponent({ data, title }: LineChartComponentProps) {
               <Legend 
                 verticalAlign="top" 
                 align="left"
-                formatter={() => "الطلبات"}
+                formatter={() => isRTL ? "الطلبات" : "Requests"}
                 iconType="line"
                 wrapperStyle={{ paddingBottom: '10px' }}
               />
@@ -166,7 +202,7 @@ export function LineChartComponent({ data, title }: LineChartComponentProps) {
             </LineChart>
           </ResponsiveContainer>
           {year && (
-            <div className="text-center text-xl font-bold text-foreground mt-1 animate-fade-in">
+            <div className="text-center text-sm font-medium text-muted-foreground mt-1">
               {year}
             </div>
           )}

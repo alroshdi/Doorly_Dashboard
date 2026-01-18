@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { DateRangeSlicer } from "@/components/ui/date-range-slicer";
 import { getTranslations, getLanguage, type Language } from "@/lib/i18n";
 import { format } from "date-fns";
 
@@ -139,25 +138,7 @@ export function TopFilters({ filters, onFiltersChange, data }: TopFiltersProps) 
   return (
     <Card className="mb-6 animate-fade-in hover-lift border-2 hover:border-primary/30 bg-gradient-to-br from-card to-card/95 transition-all duration-500 relative" style={{ zIndex: 10 }}>
       <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
-          {/* Date Range Slicer */}
-          <div className="xl:col-span-2 relative" style={{ zIndex: 1000 }}>
-            <DateRangeSlicer
-              startDate={filters.startDate}
-              endDate={filters.endDate}
-              onStartDateChange={(date) => {
-                updateFilter("startDate", date);
-                updateFilter("quickFilter", ""); // Clear quick filter when manually selecting dates
-              }}
-              onEndDateChange={(date) => {
-                updateFilter("endDate", date);
-                updateFilter("quickFilter", ""); // Clear quick filter when manually selecting dates
-              }}
-              label={t.filters.dateRange}
-              isRTL={isRTL}
-            />
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {/* Quick Date Filters */}
           <div className="space-y-2">
             <label className="text-sm font-medium">{t.filters.quickFilter}</label>

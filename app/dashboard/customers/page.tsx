@@ -287,13 +287,13 @@ export default function CustomersPage() {
     <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Sidebar />
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6 md:p-8 space-y-6 md:space-y-8">
+        <div className="p-3 md:p-4 space-y-2 md:space-y-3">
           {/* Header Section */}
-          <div className="mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
+          <div className="mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold mb-1">
               {t.sidebar.brokers}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {isRTL ? "تحليل شامل للعملاء وطلباتهم مع إحصائيات مفصلة ورسوم بيانية واضحة" : "Comprehensive customer analytics with detailed statistics and clear charts"}
             </p>
           </div>
@@ -304,31 +304,34 @@ export default function CustomersPage() {
           <CustomerKPICards metrics={customerKPIs} />
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
             {/* Customer Requests Count Chart */}
             <BarChartComponent 
-              data={customerRequestsCount.slice(0, 15)} 
-              title={isRTL ? "عدد طلبات العملاء (أعلى 15)" : "Customer Requests Count (Top 15)"} 
+              data={customerRequestsCount.slice(0, 10)} 
+              title={isRTL ? "عدد طلبات العملاء (أعلى 10)" : "Customer Requests Count (Top 10)"}
+              subtitle={isRTL ? "أكثر العملاء نشاطاً" : "Most active customers"}
             />
 
             {/* Customer Distribution by City */}
             <DonutChartComponent 
               data={customerDistributionByCity.slice(0, 10)} 
-              title={isRTL ? "توزيع العملاء حسب المناطق" : "Customer Distribution by City"} 
+              title={isRTL ? "توزيع العملاء حسب المناطق" : "Customer Distribution by City"}
+              subtitle={isRTL ? "التوزيع الجغرافي للعملاء" : "Geographic distribution of customers"}
             />
           </div>
 
           {/* Favorite Property Types */}
           <BarChartComponent 
             data={favoritePropertyTypes.slice(0, 10)} 
-            title={isRTL ? "أنواع العقارات المفضلة للعملاء" : "Favorite Property Types by Customers"} 
+            title={isRTL ? "أنواع العقارات المفضلة للعملاء" : "Favorite Property Types by Customers"}
+            subtitle={isRTL ? "أكثر أنواع العقارات طلباً" : "Most requested property types"}
           />
 
           {/* Top Customers Table */}
-          <Card className="bg-gradient-to-br from-card to-card/95 border-2 hover:border-primary/30 transition-all duration-300">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <CardTitle className="text-xl">{isRTL ? "العملاء الأكثر طلباً" : "Top Customers"}</CardTitle>
+          <Card className="border border-border">
+            <CardHeader className="pb-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <CardTitle className="text-base">{isRTL ? "العملاء الأكثر طلباً" : "Top Customers"}</CardTitle>
                 <div className="relative w-full sm:w-64">
                   <Search className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? "right-2" : "left-2")} />
                   <Input
@@ -412,14 +415,14 @@ export default function CustomersPage() {
           </Card>
 
           {/* Customers with Repeated Property Types */}
-          <Card className="bg-gradient-to-br from-card to-card/95 border-2 hover:border-primary/30 transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="text-xl">{isRTL ? "عملاء مع تكرار في نوع العقار" : "Customers with Repeated Property Types"}</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
+          <Card className="border border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">{isRTL ? "عملاء مع تكرار في نوع العقار" : "Customers with Repeated Property Types"}</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
                 {isRTL ? "العملاء الذين لديهم أكثر من طلب واحد لنفس نوع العقار" : "Customers with multiple requests for the same property type"}
               </p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-2">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -481,12 +484,12 @@ export default function CustomersPage() {
           </Card>
 
           {/* Top Customers by City */}
-          <Card className="bg-gradient-to-br from-card to-card/95 border-2 hover:border-primary/30 transition-all duration-300">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <Card className="border border-border">
+            <CardHeader className="pb-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <div>
-                  <CardTitle className="text-xl">{isRTL ? "العملاء الأكثر طلباً حسب المنطقة" : "Top Customers by City"}</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <CardTitle className="text-base">{isRTL ? "العملاء الأكثر طلباً حسب المنطقة" : "Top Customers by City"}</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {isRTL ? "اختر منطقة لعرض العملاء الأكثر نشاطاً فيها" : "Select a city to view the most active customers"}
                   </p>
                 </div>

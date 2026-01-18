@@ -236,11 +236,19 @@ export default function DashboardPage() {
   const propertyTypeDistribution = useMemo(() => getPropertyTypeDistribution(filteredData), [filteredData]);
   const usageTypeDistribution = useMemo(() => getUsageTypeDistribution(filteredData), [filteredData]);
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const lang = getLanguage();
   const t = getTranslations(lang);
   const isRTL = lang === "ar";
 
   if (loading) {
+    // Use consistent text during SSR to prevent hydration mismatch
+    const loadingText = mounted ? (isRTL ? "جاري التحميل..." : "Loading...") : "جاري التحميل...";
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
         <div className="text-center animate-fade-in">
@@ -250,7 +258,7 @@ export default function DashboardPage() {
               <Loader2 className="h-12 w-12 text-primary" />
             </div>
           </div>
-          <p className="text-muted-foreground text-lg animate-pulse-slow">{isRTL ? "جاري التحميل..." : "Loading..."}</p>
+          <p className="text-muted-foreground text-lg animate-pulse-slow">{loadingText}</p>
           <div className="mt-4 flex gap-2 justify-center">
             <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
             <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -295,38 +303,38 @@ export default function DashboardPage() {
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
       <Sidebar />
       <div className="flex-1 overflow-y-auto">
-        <div id="dashboard-content" className="p-6 md:p-8 space-y-6 md:space-y-8 animate-fade-in">
-          {/* Header Section */}
-          <div className="mb-6 animate-slide-down">
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2 animate-fade-in">
+        <div id="dashboard-content" className="p-3 md:p-4 space-y-2 md:space-y-3">
+          {/* Header Section - Compact layout */}
+          <div className="mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold mb-1">
               {t.sidebar.overview}
             </h1>
-            <p className="text-muted-foreground text-lg animate-slide-up" style={{ animationDelay: "100ms" }}>
+            <p className="text-sm text-muted-foreground">
               {isRTL ? "لوحة تحكم شاملة لإدارة وتحليل طلبات العقارات" : "Comprehensive dashboard for real estate request management and analytics"}
             </p>
           </div>
 
           {/* Top Filters */}
-          <div className="animate-slide-up" style={{ animationDelay: "200ms" }}>
+          <div>
             <TopFilters filters={filters} onFiltersChange={setFilters} data={data} />
           </div>
 
           {/* KPI Cards */}
-          <div className="animate-slide-up" style={{ animationDelay: "300ms" }} data-kpi-section>
+          <div data-kpi-section>
             <KPICards metrics={metrics} />
           </div>
 
-          {/* Charts Section */}
-          <div className="space-y-6 animate-slide-up" style={{ animationDelay: "400ms" }} data-chart-section>
+          {/* Charts Section - Compact grid with insights */}
+          <div className="space-y-2 md:space-y-3" data-chart-section>
             {/* Time Period Toggle for Line Chart */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <h2 className="text-2xl font-bold text-foreground">{t.charts.requestsOverTime}</h2>
-              <div className="flex gap-2 bg-muted/50 p-1 rounded-lg backdrop-blur-sm border border-border/50">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
+              <h2 className="text-lg font-semibold">{t.charts.requestsOverTime}</h2>
+              <div className="flex gap-1 bg-muted p-0.5 rounded-md border border-border">
                 <Button
                   variant={timePeriod === "daily" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setTimePeriod("daily")}
-                  className="transition-all duration-300 hover:scale-105 active:scale-95"
+                  className="h-7 text-xs"
                 >
                   {t.charts.daily}
                 </Button>
@@ -334,7 +342,7 @@ export default function DashboardPage() {
                   variant={timePeriod === "weekly" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setTimePeriod("weekly")}
-                  className="transition-all duration-300 hover:scale-105 active:scale-95"
+                  className="h-7 text-xs"
                 >
                   {t.charts.weekly}
                 </Button>
@@ -342,56 +350,76 @@ export default function DashboardPage() {
                   variant={timePeriod === "monthly" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setTimePeriod("monthly")}
-                  className="transition-all duration-300 hover:scale-105 active:scale-95"
+                  className="h-7 text-xs"
                 >
                   {t.charts.monthly}
                 </Button>
               </div>
             </div>
 
-            <div className="animate-scale-in" style={{ animationDelay: "500ms" }}>
-              <LineChartComponent data={requestsOverTime} title={t.charts.requestsOverTime} />
+            <LineChartComponent 
+              data={requestsOverTime} 
+              title={t.charts.requestsOverTime}
+              subtitle={isRTL ? "تطور عدد الطلبات عبر الزمن" : "Request trends over time"}
+              insight={(() => {
+                if (requestsOverTime.length === 0) return null;
+                const values = requestsOverTime.filter(d => d.value > 0).map(d => d.value);
+                if (values.length === 0) return null;
+                const maxValue = Math.max(...values);
+                const maxDate = requestsOverTime.find(d => d.value === maxValue)?.name || "";
+                return isRTL 
+                  ? `الذروة: ${new Intl.NumberFormat('ar-DZ').format(maxValue)} طلب في ${maxDate}`
+                  : `Peak: ${new Intl.NumberFormat('en-US').format(maxValue)} requests on ${maxDate}`;
+              })()}
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
+              <DonutChartComponent 
+                data={requestsByWilaya} 
+                title={t.charts.byWilaya}
+                subtitle={isRTL ? "توزيع الطلبات حسب الولاية" : "Request distribution by region"}
+              />
+              <PieChartComponent 
+                data={sourceDistribution} 
+                title={t.charts.sourceDistribution}
+                subtitle={isRTL ? "مصادر الطلبات" : "Request sources"}
+              />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="animate-slide-in-left" style={{ animationDelay: "600ms" }}>
-                <DonutChartComponent data={requestsByWilaya} title={t.charts.byWilaya} />
-              </div>
-              <div className="animate-slide-in-right" style={{ animationDelay: "700ms" }}>
-                <PieChartComponent data={sourceDistribution} title={t.charts.sourceDistribution} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="animate-slide-in-left" style={{ animationDelay: "800ms" }}>
-                <BarChartComponent data={propertyTypeDistribution} title={t.charts.propertyTypeDistribution} />
-              </div>
-              <div className="animate-slide-in-right" style={{ animationDelay: "900ms" }}>
-                <BarChartComponent data={usageTypeDistribution} title={t.charts.usageTypeDistribution} />
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
+              <BarChartComponent 
+                data={propertyTypeDistribution} 
+                title={t.charts.propertyTypeDistribution}
+                subtitle={isRTL ? "أنواع العقارات المطلوبة" : "Requested property types"}
+              />
+              <BarChartComponent 
+                data={usageTypeDistribution} 
+                title={t.charts.usageTypeDistribution}
+                subtitle={isRTL ? "أنواع الاستخدام" : "Usage types"}
+              />
             </div>
           </div>
 
           {/* Tables Section */}
-          <div className="animate-slide-up" style={{ animationDelay: "1000ms" }} data-table-section>
+          <div data-table-section>
             <Tables data={filteredData} />
           </div>
 
           {/* PDF Reports Button (UI Only) */}
-          <Card className="bg-gradient-to-br from-card to-card/95 border-2 hover:border-primary/30 transition-all duration-300 hover-lift animate-scale-in" style={{ animationDelay: "1100ms" }}>
-            <CardHeader>
-              <CardTitle className="text-xl">{t.reports.title}</CardTitle>
+          <Card className="border border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">{t.reports.title}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-2">
               <Button 
                 variant="outline" 
-                className="w-full hover:bg-primary hover:text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95 ripple"
+                className="w-full"
                 onClick={handleExportPDF}
               >
-                <FileText className={cn("h-4 w-4 transition-transform group-hover:rotate-12", isRTL ? "mr-2" : "ml-2")} />
+                <FileText className={cn("h-4 w-4", isRTL ? "mr-2" : "ml-2")} />
                 {t.reports.export}
               </Button>
-              <p className="text-sm text-muted-foreground mt-2 text-center">
+              <p className="text-xs text-muted-foreground mt-1 text-center">
                 {isRTL ? "انقر لتصدير التقرير كملف PDF" : "Click to export report as PDF"}
               </p>
             </CardContent>

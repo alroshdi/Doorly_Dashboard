@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { isAuthenticated } from "@/lib/auth";
+import { isAuthenticated, isAdmin } from "@/lib/auth";
 import { getTranslations, getLanguage, setLanguage, type Language } from "@/lib/i18n";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Languages, Save, Loader2, Snowflake } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { toggleSnow } from "@/components/snow-effect";
+import { UserManagement } from "@/components/user-management";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -181,6 +182,11 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* User Management - Admin Only */}
+          {isAdmin() && (
+            <UserManagement isRTL={isRTL} />
+          )}
 
           {/* Save Button */}
           <div className="flex justify-end">

@@ -41,7 +41,10 @@ async function getGoogleSheetsData() {
     const data = rows.slice(1).map((row: any[]) => {
       const obj: any = {};
       headers.forEach((header: string, index: number) => {
-        obj[header] = row[index] || "";
+        // Preserve actual values including 0, empty strings, and null
+        // Only default to "" if the cell is truly undefined
+        const cellValue = row[index];
+        obj[header] = cellValue !== undefined ? cellValue : "";
       });
       return obj;
     });

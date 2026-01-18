@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPIMetrics } from "@/lib/analytics";
 import { getTranslations, getLanguage } from "@/lib/i18n";
-import { TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, CreditCard, Tag, Eye, DollarSign } from "lucide-react";
+import { TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, CreditCard, Tag, Eye, DollarSign, Maximize2, Minimize2, BarChart3, ArrowDown, ArrowUp } from "lucide-react";
 
 interface KPICardsProps {
   metrics: KPIMetrics;
@@ -80,7 +81,18 @@ export function KPICards({ metrics }: KPICardsProps) {
     return new Intl.NumberFormat(isRTL ? "ar-DZ" : "en-US").format(Math.round(num));
   };
 
-  const cards = [
+  type CardItem = {
+    title: string;
+    value: number;
+    icon: any;
+    available: boolean;
+    gradient: string;
+    isArea?: boolean;
+    isPriceRange?: boolean;
+    useLogo?: boolean;
+  };
+
+  const cards: CardItem[] = [
     {
       title: t.kpi.totalRequests,
       value: metrics.totalRequests,
@@ -151,62 +163,117 @@ export function KPICards({ metrics }: KPICardsProps) {
       available: metrics.avgViews > 0,
       gradient: "from-indigo-500 to-indigo-600",
     },
+    // Price range cards - will be rendered separately side by side
+    {
+      title: t.kpi.avgPriceFrom,
+      value: metrics.avgPriceFrom,
+      icon: ArrowDown,
+      available: metrics.avgPriceFrom > 0,
+      gradient: "from-orange-500 to-orange-600",
+      isPriceRange: true,
+      useLogo: true,
+    },
+    {
+      title: t.kpi.avgPriceTo,
+      value: metrics.avgPriceTo,
+      icon: ArrowUp,
+      available: metrics.avgPriceTo > 0,
+      gradient: "from-yellow-500 to-yellow-600",
+      isPriceRange: true,
+      useLogo: true,
+    },
   ];
 
+  // Remove isPriceRange flag and include all cards together
+  const allCards = cards;
+
+  // Render a single card
+  const renderCard = (card: CardItem, index: number) => {
+    const Icon = card.icon;
+    return (
+      <Card 
+        key={index} 
+        className={`
+          ${!card.available ? "opacity-60" : ""}
+          border-2 border-border/50
+          bg-gradient-to-br from-card to-card/95
+          hover:border-primary/50
+          hover:shadow-lg
+          hover:shadow-primary/5
+          transition-all duration-300
+          h-full
+          group
+          overflow-hidden
+          relative
+        `}
+      >
+        {/* Gradient overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:to-transparent transition-all duration-300 pointer-events-none" />
+        
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
+          <CardTitle className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+            {card.title}
+          </CardTitle>
+          <div className={`
+            p-2.5 rounded-xl
+            bg-gradient-to-br ${card.gradient}
+            shadow-md
+            group-hover:shadow-lg
+            group-hover:scale-110
+            transition-all duration-300
+            relative
+          `}>
+            {card.useLogo ? (
+              <div className="w-[18px] h-[18px] flex items-center justify-center">
+                <Image
+                  src="/Bold.png"
+                  alt="Logo"
+                  width={18}
+                  height={18}
+                  className="object-contain w-full h-full"
+                />
+              </div>
+            ) : (
+              <Icon className="h-4 w-4 text-white" />
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0 relative z-10">
+          <div className="text-3xl font-bold flex items-baseline gap-2">
+            {card.available ? (
+              <>
+                {card.isPriceRange ? (
+                  <>
+                    <AnimatedCounter value={card.value} delay={index * 50} />
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      <Image
+                        src="/Bold.png"
+                        alt="Currency"
+                        width={24}
+                        height={24}
+                        className="object-contain w-full h-full"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <AnimatedCounter value={card.value} delay={index * 50} />
+                )}
+              </>
+            ) : (
+              <span className="text-sm text-muted-foreground font-medium">{t.kpi.notAvailable}</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
-      {cards.map((card, index) => {
-        const Icon = card.icon;
-        return (
-          <Card 
-            key={index} 
-            className={`
-              ${!card.available ? "opacity-60" : ""}
-              transition-all duration-500 ease-out
-              hover:shadow-2xl hover:scale-[1.03]
-              hover:border-primary/50
-              cursor-default
-              group
-              bg-gradient-to-br from-card via-card/98 to-card/95
-              backdrop-blur-sm
-              border-2
-              hover:border-primary/40
-              hover-lift
-              relative overflow-hidden
-              before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/0 before:to-primary/0
-              hover:before:from-primary/5 hover:before:to-primary/10
-              before:transition-all before:duration-500
-            `}
-            style={{ 
-              animationDelay: `${index * 80}ms`,
-              animation: `fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${index * 80}ms both`
-            }}
-          >
-            {/* Animated background gradient on hover */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-            
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-              <CardTitle className="text-sm font-semibold group-hover:text-primary transition-all duration-300 group-hover:scale-105">
-                {card.title}
-              </CardTitle>
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 group-hover:from-primary/20 group-hover:to-primary/10 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm">
-                <Icon className="h-4 w-4 text-primary group-hover:scale-125 transition-all duration-300" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-3xl font-bold group-hover:text-primary transition-all duration-300 mb-1 group-hover:scale-105 inline-block">
-                <AnimatedCounter value={card.value} delay={index * 100} />
-              </div>
-              {!card.available && (
-                <p className="text-xs text-muted-foreground mt-1 animate-pulse-slow">{t.kpi.notAvailable}</p>
-              )}
-            </CardContent>
-            
-            {/* Shine effect on hover */}
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-          </Card>
-        );
-      })}
+    <div className="mb-3">
+      {/* All cards in one grid - responsive layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2">
+        {allCards.map((card, index) => renderCard(card, index))}
+      </div>
     </div>
   );
 }

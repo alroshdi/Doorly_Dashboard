@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { LogOut, Moon, Sun, Languages, BarChart3, Home, Users, Settings, ChevronDown, ChevronRight, Linkedin, Instagram, Share2 } from "lucide-react";
-import { clearAuth } from "@/lib/auth";
+import { LogOut, Moon, Sun, Languages, BarChart3, Home, Users, Settings, ChevronDown, ChevronRight, Linkedin, Instagram, Share2, Snowflake, UserCircle, Shield } from "lucide-react";
+import { clearAuth, getUserRole, User } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/user-management";
 import { getTranslations, getLanguage, setLanguage, type Language } from "@/lib/i18n";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { toggleSnow } from "@/components/snow-effect";
 
 function SidebarLogo() {
   const [imgError, setImgError] = useState(false);
@@ -21,9 +23,10 @@ function SidebarLogo() {
     <Image
       src="/logo.png"
       alt="Doorly Logo"
-      width={80}
-      height={80}
+      width={112}
+      height={112}
       className="object-contain"
+      priority
       onError={() => setImgError(true)}
     />
   );
@@ -37,10 +40,19 @@ export function Sidebar() {
   const [mounted, setMounted] = useState(false);
   const [analyticsExpanded, setAnalyticsExpanded] = useState(true);
   const [mediaAnalysisExpanded, setMediaAnalysisExpanded] = useState(true);
+  const [snowEnabled, setSnowEnabled] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     setMounted(true);
     setLangState(getLanguage());
+    // Check snow preference
+    if (typeof window !== "undefined") {
+      const snowPreference = localStorage.getItem("doorly_snow_enabled");
+      setSnowEnabled(snowPreference === "true");
+      // Get current user info
+      setCurrentUser(getCurrentUser());
+    }
   }, []);
 
   const handleLogout = () => {
@@ -61,6 +73,12 @@ export function Sidebar() {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
+  const toggleSnowEffect = () => {
+    const newState = !snowEnabled;
+    setSnowEnabled(newState);
+    toggleSnow(newState);
+  };
+
   if (!mounted) return null;
 
   const t = getTranslations(lang);
@@ -71,7 +89,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-border/50 bg-card/50 backdrop-blur-sm">
         <div className="flex justify-center">
-          <div className="w-20 h-20 flex items-center justify-center rounded-xl bg-primary/10 p-3 transition-all duration-300 hover:bg-primary/20 hover:scale-110 hover:rotate-3 hover:shadow-lg group">
+          <div className="w-28 h-28 flex items-center justify-center p-3 transition-all duration-300 hover:scale-110 hover:rotate-3 group">
             <div className="transition-transform duration-300 group-hover:scale-110">
               <SidebarLogo />
             </div>
@@ -197,7 +215,7 @@ export function Sidebar() {
 
       {/* Bottom Section */}
       <div className="p-4 border-t border-border/50 bg-card/50 backdrop-blur-sm space-y-3">
-        {/* Language and Theme Toggle Icons */}
+        {/* Language, Theme, and Snow Toggle Icons */}
         <div className="flex items-center justify-center gap-2">
           <Button
             variant="outline"
@@ -221,12 +239,57 @@ export function Sidebar() {
               <Moon className="h-4 w-4 transition-transform duration-300" />
             )}
           </Button>
+          <Button
+            variant={snowEnabled ? "default" : "outline"}
+            size="icon"
+            className="h-9 w-9 hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-all duration-300 hover:scale-110 active:scale-95 hover:rotate-12"
+            onClick={toggleSnowEffect}
+            title={isRTL ? (snowEnabled ? "إيقاف الثلج" : "تفعيل الثلج") : (snowEnabled ? "Disable Snow" : "Enable Snow")}
+          >
+            <Snowflake className="h-4 w-4 transition-transform duration-300" />
+          </Button>
         </div>
 
         {/* User Info */}
-        <div className="px-3 py-2 text-sm text-muted-foreground text-center bg-muted/50 rounded-md">
-          {t.sidebar.admin}
-        </div>
+        {mounted && (
+          <div className="px-4 py-3 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-lg border border-primary/20 hover:border-primary/30 transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0">
+                {currentUser?.avatarUrl ? (
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-primary/30 ring-offset-2 ring-offset-background">
+                    <Image
+                      src={currentUser.avatarUrl}
+                      alt={currentUser.name || "User"}
+                      width={48}
+                      height={48}
+                      className="rounded-full object-cover w-full h-full"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary/30 ring-offset-2 ring-offset-background">
+                    <UserCircle className="h-7 w-7 text-primary" />
+                  </div>
+                )}
+                {/* Online status indicator */}
+                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full"></div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm text-foreground truncate">
+                  {currentUser?.name || t.sidebar.admin}
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  <span className="capitalize">
+                    {mounted && typeof window !== "undefined" 
+                      ? (getUserRole() === "admin" ? t.sidebar.admin : getUserRole())
+                      : t.sidebar.admin
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Logout */}
         <Button

@@ -138,140 +138,129 @@ export default function LinkedInInsightsPage() {
 
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6 md:p-8 space-y-6 md:space-y-8 animate-fade-in">
+        <div className="p-3 md:p-4 space-y-2 md:space-y-3">
           {/* Header Section */}
-          <div className="mb-6 animate-slide-down">
-            <h1 className="text-3xl md:text-4xl font-bold gradient-text mb-2 animate-fade-in">
+          <div className="mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold mb-1">
               {t.linkedin.title}
             </h1>
-            <p className="text-muted-foreground text-lg animate-slide-up" style={{ animationDelay: "100ms" }}>
+            <p className="text-sm text-muted-foreground">
               {t.linkedin.subtitle}
             </p>
           </div>
 
           {/* KPI Cards */}
-          <div className="animate-slide-up" style={{ animationDelay: "200ms" }}>
+          <div>
             <LinkedInKPICards kpis={kpis} />
           </div>
 
           {/* Charts Section */}
-          <div className="space-y-6 animate-slide-up" style={{ animationDelay: "300ms" }}>
+          <div className="space-y-2 md:space-y-3">
             {/* Time-based Charts - Only show if data exists */}
             {kpis.impressionsOverTime.length > 0 || kpis.engagementsOverTime.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
                 {kpis.impressionsOverTime.length > 0 && (
-                  <div className="animate-slide-in-left" style={{ animationDelay: "400ms" }}>
-                    <LineChartComponent 
-                      data={kpis.impressionsOverTime} 
-                      title={t.linkedin.charts.impressionsOverTime} 
-                    />
-                  </div>
+                  <LineChartComponent 
+                    data={kpis.impressionsOverTime} 
+                    title={t.linkedin.charts.impressionsOverTime}
+                    subtitle={isRTL ? "تطور المشاهدات عبر الزمن" : "Impressions trends over time"}
+                  />
                 )}
                 {kpis.engagementsOverTime.length > 0 && (
-                  <div className="animate-slide-in-right" style={{ animationDelay: "500ms" }}>
-                    <LineChartComponent 
-                      data={kpis.engagementsOverTime} 
-                      title={t.linkedin.charts.engagementsOverTime} 
-                    />
-                  </div>
+                  <LineChartComponent 
+                    data={kpis.engagementsOverTime} 
+                    title={t.linkedin.charts.engagementsOverTime}
+                    subtitle={isRTL ? "تطور التفاعلات عبر الزمن" : "Engagements trends over time"}
+                  />
                 )}
               </div>
             ) : null}
 
             {/* Followers Distribution - Only show if data exists */}
             {(kpis.followersByCountry.length > 0 || kpis.followersByIndustry.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
                 {kpis.followersByCountry.length > 0 && (
-                  <div className="animate-slide-in-left" style={{ animationDelay: "600ms" }}>
-                    <DonutChartComponent 
-                      data={kpis.followersByCountry} 
-                      title={t.linkedin.charts.followersByCountry} 
-                    />
-                  </div>
+                  <DonutChartComponent 
+                    data={kpis.followersByCountry} 
+                    title={t.linkedin.charts.followersByCountry}
+                    subtitle={isRTL ? "توزيع المتابعين حسب البلد" : "Followers distribution by country"}
+                  />
                 )}
                 {kpis.followersByIndustry.length > 0 && (
-                  <div className="animate-slide-in-right" style={{ animationDelay: "700ms" }}>
-                    <PieChartComponent 
-                      data={kpis.followersByIndustry} 
-                      title={t.linkedin.charts.followersByIndustry} 
-                    />
-                  </div>
+                  <PieChartComponent 
+                    data={kpis.followersByIndustry} 
+                    title={t.linkedin.charts.followersByIndustry}
+                    subtitle={isRTL ? "توزيع المتابعين حسب الصناعة" : "Followers distribution by industry"}
+                  />
                 )}
               </div>
             )}
 
             {/* Visitors Distribution - Only show if data exists */}
             {(kpis.visitorsByCountry.length > 0 || kpis.visitorsByIndustry.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
                 {kpis.visitorsByCountry.length > 0 && (
-                  <div className="animate-slide-in-left" style={{ animationDelay: "800ms" }}>
-                    <BarChartComponent 
-                      data={kpis.visitorsByCountry} 
-                      title={t.linkedin.charts.visitorsByCountry} 
-                    />
-                  </div>
+                  <BarChartComponent 
+                    data={kpis.visitorsByCountry} 
+                    title={t.linkedin.charts.visitorsByCountry}
+                    subtitle={isRTL ? "الزوار حسب البلد" : "Visitors by country"}
+                  />
                 )}
                 {kpis.visitorsByIndustry.length > 0 && (
-                  <div className="animate-slide-in-right" style={{ animationDelay: "900ms" }}>
-                    <BarChartComponent 
-                      data={kpis.visitorsByIndustry} 
-                      title={t.linkedin.charts.visitorsByIndustry} 
-                    />
-                  </div>
+                  <BarChartComponent 
+                    data={kpis.visitorsByIndustry} 
+                    title={t.linkedin.charts.visitorsByIndustry}
+                    subtitle={isRTL ? "الزوار حسب الصناعة" : "Visitors by industry"}
+                  />
                 )}
               </div>
             )}
 
             {/* Competitor Comparison */}
             {kpis.competitorComparison.length > 0 && (
-              <div className="animate-scale-in" style={{ animationDelay: "1000ms" }}>
-                <BarChartComponent 
-                  data={kpis.competitorComparison.map(c => ({ name: c.name, value: c.followers }))} 
-                  title={t.linkedin.charts.competitorComparison} 
-                />
-              </div>
+              <BarChartComponent 
+                data={kpis.competitorComparison.map(c => ({ name: c.name, value: c.followers }))} 
+                title={t.linkedin.charts.competitorComparison}
+                subtitle={isRTL ? "مقارنة مع المنافسين" : "Comparison with competitors"}
+              />
             )}
 
             {/* User Sources - Where users come from */}
             {(kpis.visitorsBySource.length > 0 || kpis.followersBySource.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
                 {kpis.visitorsBySource.length > 0 && (
-                  <div className="animate-slide-in-left" style={{ animationDelay: "1100ms" }}>
-                    <PieChartComponent 
-                      data={kpis.visitorsBySource} 
-                      title={t.linkedin.charts.visitorsBySource} 
-                    />
-                  </div>
+                  <PieChartComponent 
+                    data={kpis.visitorsBySource} 
+                    title={t.linkedin.charts.visitorsBySource}
+                    subtitle={isRTL ? "مصادر الزوار" : "Visitor sources"}
+                  />
                 )}
                 {kpis.followersBySource.length > 0 && (
-                  <div className="animate-slide-in-right" style={{ animationDelay: "1200ms" }}>
-                    <DonutChartComponent 
-                      data={kpis.followersBySource} 
-                      title={t.linkedin.charts.followersBySource} 
-                    />
-                  </div>
+                  <DonutChartComponent 
+                    data={kpis.followersBySource} 
+                    title={t.linkedin.charts.followersBySource}
+                    subtitle={isRTL ? "مصادر المتابعين" : "Follower sources"}
+                  />
                 )}
               </div>
             )}
 
             {/* Time Spent Metrics */}
             {(kpis.timeSpentDistribution.length > 0 || kpis.engagementTimeOverTime.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
                 {kpis.timeSpentDistribution.length > 0 && (
-                  <div className="animate-slide-in-left" style={{ animationDelay: "1300ms" }}>
-                    <BarChartComponent 
-                      data={kpis.timeSpentDistribution} 
-                      title={t.linkedin.charts.timeSpentDistribution} 
-                    />
-                  </div>
+                  <BarChartComponent 
+                    data={kpis.timeSpentDistribution} 
+                    title={t.linkedin.charts.timeSpentDistribution}
+                    subtitle={isRTL ? "توزيع الوقت المستغرق" : "Time spent distribution"}
+                  />
                 )}
                 {kpis.engagementTimeOverTime.length > 0 && (
-                  <div className="animate-slide-in-right" style={{ animationDelay: "1400ms" }}>
-                    <LineChartComponent 
-                      data={kpis.engagementTimeOverTime} 
-                      title={t.linkedin.charts.engagementTimeOverTime} 
-                    />
-                  </div>
+                  <LineChartComponent 
+                    data={kpis.engagementTimeOverTime} 
+                    title={t.linkedin.charts.engagementTimeOverTime}
+                    subtitle={isRTL ? "وقت التفاعل عبر الزمن" : "Engagement time over time"}
+                  />
                 )}
               </div>
             )}
@@ -280,29 +269,26 @@ export default function LinkedInInsightsPage() {
             {(kpis.topContent.length > 0 || kpis.engagementByType.length > 0 || kpis.reachBySource.length > 0) && (
               <>
                 {kpis.topContent.length > 0 && (
-                  <div className="animate-scale-in" style={{ animationDelay: "1500ms" }}>
-                    <BarChartComponent 
-                      data={kpis.topContent} 
-                      title={t.linkedin.charts.topContent} 
-                    />
-                  </div>
+                  <BarChartComponent 
+                    data={kpis.topContent} 
+                    title={t.linkedin.charts.topContent}
+                    subtitle={isRTL ? "أفضل المحتوى أداءً" : "Top performing content"}
+                  />
                 )}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
                   {kpis.engagementByType.length > 0 && (
-                    <div className="animate-slide-in-left" style={{ animationDelay: "1600ms" }}>
-                      <PieChartComponent 
-                        data={kpis.engagementByType} 
-                        title={t.linkedin.charts.engagementByType} 
-                      />
-                    </div>
+                    <PieChartComponent 
+                      data={kpis.engagementByType} 
+                      title={t.linkedin.charts.engagementByType}
+                      subtitle={isRTL ? "التفاعل حسب النوع" : "Engagement by type"}
+                    />
                   )}
                   {kpis.reachBySource.length > 0 && (
-                    <div className="animate-slide-in-right" style={{ animationDelay: "1700ms" }}>
-                      <BarChartComponent 
-                        data={kpis.reachBySource} 
-                        title={t.linkedin.charts.reachBySource} 
-                      />
-                    </div>
+                    <BarChartComponent 
+                      data={kpis.reachBySource} 
+                      title={t.linkedin.charts.reachBySource}
+                      subtitle={isRTL ? "الوصول حسب المصدر" : "Reach by source"}
+                    />
                   )}
                 </div>
               </>
@@ -310,13 +296,13 @@ export default function LinkedInInsightsPage() {
           </div>
 
           {/* Data Info Card */}
-          <Card className="bg-gradient-to-br from-card to-card/95 border-2 hover:border-primary/30 transition-all duration-300 hover-lift animate-scale-in" style={{ animationDelay: "1100ms" }}>
-            <CardHeader>
-              <CardTitle className="text-xl">
+          <Card className="border border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">
                 {isRTL ? "معلومات البيانات" : "Data Information"}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground mb-1">
