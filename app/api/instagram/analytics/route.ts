@@ -37,13 +37,15 @@ interface InstagramAnalyticsResponse {
 async function getGoogleSheetsData() {
   try {
     const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const serviceAccountKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-    const sheetId = process.env.GOOGLE_SHEETS_ID;
+    // Support both GOOGLE_SERVICE_ACCOUNT_KEY and GOOGLE_PRIVATE_KEY for compatibility
+    const serviceAccountKey = (process.env.GOOGLE_SERVICE_ACCOUNT_KEY || process.env.GOOGLE_PRIVATE_KEY)?.replace(/\\n/g, "\n");
+    // Support both GOOGLE_SHEET_ID and GOOGLE_SHEETS_ID for compatibility
+    const sheetId = process.env.GOOGLE_SHEET_ID || process.env.GOOGLE_SHEETS_ID;
     const sheetName = process.env.SHEET_NAME || "insta_insights_daily";
     const range = `${sheetName}!A:Z`;
 
     if (!serviceAccountEmail || !serviceAccountKey || !sheetId) {
-      throw new Error("Missing Google Sheets credentials");
+      throw new Error("Missing Google Sheets credentials. Please check GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY (or GOOGLE_PRIVATE_KEY), and GOOGLE_SHEET_ID (or GOOGLE_SHEETS_ID) environment variables.");
     }
 
     const auth = new google.auth.JWT({
@@ -60,6 +62,13 @@ async function getGoogleSheetsData() {
 
     const rows = response.data.values;
     if (!rows || rows.length === 0) {
+      console.log("No data found in sheet. Returning empty array.");
+      return [];
+    }
+    
+    // If only headers exist (1 row), return empty array
+    if (rows.length === 1) {
+      console.log("Only headers found in sheet. No data rows.");
       return [];
     }
 
@@ -266,6 +275,16 @@ export async function GET() {
     return NextResponse.json(analytics);
   } catch (error: any) {
     console.error("API Error:", error);
+    const errorMessage = error.message || "Failed to fetch Instagram analytics data";
+    
+    // Provide more helpful error messages
+    let userFriendlyError = errorMessage;
+    if (errorMessage.includes("Missing Google Sheets credentials")) {
+      userFriendlyError = "Missing: Google Sheets credentials. Please check GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY, and GOOGLE_SHEET_ID environment variables.";
+    } else if (errorMessage.includes("SHEET_NAME") || errorMessage.includes("sheet") || errorMessage.includes("not found")) {
+      userFriendlyError = "Data sheet not found or inaccessible. Please check the SHEET_NAME environment variable (default: 'insta_insights_daily').";
+    }
+    
     return NextResponse.json(
       { 
         posts: [],
@@ -284,7 +303,7 @@ export async function GET() {
           last7Days: [],
         },
         timestamp: new Date().toISOString(),
-        error: error.message || "Failed to fetch Instagram analytics data",
+        error: userFriendlyError,
       },
       { status: 500 }
     );

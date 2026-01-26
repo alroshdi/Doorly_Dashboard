@@ -63,14 +63,18 @@ export default function InstagramAnalyticsPage() {
     try {
       setLoading(true);
       const response = await fetch("/api/instagram/analytics");
-      if (!response.ok) {
-        throw new Error("Failed to fetch Instagram analytics");
-      }
       const result = await response.json();
+      
+      if (!response.ok || result.error) {
+        const errorMessage = result.error || `HTTP ${response.status}: Failed to fetch Instagram analytics`;
+        throw new Error(errorMessage);
+      }
+      
       setData(result);
       setError("");
     } catch (err: any) {
-      setError(err.message || "Failed to load Instagram analytics");
+      const errorMessage = err.message || "Failed to load Instagram analytics";
+      setError(errorMessage);
       console.error("Error fetching Instagram analytics:", err);
     } finally {
       setLoading(false);
@@ -215,7 +219,7 @@ export default function InstagramAnalyticsPage() {
     );
   }
 
-  if (error || !data) {
+  if (error || (data && data.error)) {
     return (
       <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Sidebar />
@@ -228,8 +232,39 @@ export default function InstagramAnalyticsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-2">
                   {error || data?.error || (isRTL ? "فشل تحميل بيانات الإنستجرام" : "Failed to load Instagram analytics")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isRTL 
+                    ? "تأكد من إعداد متغيرات البيئة (GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY, GOOGLE_SHEET_ID) وأن ورقة البيانات 'insta_insights_daily' موجودة."
+                    : "Please ensure environment variables (GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY, GOOGLE_SHEET_ID) are set and the 'insta_insights_daily' sheet exists."}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!data) {
+    return (
+      <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <Sidebar />
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-3 md:p-4 space-y-2 md:space-y-3">
+            <Card className="border border-border">
+              <CardHeader>
+                <CardTitle>
+                  {isRTL ? "لا توجد بيانات" : "No Data Available"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  {isRTL 
+                    ? "لا توجد بيانات في ورقة Google Sheets. يرجى تشغيل سكريبت المزامنة أولاً."
+                    : "No data found in Google Sheets. Please run the sync script first."}
                 </p>
               </CardContent>
             </Card>
