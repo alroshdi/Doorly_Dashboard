@@ -55,10 +55,23 @@ async function getGoogleSheetsData() {
     });
 
     const sheets = google.sheets({ version: "v4", auth });
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: sheetId,
-      range: range,
-    });
+    
+    let response;
+    try {
+      response = await sheets.spreadsheets.values.get({
+        spreadsheetId: sheetId,
+        range: range,
+      });
+    } catch (apiError: any) {
+      // Handle specific Google Sheets API errors
+      if (apiError.code === 404 || apiError.message?.includes("not found")) {
+        throw new Error(`Sheet "${sheetName}" not found in spreadsheet. Please check the SHEET_NAME environment variable.`);
+      }
+      if (apiError.code === 403 || apiError.message?.includes("permission")) {
+        throw new Error("Permission denied. Please check that the service account has access to the Google Sheet.");
+      }
+      throw apiError;
+    }
 
     const rows = response.data.values;
     if (!rows || rows.length === 0) {
@@ -263,15 +276,16 @@ export async function GET() {
     // Fetch data from Google Sheets
     const rawData = await getGoogleSheetsData();
     
-    // Process data
+    // Process data (handles empty arrays gracefully)
     const analytics = processInstagramData(rawData);
     
-    // Update cache
+    // Update cache (even for empty data)
     cache = {
       data: analytics,
       timestamp: Date.now(),
     };
 
+    // Return success even if no data (empty arrays)
     return NextResponse.json(analytics);
   } catch (error: any) {
     console.error("API Error:", error);

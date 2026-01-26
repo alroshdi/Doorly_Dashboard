@@ -63,18 +63,30 @@ export default function InstagramAnalyticsPage() {
     try {
       setLoading(true);
       const response = await fetch("/api/instagram/analytics");
-      const result = await response.json();
       
-      if (!response.ok || result.error) {
-        const errorMessage = result.error || `HTTP ${response.status}: Failed to fetch Instagram analytics`;
-        throw new Error(errorMessage);
+      // Always try to parse JSON, even if response is not ok
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        throw new Error(`Failed to parse response: ${response.statusText}`);
       }
       
+      // Check for error in response
+      if (!response.ok || result.error) {
+        const errorMessage = result.error || `HTTP ${response.status}: Failed to fetch Instagram analytics`;
+        setError(errorMessage);
+        setData(null);
+        return;
+      }
+      
+      // Success - set data
       setData(result);
       setError("");
     } catch (err: any) {
       const errorMessage = err.message || "Failed to load Instagram analytics";
       setError(errorMessage);
+      setData(null);
       console.error("Error fetching Instagram analytics:", err);
     } finally {
       setLoading(false);
