@@ -249,7 +249,7 @@ export default function InstagramAnalyticsPage() {
     }
 
     // Engagement rate
-    if (engagementRatios.interactionsRatio !== null && engagementRatios.interactionsRatio !== undefined) {
+    if (engagementRatios.interactionsRatio !== null && engagementRatios.interactionsRatio !== undefined && typeof engagementRatios.interactionsRatio === 'number') {
       insightsList.push(
         isRTL
           ? `معدل التفاعل: ${engagementRatios.interactionsRatio.toFixed(2)}%`
@@ -304,17 +304,20 @@ export default function InstagramAnalyticsPage() {
 
     // Follower growth insight
     if (data.availableFields.followers_count && data.availableFields.new_followers && 
-        data.kpis.followersCount !== undefined && data.kpis.newFollowers !== undefined && data.kpis.newFollowers > 0) {
+        data.kpis.followersCount !== undefined && data.kpis.newFollowers !== undefined && data.kpis.newFollowers > 0 &&
+        typeof data.kpis.followersCount === 'number' && typeof data.kpis.newFollowers === 'number') {
       const growthRate = (data.kpis.newFollowers / data.kpis.followersCount) * 100;
-      insightsList.push(
-        isRTL
-          ? `نمو المتابعين: ${data.kpis.newFollowers.toLocaleString()} متابع جديد (${growthRate.toFixed(2)}%)`
-          : `Follower growth: ${data.kpis.newFollowers.toLocaleString()} new followers (${growthRate.toFixed(2)}%)`
-      );
+      if (typeof growthRate === 'number' && !isNaN(growthRate)) {
+        insightsList.push(
+          isRTL
+            ? `نمو المتابعين: ${data.kpis.newFollowers.toLocaleString()} متابع جديد (${growthRate.toFixed(2)}%)`
+            : `Follower growth: ${data.kpis.newFollowers.toLocaleString()} new followers (${growthRate.toFixed(2)}%)`
+        );
+      }
     }
 
     // Story completion rate
-    if (engagementRatios.storyCompletion !== null && engagementRatios.storyCompletion !== undefined) {
+    if (engagementRatios.storyCompletion !== null && engagementRatios.storyCompletion !== undefined && typeof engagementRatios.storyCompletion === 'number') {
       insightsList.push(
         isRTL
           ? `معدل إكمال القصص: ${engagementRatios.storyCompletion.toFixed(2)}%`
@@ -777,7 +780,7 @@ export default function InstagramAnalyticsPage() {
             engagementRatios.profileToWebsite !== null ||
             engagementRatios.storyCompletion !== null) && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-              {engagementRatios.interactionsRatio !== null && (
+              {engagementRatios.interactionsRatio !== null && engagementRatios.interactionsRatio !== undefined && (
                 <Card className="border border-border">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-semibold">
@@ -786,7 +789,7 @@ export default function InstagramAnalyticsPage() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-2xl font-bold text-primary">
-                      {engagementRatios.interactionsRatio.toFixed(2)}%
+                      {typeof engagementRatios.interactionsRatio === 'number' ? engagementRatios.interactionsRatio.toFixed(2) : '0.00'}%
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {isRTL ? "التفاعلات / الوصول" : "Interactions / Reach"}
@@ -795,7 +798,7 @@ export default function InstagramAnalyticsPage() {
                 </Card>
               )}
 
-              {engagementRatios.likesRatio !== null && (
+              {engagementRatios.likesRatio !== null && engagementRatios.likesRatio !== undefined && (
                 <Card className="border border-border">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-semibold">
@@ -804,7 +807,7 @@ export default function InstagramAnalyticsPage() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-2xl font-bold text-primary">
-                      {engagementRatios.likesRatio.toFixed(2)}%
+                      {typeof engagementRatios.likesRatio === 'number' ? engagementRatios.likesRatio.toFixed(2) : '0.00'}%
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {isRTL ? "الإعجابات / الوصول" : "Likes / Reach"}
@@ -813,7 +816,7 @@ export default function InstagramAnalyticsPage() {
                 </Card>
               )}
 
-              {engagementRatios.commentsRatio !== null && (
+              {engagementRatios.commentsRatio !== null && engagementRatios.commentsRatio !== undefined && (
                 <Card className="border border-border">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-semibold">
@@ -822,7 +825,7 @@ export default function InstagramAnalyticsPage() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-2xl font-bold text-primary">
-                      {engagementRatios.commentsRatio.toFixed(2)}%
+                      {typeof engagementRatios.commentsRatio === 'number' ? engagementRatios.commentsRatio.toFixed(2) : '0.00'}%
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {isRTL ? "التعليقات / الوصول" : "Comments / Reach"}
@@ -831,7 +834,7 @@ export default function InstagramAnalyticsPage() {
                 </Card>
               )}
 
-              {engagementRatios.reachToImpressions !== null && (
+              {engagementRatios.reachToImpressions !== null && engagementRatios.reachToImpressions !== undefined && (
                 <Card className="border border-border">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-semibold">
@@ -840,7 +843,7 @@ export default function InstagramAnalyticsPage() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-2xl font-bold text-primary">
-                      {engagementRatios.reachToImpressions.toFixed(2)}%
+                      {typeof engagementRatios.reachToImpressions === 'number' ? engagementRatios.reachToImpressions.toFixed(2) : '0.00'}%
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {isRTL ? "نسبة الوصول من المشاهدات" : "Reach rate"}
@@ -849,7 +852,7 @@ export default function InstagramAnalyticsPage() {
                 </Card>
               )}
 
-              {engagementRatios.profileToWebsite !== null && (
+              {engagementRatios.profileToWebsite !== null && engagementRatios.profileToWebsite !== undefined && (
                 <Card className="border border-border">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-semibold">
@@ -858,7 +861,7 @@ export default function InstagramAnalyticsPage() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-2xl font-bold text-primary">
-                      {engagementRatios.profileToWebsite.toFixed(2)}%
+                      {typeof engagementRatios.profileToWebsite === 'number' ? engagementRatios.profileToWebsite.toFixed(2) : '0.00'}%
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {isRTL ? "نسبة التحويل من الملف الشخصي" : "Conversion rate"}
@@ -867,7 +870,7 @@ export default function InstagramAnalyticsPage() {
                 </Card>
               )}
 
-              {engagementRatios.storyCompletion !== null && (
+              {engagementRatios.storyCompletion !== null && engagementRatios.storyCompletion !== undefined && (
                 <Card className="border border-border">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-semibold">
@@ -876,7 +879,7 @@ export default function InstagramAnalyticsPage() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-2xl font-bold text-primary">
-                      {engagementRatios.storyCompletion.toFixed(2)}%
+                      {typeof engagementRatios.storyCompletion === 'number' ? engagementRatios.storyCompletion.toFixed(2) : '0.00'}%
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {isRTL ? "معدل إكمال مشاهدة القصص" : "Story completion rate"}
