@@ -340,6 +340,69 @@ export default function InstagramAnalyticsPage() {
     return firstLine.length > 50 ? firstLine.substring(0, 50) + "..." : firstLine;
   };
 
+  // Determine which columns to show in table
+  const tableColumns = useMemo(() => {
+    if (!data?.availableFields) return [];
+    const cols: Array<{ key: string; label: { ar: string; en: string }; field: keyof InstagramPost }> = [];
+    
+    // Always show caption if available
+    if (data.availableFields.caption) {
+      cols.push({ key: "caption", label: { ar: "التسمية التوضيحية", en: "Caption" }, field: "caption" });
+    }
+    
+    // Show timestamp if available
+    if (data.availableFields.publish_date) {
+      cols.push({ key: "timestamp", label: { ar: "التاريخ", en: "Timestamp" }, field: "timestamp" });
+    }
+    
+    // Show reach if available
+    if (data.availableFields.reach) {
+      cols.push({ key: "reach", label: { ar: "الوصول", en: "Reach" }, field: "reach" });
+    }
+    
+    // Show impressions if available
+    if (data.availableFields.impressions) {
+      cols.push({ key: "impressions", label: { ar: "المشاهدات", en: "Impressions" }, field: "impressions" });
+    }
+    
+    // Show interactions if components exist
+    if (data.availableFields.likes || data.availableFields.comments || data.availableFields.shares) {
+      cols.push({ key: "interactions", label: { ar: "التفاعلات", en: "Interactions" }, field: "total_interactions" });
+    }
+    
+    // Show likes if available
+    if (data.availableFields.likes) {
+      cols.push({ key: "likes", label: { ar: "الإعجابات", en: "Likes" }, field: "likes" });
+    }
+    
+    // Show comments if available
+    if (data.availableFields.comments) {
+      cols.push({ key: "comments", label: { ar: "التعليقات", en: "Comments" }, field: "comments" });
+    }
+    
+    // Show shares if available
+    if (data.availableFields.shares) {
+      cols.push({ key: "shares", label: { ar: "المشاركات", en: "Shares" }, field: "shares" });
+    }
+    
+    // Show saves if available
+    if (data.availableFields.saves) {
+      cols.push({ key: "saves", label: { ar: "الحفظ", en: "Saves" }, field: "saves" });
+    }
+    
+    // Show video views if available
+    if (data.availableFields.video_views) {
+      cols.push({ key: "video_views", label: { ar: "مشاهدات الفيديو", en: "Video Views" }, field: "video_views" });
+    }
+    
+    // Show permalink if available
+    if (data.availableFields.permalink) {
+      cols.push({ key: "permalink", label: { ar: "الرابط", en: "Link" }, field: "permalink" });
+    }
+    
+    return cols;
+  }, [data]);
+
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat(isRTL ? "ar-DZ" : "en-US").format(Math.round(num));
   };
@@ -824,120 +887,326 @@ export default function InstagramAnalyticsPage() {
             </div>
           )}
 
-          {/* Charts */}
+          {/* Charts - Only show if data exists */}
           {data.timeTrends.last7Days.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
-              <LineChartComponent
-                data={data.timeTrends.last7Days.map(d => ({
-                  name: d.date,
-                  value: d.reach,
-                }))}
-                title={isRTL ? "الوصول خلال آخر 7 أيام" : "Reach Over Last 7 Days"}
-              />
-              <LineChartComponent
-                data={data.timeTrends.last7Days.map(d => ({
-                  name: d.date,
-                  value: d.interactions,
-                }))}
-                title={isRTL ? "التفاعلات خلال آخر 7 أيام" : "Interactions Over Last 7 Days"}
-              />
+              {data.availableFields.reach && data.timeTrends.last7Days.some(d => d.reach !== undefined && d.reach !== null) && (
+                <LineChartComponent
+                  data={data.timeTrends.last7Days
+                    .filter(d => d.reach !== undefined && d.reach !== null)
+                    .map(d => ({
+                      name: d.date,
+                      value: d.reach!,
+                    }))}
+                  title={isRTL ? "الوصول خلال آخر 7 أيام" : "Reach Over Last 7 Days"}
+                />
+              )}
+              {data.availableFields.impressions && data.timeTrends.last7Days.some(d => d.impressions !== undefined && d.impressions !== null) && (
+                <LineChartComponent
+                  data={data.timeTrends.last7Days
+                    .filter(d => d.impressions !== undefined && d.impressions !== null)
+                    .map(d => ({
+                      name: d.date,
+                      value: d.impressions!,
+                    }))}
+                  title={isRTL ? "المشاهدات خلال آخر 7 أيام" : "Impressions Over Last 7 Days"}
+                />
+              )}
+              {data.availableFields.likes && data.availableFields.comments && data.availableFields.shares && 
+               data.timeTrends.last7Days.some(d => d.interactions !== undefined && d.interactions !== null) && (
+                <LineChartComponent
+                  data={data.timeTrends.last7Days
+                    .filter(d => d.interactions !== undefined && d.interactions !== null)
+                    .map(d => ({
+                      name: d.date,
+                      value: d.interactions!,
+                    }))}
+                  title={isRTL ? "التفاعلات خلال آخر 7 أيام" : "Interactions Over Last 7 Days"}
+                />
+              )}
+              {data.availableFields.likes && data.timeTrends.last7Days.some(d => d.likes !== undefined && d.likes !== null) && (
+                <LineChartComponent
+                  data={data.timeTrends.last7Days
+                    .filter(d => d.likes !== undefined && d.likes !== null)
+                    .map(d => ({
+                      name: d.date,
+                      value: d.likes!,
+                    }))}
+                  title={isRTL ? "الإعجابات خلال آخر 7 أيام" : "Likes Over Last 7 Days"}
+                />
+              )}
+              {data.availableFields.comments && data.timeTrends.last7Days.some(d => d.comments !== undefined && d.comments !== null) && (
+                <LineChartComponent
+                  data={data.timeTrends.last7Days
+                    .filter(d => d.comments !== undefined && d.comments !== null)
+                    .map(d => ({
+                      name: d.date,
+                      value: d.comments!,
+                    }))}
+                  title={isRTL ? "التعليقات خلال آخر 7 أيام" : "Comments Over Last 7 Days"}
+                />
+              )}
             </div>
           )}
 
-          {/* Top Posts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
-            <Card className="border border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-yellow-500" />
-                  {isRTL ? "أفضل 5 منشورات حسب الوصول" : "Top 5 Posts by Reach"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {data.topPosts.byReach.slice(0, 5).map((post, index) => (
-                    <div
-                      key={post.media_id}
-                      className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="w-6 h-6 flex items-center justify-center">
-                          {index + 1}
-                        </Badge>
-                        <div>
-                          <p className="text-sm font-medium">
-                            {post.caption ? getFirstSentence(post.caption) : post.media_id}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(post.timestamp)}
-                          </p>
+          {/* Top Posts - Only show if data exists */}
+          {(data.topPosts.byReach && data.topPosts.byReach.length > 0) ||
+           (data.topPosts.byImpressions && data.topPosts.byImpressions.length > 0) ||
+           (data.topPosts.byInteractions && data.topPosts.byInteractions.length > 0) ||
+           (data.topPosts.byLikes && data.topPosts.byLikes.length > 0) ||
+           (data.topPosts.byVideoViews && data.topPosts.byVideoViews.length > 0) ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
+              {data.topPosts.byReach && data.topPosts.byReach.length > 0 && (
+                <Card className="border border-border">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-yellow-500" />
+                      {isRTL ? "أفضل 5 منشورات حسب الوصول" : "Top 5 Posts by Reach"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {data.topPosts.byReach.slice(0, 5).map((post, index) => (
+                        <div
+                          key={post.media_id}
+                          className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="w-6 h-6 flex items-center justify-center">
+                              {index + 1}
+                            </Badge>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {post.caption ? getFirstSentence(post.caption) : post.media_id}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(post.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {post.reach !== undefined && post.reach !== null && (
+                              <span className="text-sm font-semibold">{formatNumber(post.reach)}</span>
+                            )}
+                            {post.permalink && (
+                              <a
+                                href={post.permalink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:text-primary/80"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold">{formatNumber(post.reach || 0)}</span>
-                        {post.permalink && (
-                          <a
-                            href={post.permalink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        )}
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              )}
 
-            <Card className="border border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-blue-500" />
-                  {isRTL ? "أفضل 5 منشورات حسب التفاعل" : "Top 5 Posts by Interactions"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {data.topPosts.byInteractions.slice(0, 5).map((post, index) => (
-                    <div
-                      key={post.media_id}
-                      className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="w-6 h-6 flex items-center justify-center">
-                          {index + 1}
-                        </Badge>
-                        <div>
-                          <p className="text-sm font-medium">
-                            {post.caption ? getFirstSentence(post.caption) : post.media_id}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(post.timestamp)}
-                          </p>
+              {data.topPosts.byImpressions && data.topPosts.byImpressions.length > 0 && (
+                <Card className="border border-border">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-purple-500" />
+                      {isRTL ? "أفضل 5 منشورات حسب المشاهدات" : "Top 5 Posts by Impressions"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {data.topPosts.byImpressions.slice(0, 5).map((post, index) => (
+                        <div
+                          key={post.media_id}
+                          className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="w-6 h-6 flex items-center justify-center">
+                              {index + 1}
+                            </Badge>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {post.caption ? getFirstSentence(post.caption) : post.media_id}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(post.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {post.impressions !== undefined && post.impressions !== null && (
+                              <span className="text-sm font-semibold">{formatNumber(post.impressions)}</span>
+                            )}
+                            {post.permalink && (
+                              <a
+                                href={post.permalink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:text-primary/80"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold">{formatNumber(post.total_interactions || 0)}</span>
-                        {post.permalink && (
-                          <a
-                            href={post.permalink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        )}
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {data.topPosts.byInteractions && data.topPosts.byInteractions.length > 0 && (
+                <Card className="border border-border">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-blue-500" />
+                      {isRTL ? "أفضل 5 منشورات حسب التفاعل" : "Top 5 Posts by Interactions"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {data.topPosts.byInteractions.slice(0, 5).map((post, index) => (
+                        <div
+                          key={post.media_id}
+                          className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="w-6 h-6 flex items-center justify-center">
+                              {index + 1}
+                            </Badge>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {post.caption ? getFirstSentence(post.caption) : post.media_id}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(post.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {post.total_interactions !== undefined && post.total_interactions !== null && (
+                              <span className="text-sm font-semibold">{formatNumber(post.total_interactions)}</span>
+                            )}
+                            {post.permalink && (
+                              <a
+                                href={post.permalink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:text-primary/80"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {data.topPosts.byLikes && data.topPosts.byLikes.length > 0 && (
+                <Card className="border border-border">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-red-500" />
+                      {isRTL ? "أفضل 5 منشورات حسب الإعجابات" : "Top 5 Posts by Likes"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {data.topPosts.byLikes.slice(0, 5).map((post, index) => (
+                        <div
+                          key={post.media_id}
+                          className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="w-6 h-6 flex items-center justify-center">
+                              {index + 1}
+                            </Badge>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {post.caption ? getFirstSentence(post.caption) : post.media_id}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(post.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {post.likes !== undefined && post.likes !== null && (
+                              <span className="text-sm font-semibold">{formatNumber(post.likes)}</span>
+                            )}
+                            {post.permalink && (
+                              <a
+                                href={post.permalink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:text-primary/80"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {data.topPosts.byVideoViews && data.topPosts.byVideoViews.length > 0 && (
+                <Card className="border border-border">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-green-500" />
+                      {isRTL ? "أفضل 5 فيديوهات حسب المشاهدات" : "Top 5 Videos by Views"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {data.topPosts.byVideoViews.slice(0, 5).map((post, index) => (
+                        <div
+                          key={post.media_id}
+                          className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="w-6 h-6 flex items-center justify-center">
+                              {index + 1}
+                            </Badge>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {post.caption ? getFirstSentence(post.caption) : post.media_id}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(post.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {post.video_views !== undefined && post.video_views !== null && (
+                              <span className="text-sm font-semibold">{formatNumber(post.video_views)}</span>
+                            )}
+                            {post.permalink && (
+                              <a
+                                href={post.permalink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:text-primary/80"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : null}
 
           {/* Insights */}
           {insights.length > 0 && (
@@ -961,104 +1230,87 @@ export default function InstagramAnalyticsPage() {
             </Card>
           )}
 
-          {/* Data Table */}
-          <Card className="border border-border">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{isRTL ? "جدول المنشورات" : "Posts Table"}</CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder={isRTL ? "بحث..." : "Search..."}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pr-8"
-                  />
+          {/* Data Table - Only show columns that exist */}
+          {tableColumns.length > 0 && (
+            <Card className="border border-border">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>{isRTL ? "جدول المنشورات" : "Posts Table"}</CardTitle>
+                  <div className="relative w-64">
+                    <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={isRTL ? "بحث..." : "Search..."}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pr-8"
+                    />
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className={`text-sm font-semibold p-3 ${isRTL ? "text-right" : "text-left"}`}>
-                        {isRTL ? "التسمية التوضيحية" : "Caption"}
-                      </th>
-                      <th className={`text-sm font-semibold p-3 ${isRTL ? "text-right" : "text-left"}`}>
-                        {isRTL ? "التاريخ" : "Timestamp"}
-                      </th>
-                      <th className={`text-sm font-semibold p-3 ${isRTL ? "text-right" : "text-left"}`}>
-                        {isRTL ? "الوصول" : "Reach"}
-                      </th>
-                      <th className={`text-sm font-semibold p-3 ${isRTL ? "text-right" : "text-left"}`}>
-                        {isRTL ? "التفاعلات" : "Interactions"}
-                      </th>
-                      <th className={`text-sm font-semibold p-3 ${isRTL ? "text-right" : "text-left"}`}>
-                        {isRTL ? "الإعجابات" : "Likes"}
-                      </th>
-                      <th className={`text-sm font-semibold p-3 ${isRTL ? "text-right" : "text-left"}`}>
-                        {isRTL ? "التعليقات" : "Comments"}
-                      </th>
-                      <th className={`text-sm font-semibold p-3 ${isRTL ? "text-right" : "text-left"}`}>
-                        {isRTL ? "الرابط" : "Link"}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredPosts.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="text-center p-8 text-muted-foreground">
-                          {isRTL ? "لا توجد بيانات" : "No data available"}
-                        </td>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        {tableColumns.map((col) => (
+                          <th key={col.key} className={`text-sm font-semibold p-3 ${isRTL ? "text-right" : "text-left"}`}>
+                            {isRTL ? col.label.ar : col.label.en}
+                          </th>
+                        ))}
                       </tr>
-                    ) : (
-                      filteredPosts.map((post) => (
-                        <tr
-                          key={post.media_id}
-                          className="border-b border-border/50 hover:bg-muted/50 transition-colors"
-                        >
-                          <td className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
-                            {post.caption ? getFirstSentence(post.caption) : post.media_id}
-                          </td>
-                          <td className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
-                            {formatDate(post.timestamp)}
-                          </td>
-                          <td className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
-                            {formatNumber(post.reach || 0)}
-                          </td>
-                          <td className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
-                            {formatNumber(post.total_interactions || 0)}
-                          </td>
-                          <td className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
-                            {formatNumber(post.likes || 0)}
-                          </td>
-                          <td className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
-                            {formatNumber(post.comments || 0)}
-                          </td>
-                          <td className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
-                            {post.permalink ? (
-                              <a
-                                href={post.permalink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:text-primary/80 flex items-center gap-1"
-                              >
-                                <span>{isRTL ? "فتح" : "Open"}</span>
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
+                    </thead>
+                    <tbody>
+                      {filteredPosts.length === 0 ? (
+                        <tr>
+                          <td colSpan={tableColumns.length} className="text-center p-8 text-muted-foreground">
+                            {isRTL ? "لا توجد بيانات" : "No data available"}
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                      ) : (
+                        filteredPosts.map((post) => (
+                          <tr
+                            key={post.media_id}
+                            className="border-b border-border/50 hover:bg-muted/50 transition-colors"
+                          >
+                            {tableColumns.map((col) => {
+                              const value = post[col.field];
+                              return (
+                                <td key={col.key} className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
+                                  {col.key === "caption" ? (
+                                    post.caption ? getFirstSentence(post.caption) : post.media_id
+                                  ) : col.key === "timestamp" ? (
+                                    formatDate(post.timestamp)
+                                  ) : col.key === "permalink" ? (
+                                    post.permalink ? (
+                                      <a
+                                        href={post.permalink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:text-primary/80 flex items-center gap-1"
+                                      >
+                                        <span>{isRTL ? "فتح" : "Open"}</span>
+                                        <ExternalLink className="h-3 w-3" />
+                                      </a>
+                                    ) : (
+                                      <span className="text-muted-foreground">-</span>
+                                    )
+                                  ) : typeof value === "number" && value !== null && value !== undefined ? (
+                                    formatNumber(value)
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
