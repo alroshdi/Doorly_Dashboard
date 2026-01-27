@@ -133,12 +133,12 @@ export default function InstagramAnalyticsPage() {
 
   // Generate insights
   const insights = useMemo(() => {
-    if (!data || data.posts.length === 0) return [];
+    if (!data || !data.posts || data.posts.length === 0) return [];
 
     const insightsList: string[] = [];
 
     // Top performing post
-    if (data.topPosts.byReach.length > 0) {
+    if (data.topPosts?.byReach && data.topPosts.byReach.length > 0) {
       const topPost = data.topPosts.byReach[0];
       insightsList.push(
         isRTL
@@ -157,7 +157,7 @@ export default function InstagramAnalyticsPage() {
     }
 
     // Average metrics per post
-    if (data.kpis.totalPosts > 0) {
+    if (data.kpis?.totalPosts && data.kpis.totalPosts > 0) {
       const avgReach = data.kpis.totalReach / data.kpis.totalPosts;
       const avgLikes = data.kpis.totalLikes / data.kpis.totalPosts;
       insightsList.push(
@@ -173,7 +173,8 @@ export default function InstagramAnalyticsPage() {
     }
 
     // Content performance recommendation
-    if (data.topPosts.byInteractions.length > 0 && data.topPosts.byReach.length > 0) {
+    if (data.topPosts?.byInteractions && data.topPosts?.byReach && 
+        data.topPosts.byInteractions.length > 0 && data.topPosts.byReach.length > 0) {
       const topByInteractions = data.topPosts.byInteractions[0];
       const topByReach = data.topPosts.byReach[0];
       
@@ -431,7 +432,7 @@ export default function InstagramAnalyticsPage() {
           </div>
 
           {/* Charts */}
-          {data.timeTrends.last7Days.length > 0 && (
+          {data.timeTrends?.last7Days && data.timeTrends.last7Days.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
               <LineChartComponent
                 data={data.timeTrends.last7Days.map(d => ({
@@ -451,17 +452,18 @@ export default function InstagramAnalyticsPage() {
           )}
 
           {/* Top Posts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
-            <Card className="border border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-yellow-500" />
-                  {isRTL ? "أفضل 5 منشورات حسب الوصول" : "Top 5 Posts by Reach"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {data.topPosts.byReach.slice(0, 5).map((post, index) => (
+          {data.topPosts?.byReach && data.topPosts?.byInteractions && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-3">
+              <Card className="border border-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-yellow-500" />
+                    {isRTL ? "أفضل 5 منشورات حسب الوصول" : "Top 5 Posts by Reach"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {data.topPosts.byReach.slice(0, 5).map((post, index) => (
                     <div
                       key={post.media_id}
                       className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors"
@@ -540,10 +542,11 @@ export default function InstagramAnalyticsPage() {
                       </div>
                     </div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Insights */}
           {insights.length > 0 && (
