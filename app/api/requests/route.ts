@@ -45,25 +45,28 @@ async function getGoogleSheetsData() {
     );
     
     // Convert rows to objects
-    // Filter out completely empty rows (rows with no data at all)
-    const data = rows.slice(1)
-      .map((row: any[]) => {
-        const obj: any = {};
-        headers.forEach((header: string, index: number) => {
-          // Preserve actual values including 0, empty strings, and null
-          // Only default to "" if the cell is truly undefined
-          const cellValue = row[index];
-          obj[header] = cellValue !== undefined ? cellValue : "";
-        });
-        return obj;
-      })
-      .filter((obj: any) => {
-        // Keep rows that have at least one non-empty value
-        return Object.values(obj).some((val: any) => val !== "" && val !== null && val !== undefined);
+    const data = rows.slice(1).map((row: any[]) => {
+      const obj: any = {};
+      headers.forEach((header: string, index: number) => {
+        // Preserve actual values including 0, empty strings, and null
+        // Only default to "" if the cell is truly undefined
+        const cellValue = row[index];
+        obj[header] = cellValue !== undefined ? cellValue : "";
       });
+      return obj;
+    });
 
-    console.log(`Processed ${data.length} data rows (excluding header and empty rows)`);
-    return data;
+    // Filter out rows that don't have a request_id (completely empty rows)
+    const requestIdColumn = headers.find(h => h.includes("request_id") || h.includes("id"));
+    const filteredData = requestIdColumn 
+      ? data.filter((obj: any) => {
+          const id = obj[requestIdColumn];
+          return id !== "" && id !== null && id !== undefined;
+        })
+      : data; // If no request_id column found, return all data
+
+    console.log(`Processed ${filteredData.length} data rows (excluding header, total rows: ${rows.length})`);
+    return filteredData;
   } catch (error: any) {
     console.error("Error fetching Google Sheets data:", error);
     throw error;
