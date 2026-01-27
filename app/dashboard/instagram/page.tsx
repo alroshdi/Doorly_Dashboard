@@ -188,11 +188,19 @@ export default function InstagramAnalyticsPage() {
     return insightsList;
   }, [data, engagementRatios, isRTL]);
 
-  // Helper function to get first word of caption
-  const getFirstWord = (caption?: string) => {
+  // Helper function to get first sentence of caption
+  const getFirstSentence = (caption?: string) => {
     if (!caption) return "";
-    const words = caption.trim().split(/\s+/);
-    return words[0] || "";
+    const trimmed = caption.trim();
+    // Split by sentence endings: period, exclamation, question mark, newline, or emoji
+    // Match first sentence (ending with . ! ? \n or before emoji)
+    const sentenceMatch = trimmed.match(/^[^.!?\n]+[.!?\n]?/);
+    if (sentenceMatch) {
+      return sentenceMatch[0].trim();
+    }
+    // If no sentence ending found, return first 50 characters or until newline
+    const firstLine = trimmed.split('\n')[0];
+    return firstLine.length > 50 ? firstLine.substring(0, 50) + "..." : firstLine;
   };
 
   const formatNumber = (num: number) => {
@@ -463,7 +471,7 @@ export default function InstagramAnalyticsPage() {
                         </Badge>
                         <div>
                           <p className="text-sm font-medium">
-                            {post.caption ? getFirstWord(post.caption) : post.media_id}
+                            {post.caption ? getFirstSentence(post.caption) : post.media_id}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {formatDate(post.timestamp)}
@@ -509,7 +517,7 @@ export default function InstagramAnalyticsPage() {
                         </Badge>
                         <div>
                           <p className="text-sm font-medium">
-                            {post.caption ? getFirstWord(post.caption) : post.media_id}
+                            {post.caption ? getFirstSentence(post.caption) : post.media_id}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {formatDate(post.timestamp)}
