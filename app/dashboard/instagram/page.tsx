@@ -10,34 +10,83 @@ import { isAuthenticated } from "@/lib/auth";
 import { getTranslations, getLanguage } from "@/lib/i18n";
 import { LineChartComponent } from "@/components/charts/line-chart";
 import { BarChartComponent } from "@/components/charts/bar-chart";
-import { Eye, TrendingUp, Heart, MessageCircle, ExternalLink, Search, Trophy, Lightbulb } from "lucide-react";
+import { Eye, TrendingUp, Heart, MessageCircle, ExternalLink, Search, Trophy, Lightbulb, Users, Share2, Bookmark, Play, User, FileText } from "lucide-react";
 
 interface InstagramPost {
   media_id: string;
   timestamp?: string;
   reach?: number;
+  impressions?: number;
   total_interactions?: number;
   likes?: number;
   comments?: number;
+  shares?: number;
+  saves?: number;
+  video_views?: number;
+  media_type?: string;
   permalink?: string;
   caption?: string;
 }
 
+interface AvailableFields {
+  followers_count: boolean;
+  new_followers: boolean;
+  reach: boolean;
+  impressions: boolean;
+  profile_visits: boolean;
+  website_clicks: boolean;
+  media_id: boolean;
+  publish_date: boolean;
+  media_type: boolean;
+  likes: boolean;
+  comments: boolean;
+  shares: boolean;
+  saves: boolean;
+  video_views: boolean;
+  caption: boolean;
+  permalink: boolean;
+  story_views: boolean;
+  story_replies: boolean;
+  exits: boolean;
+}
+
 interface InstagramAnalytics {
   posts: InstagramPost[];
+  availableFields: AvailableFields;
   kpis: {
-    totalReach: number;
-    totalInteractions: number;
-    totalLikes: number;
-    totalComments: number;
+    totalReach?: number;
+    totalImpressions?: number;
+    totalInteractions?: number;
+    totalLikes?: number;
+    totalComments?: number;
+    totalShares?: number;
+    totalSaves?: number;
+    totalVideoViews?: number;
     totalPosts: number;
+    followersCount?: number;
+    newFollowers?: number;
+    profileVisits?: number;
+    websiteClicks?: number;
+    totalStoryViews?: number;
+    totalStoryReplies?: number;
+    totalExits?: number;
   };
   topPosts: {
-    byReach: InstagramPost[];
-    byInteractions: InstagramPost[];
+    byReach?: InstagramPost[];
+    byImpressions?: InstagramPost[];
+    byInteractions?: InstagramPost[];
+    byLikes?: InstagramPost[];
+    byVideoViews?: InstagramPost[];
   };
   timeTrends: {
-    last7Days: Array<{ date: string; reach: number; interactions: number; likes: number; comments: number }>;
+    last7Days: Array<{
+      date: string;
+      reach?: number;
+      impressions?: number;
+      interactions?: number;
+      likes?: number;
+      comments?: number;
+    }>;
   };
   timestamp: string;
   error?: string | null;
@@ -114,41 +163,93 @@ export default function InstagramAnalyticsPage() {
     });
   }, [data, searchTerm]);
 
-  // Calculate engagement ratios
+  // Calculate engagement ratios - only if both fields exist
   const engagementRatios = useMemo(() => {
-    if (!data?.kpis || data.kpis.totalReach === 0) {
+    if (!data?.kpis || !data?.availableFields) {
       return {
-        interactionsRatio: 0,
-        likesRatio: 0,
-        commentsRatio: 0,
+        interactionsRatio: null,
+        likesRatio: null,
+        commentsRatio: null,
+        reachToImpressions: null,
+        profileToWebsite: null,
+        storyCompletion: null,
       };
     }
 
-    return {
-      interactionsRatio: (data.kpis.totalInteractions / data.kpis.totalReach) * 100,
-      likesRatio: (data.kpis.totalLikes / data.kpis.totalReach) * 100,
-      commentsRatio: (data.kpis.totalComments / data.kpis.totalReach) * 100,
-    };
+    const ratios: any = {};
+
+    // Interactions / Reach ratio
+    if (data.availableFields.reach && data.kpis.totalReach && data.kpis.totalReach > 0 && 
+        data.kpis.totalInteractions !== undefined) {
+      ratios.interactionsRatio = (data.kpis.totalInteractions / data.kpis.totalReach) * 100;
+    }
+
+    // Likes / Reach ratio
+    if (data.availableFields.reach && data.kpis.totalReach && data.kpis.totalReach > 0 && 
+        data.kpis.totalLikes !== undefined) {
+      ratios.likesRatio = (data.kpis.totalLikes / data.kpis.totalReach) * 100;
+    }
+
+    // Comments / Reach ratio
+    if (data.availableFields.reach && data.kpis.totalReach && data.kpis.totalReach > 0 && 
+        data.kpis.totalComments !== undefined) {
+      ratios.commentsRatio = (data.kpis.totalComments / data.kpis.totalReach) * 100;
+    }
+
+    // Reach / Impressions ratio
+    if (data.availableFields.reach && data.availableFields.impressions && 
+        data.kpis.totalReach && data.kpis.totalImpressions && data.kpis.totalImpressions > 0) {
+      ratios.reachToImpressions = (data.kpis.totalReach / data.kpis.totalImpressions) * 100;
+    }
+
+    // Profile visits / Website clicks ratio
+    if (data.availableFields.profile_visits && data.availableFields.website_clicks && 
+        data.kpis.profileVisits && data.kpis.websiteClicks && data.kpis.websiteClicks > 0) {
+      ratios.profileToWebsite = (data.kpis.profileVisits / data.kpis.websiteClicks) * 100;
+    }
+
+    // Story completion rate (views - exits) / views
+    if (data.availableFields.story_views && data.availableFields.exits && 
+        data.kpis.totalStoryViews && data.kpis.totalStoryViews > 0 && 
+        data.kpis.totalExits !== undefined) {
+      ratios.storyCompletion = ((data.kpis.totalStoryViews - data.kpis.totalExits) / data.kpis.totalStoryViews) * 100;
+    }
+
+    return ratios;
   }, [data]);
 
-  // Generate insights
+  // Generate insights - only based on available data
   const insights = useMemo(() => {
-    if (!data || data.posts.length === 0) return [];
+    if (!data || data.posts.length === 0 || !data.availableFields) return [];
 
     const insightsList: string[] = [];
 
-    // Top performing post
-    if (data.topPosts.byReach.length > 0) {
+    // Top performing post by reach
+    if (data.availableFields.reach && data.topPosts.byReach && data.topPosts.byReach.length > 0) {
       const topPost = data.topPosts.byReach[0];
-      insightsList.push(
-        isRTL
-          ? `أفضل منشور من حيث الوصول: ${topPost.reach?.toLocaleString()} وصول`
-          : `Top performing post by reach: ${topPost.reach?.toLocaleString()} reach`
-      );
+      if (topPost.reach !== undefined && topPost.reach !== null) {
+        insightsList.push(
+          isRTL
+            ? `أفضل منشور من حيث الوصول: ${topPost.reach.toLocaleString()} وصول`
+            : `Top performing post by reach: ${topPost.reach.toLocaleString()} reach`
+        );
+      }
+    }
+
+    // Top performing post by impressions
+    if (data.availableFields.impressions && data.topPosts.byImpressions && data.topPosts.byImpressions.length > 0) {
+      const topPost = data.topPosts.byImpressions[0];
+      if (topPost.impressions !== undefined && topPost.impressions !== null) {
+        insightsList.push(
+          isRTL
+            ? `أفضل منشور من حيث المشاهدات: ${topPost.impressions.toLocaleString()} مشاهدة`
+            : `Top performing post by impressions: ${topPost.impressions.toLocaleString()} impressions`
+        );
+      }
     }
 
     // Engagement rate
-    if (engagementRatios.interactionsRatio > 0) {
+    if (engagementRatios.interactionsRatio !== null && engagementRatios.interactionsRatio !== undefined) {
       insightsList.push(
         isRTL
           ? `معدل التفاعل: ${engagementRatios.interactionsRatio.toFixed(2)}%`
@@ -156,24 +257,39 @@ export default function InstagramAnalyticsPage() {
       );
     }
 
-    // Average metrics per post
+    // Average metrics per post - only if data exists
     if (data.kpis.totalPosts > 0) {
-      const avgReach = data.kpis.totalReach / data.kpis.totalPosts;
-      const avgLikes = data.kpis.totalLikes / data.kpis.totalPosts;
-      insightsList.push(
-        isRTL
-          ? `متوسط الوصول لكل منشور: ${Math.round(avgReach).toLocaleString()}`
-          : `Average reach per post: ${Math.round(avgReach).toLocaleString()}`
-      );
-      insightsList.push(
-        isRTL
-          ? `متوسط الإعجابات لكل منشور: ${Math.round(avgLikes).toLocaleString()}`
-          : `Average likes per post: ${Math.round(avgLikes).toLocaleString()}`
-      );
+      if (data.availableFields.reach && data.kpis.totalReach !== undefined) {
+        const avgReach = data.kpis.totalReach / data.kpis.totalPosts;
+        insightsList.push(
+          isRTL
+            ? `متوسط الوصول لكل منشور: ${Math.round(avgReach).toLocaleString()}`
+            : `Average reach per post: ${Math.round(avgReach).toLocaleString()}`
+        );
+      }
+
+      if (data.availableFields.likes && data.kpis.totalLikes !== undefined) {
+        const avgLikes = data.kpis.totalLikes / data.kpis.totalPosts;
+        insightsList.push(
+          isRTL
+            ? `متوسط الإعجابات لكل منشور: ${Math.round(avgLikes).toLocaleString()}`
+            : `Average likes per post: ${Math.round(avgLikes).toLocaleString()}`
+        );
+      }
+
+      if (data.availableFields.video_views && data.kpis.totalVideoViews !== undefined) {
+        const avgVideoViews = data.kpis.totalVideoViews / data.kpis.totalPosts;
+        insightsList.push(
+          isRTL
+            ? `متوسط مشاهدات الفيديو لكل منشور: ${Math.round(avgVideoViews).toLocaleString()}`
+            : `Average video views per post: ${Math.round(avgVideoViews).toLocaleString()}`
+        );
+      }
     }
 
     // Content performance recommendation
-    if (data.topPosts.byInteractions.length > 0 && data.topPosts.byReach.length > 0) {
+    if (data.topPosts.byInteractions && data.topPosts.byReach && 
+        data.topPosts.byInteractions.length > 0 && data.topPosts.byReach.length > 0) {
       const topByInteractions = data.topPosts.byInteractions[0];
       const topByReach = data.topPosts.byReach[0];
       
@@ -184,6 +300,26 @@ export default function InstagramAnalyticsPage() {
             : "💡 Posts with high reach also achieve high engagement"
         );
       }
+    }
+
+    // Follower growth insight
+    if (data.availableFields.followers_count && data.availableFields.new_followers && 
+        data.kpis.followersCount !== undefined && data.kpis.newFollowers !== undefined && data.kpis.newFollowers > 0) {
+      const growthRate = (data.kpis.newFollowers / data.kpis.followersCount) * 100;
+      insightsList.push(
+        isRTL
+          ? `نمو المتابعين: ${data.kpis.newFollowers.toLocaleString()} متابع جديد (${growthRate.toFixed(2)}%)`
+          : `Follower growth: ${data.kpis.newFollowers.toLocaleString()} new followers (${growthRate.toFixed(2)}%)`
+      );
+    }
+
+    // Story completion rate
+    if (engagementRatios.storyCompletion !== null && engagementRatios.storyCompletion !== undefined) {
+      insightsList.push(
+        isRTL
+          ? `معدل إكمال القصص: ${engagementRatios.storyCompletion.toFixed(2)}%`
+          : `Story completion rate: ${engagementRatios.storyCompletion.toFixed(2)}%`
+      );
     }
 
     return insightsList;
@@ -320,115 +456,373 @@ export default function InstagramAnalyticsPage() {
             </p>
           </div>
 
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
-            <Card className="border border-border hover:border-primary/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-semibold">
-                  {isRTL ? "إجمالي الوصول" : "Total Reach"}
-                </CardTitle>
-                <div className="p-1.5 rounded-lg bg-primary/10">
-                  <Eye className="h-3.5 w-3.5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-xl font-bold">{formatNumber(data.kpis.totalReach)}</div>
-              </CardContent>
-            </Card>
+          {/* KPI Cards - Only show if data exists */}
+          {data.availableFields && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
+              {/* Account-level KPIs */}
+              {data.availableFields.followers_count && data.kpis.followersCount !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "عدد المتابعين" : "Followers"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <Users className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.followersCount)}</div>
+                  </CardContent>
+                </Card>
+              )}
 
-            <Card className="border border-border hover:border-primary/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-semibold">
-                  {isRTL ? "إجمالي التفاعلات" : "Total Interactions"}
-                </CardTitle>
-                <div className="p-1.5 rounded-lg bg-primary/10">
-                  <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-xl font-bold">{formatNumber(data.kpis.totalInteractions)}</div>
-              </CardContent>
-            </Card>
+              {data.availableFields.new_followers && data.kpis.newFollowers !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "متابعون جدد" : "New Followers"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.newFollowers)}</div>
+                  </CardContent>
+                </Card>
+              )}
 
-            <Card className="border border-border hover:border-primary/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-semibold">
-                  {isRTL ? "إجمالي الإعجابات" : "Total Likes"}
-                </CardTitle>
-                <div className="p-1.5 rounded-lg bg-primary/10">
-                  <Heart className="h-3.5 w-3.5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-xl font-bold">{formatNumber(data.kpis.totalLikes)}</div>
-              </CardContent>
-            </Card>
+              {/* Post-level KPIs */}
+              {data.availableFields.reach && data.kpis.totalReach !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "إجمالي الوصول" : "Total Reach"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <Eye className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalReach)}</div>
+                  </CardContent>
+                </Card>
+              )}
 
-            <Card className="border border-border hover:border-primary/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-semibold">
-                  {isRTL ? "إجمالي التعليقات" : "Total Comments"}
-                </CardTitle>
-                <div className="p-1.5 rounded-lg bg-primary/10">
-                  <MessageCircle className="h-3.5 w-3.5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-xl font-bold">{formatNumber(data.kpis.totalComments)}</div>
-              </CardContent>
-            </Card>
-          </div>
+              {data.availableFields.impressions && data.kpis.totalImpressions !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "إجمالي المشاهدات" : "Total Impressions"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <Eye className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalImpressions)}</div>
+                  </CardContent>
+                </Card>
+              )}
 
-          {/* Engagement Ratios */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-            <Card className="border border-border">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">
-                  {isRTL ? "نسبة التفاعل" : "Engagement Ratio"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-2xl font-bold text-primary">
-                  {engagementRatios.interactionsRatio.toFixed(2)}%
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {isRTL ? "التفاعلات / الوصول" : "Interactions / Reach"}
-                </p>
-              </CardContent>
-            </Card>
+              {data.availableFields.likes && data.availableFields.comments && data.availableFields.shares && 
+               data.kpis.totalInteractions !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "إجمالي التفاعلات" : "Total Interactions"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalInteractions)}</div>
+                  </CardContent>
+                </Card>
+              )}
 
-            <Card className="border border-border">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">
-                  {isRTL ? "نسبة الإعجابات" : "Likes Ratio"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-2xl font-bold text-primary">
-                  {engagementRatios.likesRatio.toFixed(2)}%
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {isRTL ? "الإعجابات / الوصول" : "Likes / Reach"}
-                </p>
-              </CardContent>
-            </Card>
+              {data.availableFields.likes && data.kpis.totalLikes !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "إجمالي الإعجابات" : "Total Likes"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <Heart className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalLikes)}</div>
+                  </CardContent>
+                </Card>
+              )}
 
-            <Card className="border border-border">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">
-                  {isRTL ? "نسبة التعليقات" : "Comments Ratio"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="text-2xl font-bold text-primary">
-                  {engagementRatios.commentsRatio.toFixed(2)}%
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {isRTL ? "التعليقات / الوصول" : "Comments / Reach"}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+              {data.availableFields.comments && data.kpis.totalComments !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "إجمالي التعليقات" : "Total Comments"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <MessageCircle className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalComments)}</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {data.availableFields.shares && data.kpis.totalShares !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "إجمالي المشاركات" : "Total Shares"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <Share2 className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalShares)}</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {data.availableFields.saves && data.kpis.totalSaves !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "إجمالي الحفظ" : "Total Saves"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <Bookmark className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalSaves)}</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {data.availableFields.video_views && data.kpis.totalVideoViews !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "مشاهدات الفيديو" : "Video Views"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <Play className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalVideoViews)}</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {data.availableFields.profile_visits && data.kpis.profileVisits !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "زيارات الملف الشخصي" : "Profile Visits"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <User className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.profileVisits)}</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {data.availableFields.website_clicks && data.kpis.websiteClicks !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "نقرات الموقع" : "Website Clicks"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <ExternalLink className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.websiteClicks)}</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Stories KPIs */}
+              {data.availableFields.story_views && data.kpis.totalStoryViews !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "مشاهدات القصص" : "Story Views"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <Eye className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalStoryViews)}</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {data.availableFields.story_replies && data.kpis.totalStoryReplies !== undefined && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "ردود القصص" : "Story Replies"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <MessageCircle className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalStoryReplies)}</div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Total Posts - Always show if we have posts */}
+              {data.kpis.totalPosts > 0 && (
+                <Card className="border border-border hover:border-primary/50 transition-colors">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xs font-semibold">
+                      {isRTL ? "إجمالي المنشورات" : "Total Posts"}
+                    </CardTitle>
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <FileText className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-xl font-bold">{formatNumber(data.kpis.totalPosts)}</div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Engagement Ratios - Only show if data exists */}
+          {(engagementRatios.interactionsRatio !== null || 
+            engagementRatios.likesRatio !== null || 
+            engagementRatios.commentsRatio !== null ||
+            engagementRatios.reachToImpressions !== null ||
+            engagementRatios.profileToWebsite !== null ||
+            engagementRatios.storyCompletion !== null) && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+              {engagementRatios.interactionsRatio !== null && (
+                <Card className="border border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold">
+                      {isRTL ? "نسبة التفاعل" : "Engagement Ratio"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-2xl font-bold text-primary">
+                      {engagementRatios.interactionsRatio.toFixed(2)}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isRTL ? "التفاعلات / الوصول" : "Interactions / Reach"}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {engagementRatios.likesRatio !== null && (
+                <Card className="border border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold">
+                      {isRTL ? "نسبة الإعجابات" : "Likes Ratio"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-2xl font-bold text-primary">
+                      {engagementRatios.likesRatio.toFixed(2)}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isRTL ? "الإعجابات / الوصول" : "Likes / Reach"}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {engagementRatios.commentsRatio !== null && (
+                <Card className="border border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold">
+                      {isRTL ? "نسبة التعليقات" : "Comments Ratio"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-2xl font-bold text-primary">
+                      {engagementRatios.commentsRatio.toFixed(2)}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isRTL ? "التعليقات / الوصول" : "Comments / Reach"}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {engagementRatios.reachToImpressions !== null && (
+                <Card className="border border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold">
+                      {isRTL ? "الوصول / المشاهدات" : "Reach / Impressions"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-2xl font-bold text-primary">
+                      {engagementRatios.reachToImpressions.toFixed(2)}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isRTL ? "نسبة الوصول من المشاهدات" : "Reach rate"}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {engagementRatios.profileToWebsite !== null && (
+                <Card className="border border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold">
+                      {isRTL ? "الملف الشخصي / الموقع" : "Profile / Website"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-2xl font-bold text-primary">
+                      {engagementRatios.profileToWebsite.toFixed(2)}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isRTL ? "نسبة التحويل من الملف الشخصي" : "Conversion rate"}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {engagementRatios.storyCompletion !== null && (
+                <Card className="border border-border">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold">
+                      {isRTL ? "معدل إكمال القصص" : "Story Completion"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="text-2xl font-bold text-primary">
+                      {engagementRatios.storyCompletion.toFixed(2)}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isRTL ? "معدل إكمال مشاهدة القصص" : "Story completion rate"}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
 
           {/* Charts */}
           {data.timeTrends.last7Days.length > 0 && (
