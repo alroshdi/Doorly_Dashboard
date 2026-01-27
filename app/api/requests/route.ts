@@ -9,7 +9,9 @@ async function getGoogleSheetsData() {
     const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
     const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY?.replace(/\\n/g, "\n");
     const sheetId = process.env.GOOGLE_SHEET_ID;
-    const range = process.env.GOOGLE_SHEET_RANGE || "requests!A:Z";
+    // Use a larger range to ensure we get all columns and rows
+    // Google Sheets supports up to column ZZ, but we'll use A:ZZ to be safe
+    const range = process.env.GOOGLE_SHEET_RANGE || "requests!A:ZZ";
 
     if (!serviceAccountEmail || !serviceAccountKey || !sheetId) {
       throw new Error("Missing Google Sheets credentials");
@@ -22,6 +24,8 @@ async function getGoogleSheetsData() {
     });
 
     const sheets = google.sheets({ version: "v4", auth });
+    
+    // Fetch all data - Google Sheets API will return all rows automatically
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
       range: range,
@@ -29,8 +33,11 @@ async function getGoogleSheetsData() {
 
     const rows = response.data.values;
     if (!rows || rows.length === 0) {
+      console.log("No rows found in Google Sheets");
       return [];
     }
+    
+    console.log(`Fetched ${rows.length} rows from Google Sheets (including header)`);
 
     // First row is headers
     const headers = rows[0].map((h: string) => 
