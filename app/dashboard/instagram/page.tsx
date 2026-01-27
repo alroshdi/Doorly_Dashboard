@@ -661,3 +661,4 @@ export default function InstagramAnalyticsPage() {
     </div>
   );
 }
+

@@ -168,14 +168,14 @@ export function Sidebar() {
           {mediaAnalysisExpanded && (
             <div className={cn("space-y-1 animate-slide-down", isRTL ? "mr-6" : "ml-6")}>
               <Button
-                variant={pathname === "/dashboard/analytics/instagram" ? "default" : "ghost"}
+                variant={pathname === "/dashboard/instagram" ? "default" : "ghost"}
                 className={cn(
                   "w-full justify-start text-sm transition-all duration-300 hover:scale-[1.02] active:scale-95",
-                  pathname === "/dashboard/analytics/instagram" 
+                  pathname === "/dashboard/instagram" 
                     ? "bg-primary text-primary-foreground shadow-md hover:shadow-lg" 
                     : "hover:bg-primary/10 hover:text-primary"
                 )}
-                onClick={() => router.push("/dashboard/analytics/instagram")}
+                onClick={() => router.push("/dashboard/instagram")}
               >
                 <Instagram className={cn("h-4 w-4 transition-transform duration-300 group-hover:scale-110", isRTL ? "mr-2" : "ml-2")} />
                 {t.sidebar.instagram}
