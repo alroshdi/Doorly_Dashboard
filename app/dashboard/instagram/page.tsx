@@ -107,6 +107,7 @@ export default function InstagramAnalyticsPage() {
     return data.posts.filter((post) => {
       return (
         post.media_id?.toLowerCase().includes(term) ||
+        post.caption?.toLowerCase().includes(term) ||
         post.timestamp?.toLowerCase().includes(term) ||
         post.permalink?.toLowerCase().includes(term)
       );
@@ -588,7 +589,7 @@ export default function InstagramAnalyticsPage() {
                   <thead>
                     <tr className="border-b border-border">
                       <th className={`text-sm font-semibold p-3 ${isRTL ? "text-right" : "text-left"}`}>
-                        {isRTL ? "معرف المنشور" : "Media ID"}
+                        {isRTL ? "التسمية التوضيحية" : "Caption"}
                       </th>
                       <th className={`text-sm font-semibold p-3 ${isRTL ? "text-right" : "text-left"}`}>
                         {isRTL ? "التاريخ" : "Timestamp"}
@@ -624,7 +625,7 @@ export default function InstagramAnalyticsPage() {
                           className="border-b border-border/50 hover:bg-muted/50 transition-colors"
                         >
                           <td className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
-                            {post.media_id}
+                            {post.caption ? getFirstSentence(post.caption) : post.media_id}
                           </td>
                           <td className={`p-3 text-sm ${isRTL ? "text-right" : "text-left"}`}>
                             {formatDate(post.timestamp)}
