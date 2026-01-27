@@ -73,14 +73,20 @@ async function getGoogleSheetsData() {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Check cache
-    if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
+    // Check for cache bypass query parameter
+    const { searchParams } = new URL(request.url);
+    const bypassCache = searchParams.get("refresh") === "true";
+    
+    // Check cache (unless bypassed)
+    if (!bypassCache && cache && Date.now() - cache.timestamp < CACHE_DURATION) {
+      console.log(`Returning cached data (${cache.data.length} rows)`);
       return NextResponse.json(cache.data);
     }
 
     // Fetch fresh data
+    console.log("Fetching fresh data from Google Sheets...");
     const data = await getGoogleSheetsData();
     
     // Update cache
