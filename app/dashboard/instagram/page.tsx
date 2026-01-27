@@ -406,7 +406,8 @@ export default function InstagramAnalyticsPage() {
     return cols;
   }, [data]);
 
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | null | undefined) => {
+    if (num === null || num === undefined || isNaN(num) || !isFinite(num)) return "0";
     return new Intl.NumberFormat(isRTL ? "ar-DZ" : "en-US").format(Math.round(num));
   };
 
