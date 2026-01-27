@@ -20,6 +20,7 @@ interface InstagramPost {
   likes?: number;
   comments?: number;
   permalink?: string;
+  caption?: string;
 }
 
 interface InstagramAnalytics {
@@ -186,6 +187,13 @@ export default function InstagramAnalyticsPage() {
 
     return insightsList;
   }, [data, engagementRatios, isRTL]);
+
+  // Helper function to get first word of caption
+  const getFirstWord = (caption?: string) => {
+    if (!caption) return "";
+    const words = caption.trim().split(/\s+/);
+    return words[0] || "";
+  };
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat(isRTL ? "ar-DZ" : "en-US").format(Math.round(num));
@@ -454,7 +462,9 @@ export default function InstagramAnalyticsPage() {
                           {index + 1}
                         </Badge>
                         <div>
-                          <p className="text-sm font-medium">{post.media_id}</p>
+                          <p className="text-sm font-medium">
+                            {post.caption ? getFirstWord(post.caption) : post.media_id}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             {formatDate(post.timestamp)}
                           </p>
@@ -498,7 +508,9 @@ export default function InstagramAnalyticsPage() {
                           {index + 1}
                         </Badge>
                         <div>
-                          <p className="text-sm font-medium">{post.media_id}</p>
+                          <p className="text-sm font-medium">
+                            {post.caption ? getFirstWord(post.caption) : post.media_id}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             {formatDate(post.timestamp)}
                           </p>

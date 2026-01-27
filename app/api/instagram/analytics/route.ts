@@ -12,6 +12,7 @@ interface InstagramPost {
   likes?: number;
   comments?: number;
   permalink?: string;
+  caption?: string;
 }
 
 interface InstagramAnalyticsResponse {
@@ -170,6 +171,7 @@ function processInstagramData(rawData: any[]): InstagramAnalyticsResponse {
     const comments = extractValue(row, ["comments", "comments_count"]);
     const timestamp = extractStringValue(row, ["timestamp", "date", "created_at", "publish_date"]);
     const permalink = extractStringValue(row, ["permalink", "url", "link"]);
+    const caption = extractStringValue(row, ["caption", "text", "description", "message"]);
 
     const post: InstagramPost = {
       media_id: mediaId,
@@ -179,6 +181,7 @@ function processInstagramData(rawData: any[]): InstagramAnalyticsResponse {
       likes: likes || 0,
       comments: comments || 0,
       permalink: permalink || undefined,
+      caption: caption || undefined,
     };
 
     posts.push(post);
