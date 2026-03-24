@@ -1,98 +1,112 @@
 import { NextResponse } from "next/server";
-import * as XLSX from "xlsx";
-import { readFileSync, existsSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 import { join } from "path";
+import { parseLinkedInWorkbook } from "@/lib/linkedin-parse";
 
-let cache: { data: any; timestamp: number } | null = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+export const dynamic = "force-dynamic";
 
-function parseExcelFile(filePath: string) {
-  try {
-    const fileBuffer = readFileSync(filePath);
-    const workbook = XLSX.read(fileBuffer, { type: "buffer" });
-    
-    const data: any = {};
-    
-    // Parse each sheet
-    workbook.SheetNames.forEach((sheetName) => {
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
-      data[sheetName] = jsonData;
-    });
-    
-    return data;
-  } catch (error: any) {
-    console.error(`Error parsing file ${filePath}:`, error);
-    return null;
+let cache: { data: unknown; timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000;
+
+function pickLatestExport(files: string[], pattern: RegExp): string | null {
+  const matches = files.filter((f) => pattern.test(f));
+  if (!matches.length) return null;
+  matches.sort((a, b) => {
+    const ma = a.match(/_(\d+)\.(xls|xlsx)$/i);
+    const mb = b.match(/_(\d+)\.(xls|xlsx)$/i);
+    const ta = ma ? parseInt(ma[1], 10) : 0;
+    const tb = mb ? parseInt(mb[1], 10) : 0;
+    return tb - ta;
+  });
+  return matches[0];
+}
+
+function resolveLinkedInDir(): string {
+  const possiblePaths = [
+    join(process.cwd(), "linkedin"),
+    join(process.cwd(), "..", "linkedin"),
+    join(__dirname, "..", "..", "..", "linkedin"),
+  ];
+  for (const p of possiblePaths) {
+    try {
+      if (existsSync(p)) return p;
+    } catch {
+      /* continue */
+    }
   }
+  throw new Error("LinkedIn data folder not found. Add exports under the project `linkedin` folder.");
 }
 
 async function getLinkedInData() {
-  try {
-    // Try multiple possible paths for the linkedin folder
-    const possiblePaths = [
-      join(process.cwd(), "..", "linkedin"), // Development: parent directory
-      join(process.cwd(), "linkedin"), // Same directory
-      join(__dirname, "..", "..", "..", "linkedin"), // Alternative path
-    ];
-    
-    let basePath: string | null = null;
-    for (const path of possiblePaths) {
-      try {
-        if (existsSync(path)) {
-          basePath = path;
-          break;
-        }
-      } catch {
-        // Continue to next path
-      }
-    }
-    
-    if (!basePath) {
-      throw new Error("LinkedIn data folder not found. Please ensure the 'linkedin' folder exists.");
-    }
-    
-    // Parse all LinkedIn files
-    const contentData = parseExcelFile(join(basePath, "دورلي-doorly_content_1767085154803.xls"));
-    const visitorsData = parseExcelFile(join(basePath, "دورلي-doorly_visitors_1767085157484.xls"));
-    const followersData = parseExcelFile(join(basePath, "دورلي-doorly_followers_1767085160414.xls"));
-    const competitorData = parseExcelFile(join(basePath, "دورلي - doorly_competitor_analytics_1767085167105.xlsx"));
-    
-    return {
-      content: contentData || {},
-      visitors: visitorsData || {},
-      followers: followersData || {},
-      competitors: competitorData || {},
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error: any) {
-    console.error("Error fetching LinkedIn data:", error);
-    throw error;
+  const basePath = resolveLinkedInDir();
+  const files = readdirSync(basePath);
+
+  const contentName = pickLatestExport(files, /doorly_content_\d+\.xls$/i);
+  const visitorsName = pickLatestExport(files, /doorly_visitors_\d+\.xls$/i);
+  const followersName = pickLatestExport(files, /doorly_followers_\d+\.xls$/i);
+  const competitorName =
+    pickLatestExport(files, /competitor.*\.xlsx$/i) ||
+    files.find((f) => /\.xlsx$/i.test(f) && /competitor/i.test(f)) ||
+    null;
+
+  if (!contentName || !visitorsName || !followersName) {
+    throw new Error(
+      "Missing LinkedIn exports. Expected files matching *doorly_content_*.xls, *doorly_visitors_*.xls, *doorly_followers_*.xls"
+    );
   }
+
+  const content = parseLinkedInWorkbook(join(basePath, contentName));
+  const visitors = parseLinkedInWorkbook(join(basePath, visitorsName));
+  const followers = parseLinkedInWorkbook(join(basePath, followersName));
+  const competitors = competitorName
+    ? parseLinkedInWorkbook(join(basePath, competitorName))
+    : {};
+
+  const tsFromName = (name: string) => {
+    const m = name.match(/_(\d+)\.(xls|xlsx)$/i);
+    return m ? parseInt(m[1], 10) : null;
+  };
+
+  const exportIds = [contentName, visitorsName, followersName]
+    .map(tsFromName)
+    .filter((n): n is number => n != null);
+
+  return {
+    content,
+    visitors,
+    followers,
+    competitors,
+    timestamp: new Date().toISOString(),
+    sources: {
+      content: contentName,
+      visitors: visitorsName,
+      followers: followersName,
+      competitors: competitorName,
+    },
+    exportEpochMs:
+      exportIds.length > 0 ? Math.min(...exportIds.map((id) => (id < 1e12 ? id * 1000 : id))) : null,
+  };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Check cache
+    const { searchParams } = new URL(request.url);
+    const refresh = searchParams.get("refresh") === "1" || searchParams.get("refresh") === "true";
+
+    if (refresh) {
+      cache = null;
+    }
+
     if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
       return NextResponse.json(cache.data);
     }
 
     const data = await getLinkedInData();
-    
-    // Update cache
-    cache = {
-      data,
-      timestamp: Date.now(),
-    };
-
+    cache = { data, timestamp: Date.now() };
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to fetch LinkedIn data";
     console.error("Error in LinkedIn API:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch LinkedIn data" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
