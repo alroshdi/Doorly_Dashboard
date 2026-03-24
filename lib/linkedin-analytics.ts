@@ -80,11 +80,6 @@ function extractValue(obj: any, possibleKeys: string[]): number {
     }
   }
 
-  for (const k in obj) {
-    const value = obj[k];
-    if (typeof value === "number" && !isNaN(value) && value > 0) return value;
-  }
-
   return 0;
 }
 
@@ -97,13 +92,6 @@ function extractStringValue(obj: any, possibleKeys: string[]): string {
     if (found) {
       const value = String(obj[found] || "").trim();
       if (value && value !== "null" && value !== "undefined") return value;
-    }
-  }
-
-  for (const k in obj) {
-    const value = String(obj[k] || "").trim();
-    if (value && value !== "null" && value !== "undefined" && isNaN(parseFloat(value))) {
-      if (!value.match(/^\d{4}-\d{2}-\d{2}/) && value.length > 1) return value;
     }
   }
 
@@ -163,7 +151,16 @@ export function calculateLinkedInKPIs(data: LinkedInData): LinkedInKPIs {
     reachBySource: [],
   };
 
-  const posts = firstSheetRows(data.content, (n) => /all posts/i.test(n));
+  let posts = firstSheetRows(data.content, (n) => {
+    const s = n.trim().toLowerCase();
+    return s.includes("all") && s.includes("post");
+  });
+  if (posts.length === 0) {
+    posts = firstSheetRows(data.content, (n) => {
+      const s = n.trim().toLowerCase();
+      return s.includes("post") && !s.includes("metric");
+    });
+  }
   const metricsRows = firstSheetRows(data.content, (n) => /^metrics$/i.test(n.trim()));
 
   posts.forEach((post: any) => {

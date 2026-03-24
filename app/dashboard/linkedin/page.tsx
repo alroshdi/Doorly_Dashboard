@@ -44,7 +44,10 @@ export default function LinkedInInsightsPage() {
     try {
       setLoading(true);
       const q = refresh ? "?refresh=1" : "";
-      const response = await fetch(`/api/linkedin${q}`);
+      const response = await fetch(`/api/linkedin${q}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+      });
       const result = await response.json();
       if (!response.ok || result.error) {
         throw new Error(result.error || "Failed to fetch LinkedIn data");

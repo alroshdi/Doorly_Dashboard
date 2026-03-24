@@ -97,13 +97,17 @@ export async function GET(request: Request) {
       cache = null;
     }
 
+    const noStore = {
+      "Cache-Control": "private, no-store, max-age=0, must-revalidate",
+    } as const;
+
     if (cache && Date.now() - cache.timestamp < CACHE_DURATION) {
-      return NextResponse.json(cache.data);
+      return NextResponse.json(cache.data, { headers: noStore });
     }
 
     const data = await getLinkedInData();
     cache = { data, timestamp: Date.now() };
-    return NextResponse.json(data);
+    return NextResponse.json(data, { headers: noStore });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to fetch LinkedIn data";
     console.error("Error in LinkedIn API:", error);
