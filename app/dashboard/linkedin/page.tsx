@@ -20,6 +20,7 @@ import {
 } from "@/lib/linkedin-analytics";
 import { RefreshCw, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function LinkedInInsightsPage() {
   const router = useRouter();
@@ -111,6 +112,34 @@ export default function LinkedInInsightsPage() {
 
     const kpis = calculateLinkedInKPIs(data);
     const insights = generateLinkedInInsights(kpis, lang);
+
+    const timeSeriesChartCount = [
+      kpis.impressionsOverTime.length > 0,
+      kpis.engagementsOverTime.length > 0,
+      kpis.followersOverTime.length > 0,
+    ].filter(Boolean).length;
+    const timeSeriesGridClass = cn(
+      "grid gap-2 md:gap-3",
+      timeSeriesChartCount >= 3 && "grid-cols-1 md:grid-cols-2 xl:grid-cols-3",
+      timeSeriesChartCount === 2 && "grid-cols-1 lg:grid-cols-2",
+      timeSeriesChartCount <= 1 && "grid-cols-1"
+    );
+
+    const audienceFollowerCharts = [kpis.followersByCountry.length > 0, kpis.followersByIndustry.length > 0].filter(
+      Boolean
+    ).length;
+    const audienceVisitorCharts = [kpis.visitorsByCountry.length > 0, kpis.visitorsByIndustry.length > 0].filter(
+      Boolean
+    ).length;
+    const sourceChartsCount = [kpis.visitorsBySource.length > 0, kpis.followersBySource.length > 0].filter(
+      Boolean
+    ).length;
+    const engagementMixCount = [kpis.engagementByType.length > 0, kpis.reachBySource.length > 0].filter(
+      Boolean
+    ).length;
+
+    const twoColOrFull = (n: number) =>
+      cn("grid gap-2 md:gap-3", n >= 2 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1");
     const exportDate =
       data.exportEpochMs != null
         ? new Date(data.exportEpochMs).toLocaleDateString(isRTL ? "ar" : "en-US", {
@@ -181,17 +210,7 @@ export default function LinkedInInsightsPage() {
             {kpis.impressionsOverTime.length > 0 ||
             kpis.engagementsOverTime.length > 0 ||
             kpis.followersOverTime.length > 0 ? (
-              <div
-                className={
-                  [
-                    kpis.impressionsOverTime.length > 0,
-                    kpis.engagementsOverTime.length > 0,
-                    kpis.followersOverTime.length > 0,
-                  ].filter(Boolean).length === 3
-                    ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-3"
-                    : "grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3"
-                }
-              >
+              <div className={timeSeriesGridClass}>
                 {kpis.impressionsOverTime.length > 0 && (
                   <LineChartComponent 
                     data={kpis.impressionsOverTime} 
@@ -227,7 +246,7 @@ export default function LinkedInInsightsPage() {
 
             {/* Followers Distribution - Only show if data exists */}
             {(kpis.followersByCountry.length > 0 || kpis.followersByIndustry.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
+              <div className={twoColOrFull(audienceFollowerCharts)}>
                 {kpis.followersByCountry.length > 0 && (
                   <DonutChartComponent 
                     data={kpis.followersByCountry} 
@@ -247,7 +266,7 @@ export default function LinkedInInsightsPage() {
 
             {/* Visitors Distribution - Only show if data exists */}
             {(kpis.visitorsByCountry.length > 0 || kpis.visitorsByIndustry.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
+              <div className={twoColOrFull(audienceVisitorCharts)}>
                 {kpis.visitorsByCountry.length > 0 && (
                   <BarChartComponent 
                     data={kpis.visitorsByCountry} 
@@ -271,18 +290,9 @@ export default function LinkedInInsightsPage() {
               description={t.linkedin.sectionHintBenchmark}
             />
 
-            {/* Competitor Comparison */}
-            {kpis.competitorComparison.length > 0 && (
-              <BarChartComponent 
-                data={kpis.competitorComparison.map(c => ({ name: c.name, value: c.followers }))} 
-                title={t.linkedin.charts.competitorComparison}
-                subtitle={isRTL ? "متابعو الصفحة حسب التصدير" : "Page followers from competitor export"}
-              />
-            )}
-
             {/* User Sources - Where users come from */}
             {(kpis.visitorsBySource.length > 0 || kpis.followersBySource.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
+              <div className={twoColOrFull(sourceChartsCount)}>
                 {kpis.visitorsBySource.length > 0 && (
                   <PieChartComponent 
                     data={kpis.visitorsBySource} 
@@ -301,23 +311,13 @@ export default function LinkedInInsightsPage() {
             )}
 
             {/* Time Spent Metrics */}
-            {(kpis.timeSpentDistribution.length > 0 || kpis.engagementTimeOverTime.length > 0) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
-                {kpis.timeSpentDistribution.length > 0 && (
-                  <BarChartComponent 
-                    data={kpis.timeSpentDistribution} 
-                    title={t.linkedin.charts.timeSpentDistribution}
-                    subtitle={isRTL ? "توزيع الوقت المستغرق" : "Time spent distribution"}
-                  />
-                )}
-                {kpis.engagementTimeOverTime.length > 0 && (
-                  <LineChartComponent 
-                    data={kpis.engagementTimeOverTime} 
-                    title={t.linkedin.charts.engagementTimeOverTime}
-                    subtitle={isRTL ? "وقت التفاعل عبر الزمن" : "Engagement time over time"}
-                    valueLabel={t.linkedin.charts.axisEngagementSeries}
-                  />
-                )}
+            {kpis.timeSpentDistribution.length > 0 && (
+              <div className={twoColOrFull(1)}>
+                <BarChartComponent 
+                  data={kpis.timeSpentDistribution} 
+                  title={t.linkedin.charts.timeSpentDistribution}
+                  subtitle={isRTL ? "توزيع الوقت المستغرق" : "Time spent distribution"}
+                />
               </div>
             )}
 
@@ -331,7 +331,7 @@ export default function LinkedInInsightsPage() {
                     subtitle={isRTL ? "أفضل المحتوى أداءً" : "Top performing content"}
                   />
                 )}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
+                <div className={twoColOrFull(engagementMixCount)}>
                   {kpis.engagementByType.length > 0 && (
                     <PieChartComponent 
                       data={kpis.engagementByType} 

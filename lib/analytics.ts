@@ -567,25 +567,74 @@ export function getCustomerRequestsCount(data: RequestData[]): ChartData[] {
 
 // Get customers with repeated property types
 export function getCustomersWithRepeatedPropertyTypes(data: RequestData[]): CustomerAnalytics[] {
-  const customerIdColumn = Object.keys(data[0] || {}).find(k => 
-    k.toLowerCase().includes("customer_id")
-  );
-  const customerNameColumn = Object.keys(data[0] || {}).find(k => 
-    k.toLowerCase().includes("customer_name")
-  );
-  const propertyTypeColumn = Object.keys(data[0] || {}).find(k => 
-    k.toLowerCase().includes("property_type_ar") || 
-    k.toLowerCase().includes("property_type")
+  if (!data.length) return [];
+
+  const keys = Object.keys(data[0] || {});
+
+  const customerIdColumn = keys.find((k) => k.toLowerCase().includes("customer_id"));
+  const customerNameColumn = keys.find(
+    (k) =>
+      k.toLowerCase().includes("customer_name") || k.toLowerCase().includes("customer_name_ar")
   );
 
-  if (!customerIdColumn || !propertyTypeColumn || data.length === 0) return [];
+  const propertyTypeArColumn = keys.find((k) => k.toLowerCase().includes("property_type_ar"));
+  const propertyTypeEnColumn = keys.find((k) => k.toLowerCase().includes("property_type_en"));
+  const propertyTypeNameColumn = keys.find((k) => {
+    const l = k.toLowerCase();
+    return (
+      l.includes("property_type_name") ||
+      (l.includes("property_name") && !l.includes("customer"))
+    );
+  });
+  const propertyTypeIdColumn = keys.find((k) => {
+    const l = k.toLowerCase();
+    return (
+      l.includes("property_type") &&
+      !l.includes("_ar") &&
+      !l.includes("_en") &&
+      !l.includes("name")
+    );
+  });
+
+  if (!customerIdColumn) return [];
+  if (!propertyTypeArColumn && !propertyTypeNameColumn && !propertyTypeEnColumn && !propertyTypeIdColumn) {
+    return [];
+  }
+
+  const idToLabel: Record<string, string> = {};
+  data.forEach((row) => {
+    const id = propertyTypeIdColumn ? String(row[propertyTypeIdColumn] ?? "").trim() : "";
+    if (!id || !/^\d+$/.test(id)) return;
+    const ar = propertyTypeArColumn ? String(row[propertyTypeArColumn] ?? "").trim() : "";
+    const en = propertyTypeEnColumn ? String(row[propertyTypeEnColumn] ?? "").trim() : "";
+    const nm = propertyTypeNameColumn ? String(row[propertyTypeNameColumn] ?? "").trim() : "";
+    const label = ar || nm || en;
+    if (label) {
+      idToLabel[id] = label;
+    }
+  });
+
+  const resolvePropertyTypeLabel = (row: RequestData): string => {
+    const ar = propertyTypeArColumn ? String(row[propertyTypeArColumn] ?? "").trim() : "";
+    if (ar) return ar;
+    const nm = propertyTypeNameColumn ? String(row[propertyTypeNameColumn] ?? "").trim() : "";
+    if (nm) return nm;
+    const en = propertyTypeEnColumn ? String(row[propertyTypeEnColumn] ?? "").trim() : "";
+    if (en) return en;
+    const id = propertyTypeIdColumn ? String(row[propertyTypeIdColumn] ?? "").trim() : "";
+    if (id) {
+      if (idToLabel[id]) return idToLabel[id];
+      if (!/^\d+$/.test(id)) return id;
+    }
+    return id;
+  };
 
   const customerMap: { [key: string]: CustomerAnalytics } = {};
 
   data.forEach((row) => {
     const customerId = String(row[customerIdColumn] || "").trim();
     const customerName = customerNameColumn ? String(row[customerNameColumn] || "").trim() : customerId;
-    const propertyType = String(row[propertyTypeColumn] || "").trim();
+    const propertyType = resolvePropertyTypeLabel(row);
 
     if (customerId && propertyType) {
       if (!customerMap[customerId]) {
@@ -598,16 +647,13 @@ export function getCustomersWithRepeatedPropertyTypes(data: RequestData[]): Cust
         };
       }
       customerMap[customerId].requestCount++;
-      customerMap[customerId].propertyTypes[propertyType] = 
+      customerMap[customerId].propertyTypes[propertyType] =
         (customerMap[customerId].propertyTypes[propertyType] || 0) + 1;
     }
   });
 
-  // Filter customers with repeated property types (more than 1 request of same type)
   return Object.values(customerMap)
-    .filter(customer => {
-      return Object.values(customer.propertyTypes).some(count => count > 1);
-    })
+    .filter((customer) => Object.values(customer.propertyTypes).some((count) => count > 1))
     .sort((a, b) => b.requestCount - a.requestCount);
 }
 

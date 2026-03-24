@@ -29,7 +29,7 @@ export function DonutChartComponent({ data, title, subtitle, insight }: DonutCha
   // If no data, show empty state
   if (processedData.length === 0) {
     return (
-      <Card className="border border-border bg-card">
+      <Card className="h-full w-full min-w-0 border border-border bg-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold">{title}</CardTitle>
           {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
@@ -49,7 +49,7 @@ export function DonutChartComponent({ data, title, subtitle, insight }: DonutCha
   const analyticsSummary = insight || generateAnalyticsSummary(processedData, isRTL);
 
   return (
-    <Card className="border border-border bg-card shadow-sm">
+    <Card className="h-full w-full min-w-0 border border-border bg-card shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}

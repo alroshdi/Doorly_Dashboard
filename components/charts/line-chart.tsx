@@ -90,7 +90,7 @@ export function LineChartComponent({
 
   if (filteredData.length === 0) {
     return (
-      <Card className="border border-border bg-card">
+      <Card className="h-full w-full min-w-0 border border-border bg-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-semibold">{title}</CardTitle>
           {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
@@ -134,7 +134,7 @@ export function LineChartComponent({
   const muted = "hsl(var(--muted-foreground))";
 
   return (
-    <Card className="border border-border bg-card shadow-sm">
+    <Card className="h-full w-full min-w-0 border border-border bg-card shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
