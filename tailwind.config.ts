@@ -40,6 +40,9 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      maxWidth: {
+        dashboard: "88rem",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

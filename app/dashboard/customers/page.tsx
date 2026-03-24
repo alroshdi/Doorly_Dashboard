@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { parseISO } from "date-fns";
-import { Sidebar } from "@/components/sidebar";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { PageHeader } from "@/components/page-header";
+import { DashboardLoader } from "@/components/dashboard-states";
 import { TopFilters, FilterState } from "@/components/top-filters";
 import { BarChartComponent } from "@/components/charts/bar-chart";
 import { PieChartComponent } from "@/components/charts/pie-chart";
@@ -21,7 +23,7 @@ import {
   getCustomerKPIs,
   type RequestData,
 } from "@/lib/analytics";
-import { Loader2, Search, MapPin, Building2, Calendar } from "lucide-react";
+import { Search, MapPin, Building2, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CustomerKPICards } from "@/components/customer-kpi-cards";
 import { cn } from "@/lib/utils";
@@ -249,27 +251,23 @@ export default function CustomersPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </div>
+      <DashboardShell>
+        <DashboardLoader label={isRTL ? "جاري التحميل..." : "Loading..."} />
+      </DashboardShell>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <Card>
+      <DashboardShell>
+        <div className="flex min-h-[50vh] items-center justify-center py-8">
+          <Card className="w-full max-w-md border-destructive/40">
             <CardContent className="p-6">
-              <p className="text-destructive">{error}</p>
+              <p className="text-sm text-destructive leading-relaxed">{error}</p>
             </CardContent>
           </Card>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
@@ -284,21 +282,18 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Sidebar />
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-3 md:p-4 space-y-2 md:space-y-3">
-          {/* Header Section */}
-          <div className="mb-2">
-            <h1 className="text-2xl md:text-3xl font-bold mb-1">
-              {t.sidebar.brokers}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {isRTL ? "تحليل شامل للعملاء وطلباتهم مع إحصائيات مفصلة ورسوم بيانية واضحة" : "Comprehensive customer analytics with detailed statistics and clear charts"}
-            </p>
-          </div>
+    <DashboardShell>
+      <div className="flex flex-col gap-6 md:gap-8">
+        <PageHeader
+          title={t.sidebar.brokers}
+          description={
+            isRTL
+              ? "تحليل شامل للعملاء وطلباتهم مع إحصائيات مفصلة ورسوم بيانية واضحة"
+              : "Comprehensive customer analytics with detailed statistics and clear charts"
+          }
+        />
 
-          <TopFilters filters={filters} onFiltersChange={setFilters} data={filteredData} />
+        <TopFilters filters={filters} onFiltersChange={setFilters} data={filteredData} />
 
           {/* Customer KPI Cards */}
           <CustomerKPICards metrics={customerKPIs} />
@@ -562,9 +557,8 @@ export default function CustomersPage() {
               )}
             </CardContent>
           </Card>
-        </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }
 

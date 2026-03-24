@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Sidebar } from "@/components/sidebar";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { PageHeader } from "@/components/page-header";
+import { DashboardLoader } from "@/components/dashboard-states";
 import { TopFilters, FilterState } from "@/components/top-filters";
 import { KPICards } from "@/components/kpi-cards";
 import { LineChartComponent } from "@/components/charts/line-chart";
@@ -23,7 +25,7 @@ import {
   getUsageTypeDistribution,
   type RequestData,
 } from "@/lib/analytics";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText } from "lucide-react";
 import { parseISO, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 import { exportDashboardToPDF } from "@/lib/pdf-export";
@@ -250,38 +252,31 @@ export default function DashboardPage() {
     // Use consistent text during SSR to prevent hydration mismatch
     const loadingText = mounted ? (isRTL ? "جاري التحميل..." : "Loading...") : "جاري التحميل...";
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
-        <div className="text-center animate-fade-in">
-          <div className="relative">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-            <div className="absolute inset-0 h-12 w-12 mx-auto animate-ping opacity-20">
-              <Loader2 className="h-12 w-12 text-primary" />
-            </div>
-          </div>
-          <p className="text-muted-foreground text-lg animate-pulse-slow">{loadingText}</p>
-          <div className="mt-4 flex gap-2 justify-center">
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-          </div>
-        </div>
-      </div>
+      <DashboardShell>
+        <DashboardLoader label={loadingText} />
+      </DashboardShell>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle className="text-destructive">Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={fetchData}>Retry</Button>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardShell>
+        <div className="flex min-h-[50vh] items-center justify-center py-8">
+          <Card className="w-full max-w-md border-destructive/40">
+            <CardHeader>
+              <CardTitle className="text-lg text-destructive">
+                {isRTL ? "خطأ" : "Error"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground leading-relaxed">{error}</p>
+              <Button type="button" onClick={fetchData}>
+                {isRTL ? "إعادة المحاولة" : "Retry"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardShell>
     );
   }
 
@@ -300,19 +295,16 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
-      <Sidebar />
-      <div className="flex-1 overflow-y-auto">
-        <div id="dashboard-content" className="p-3 md:p-4 space-y-2 md:space-y-3">
-          {/* Header Section - Compact layout */}
-          <div className="mb-2">
-            <h1 className="text-2xl md:text-3xl font-bold mb-1">
-              {t.sidebar.overview}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {isRTL ? "لوحة تحكم شاملة لإدارة وتحليل طلبات العقارات" : "Comprehensive dashboard for real estate request management and analytics"}
-            </p>
-          </div>
+    <DashboardShell>
+      <div id="dashboard-content" className="flex flex-col gap-6 md:gap-8">
+        <PageHeader
+          title={t.sidebar.overview}
+          description={
+            isRTL
+              ? "لوحة تحكم شاملة لإدارة وتحليل طلبات العقارات"
+              : "Comprehensive dashboard for real estate request management and analytics"
+          }
+        />
 
           {/* Top Filters */}
           <div>
@@ -425,9 +417,8 @@ export default function DashboardPage() {
               </p>
             </CardContent>
           </Card>
-        </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }
 

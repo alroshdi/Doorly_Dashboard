@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sidebar } from "@/components/sidebar";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { PageHeader, SectionHeader } from "@/components/page-header";
+import { DashboardLoader } from "@/components/dashboard-states";
 import { LinkedInKPICards } from "@/components/linkedin-kpi-cards";
 import { LineChartComponent } from "@/components/charts/line-chart";
 import { BarChartComponent } from "@/components/charts/bar-chart";
@@ -16,7 +18,7 @@ import {
   generateLinkedInInsights,
   type LinkedInData,
 } from "@/lib/linkedin-analytics";
-import { Loader2, RefreshCw, Lightbulb } from "lucide-react";
+import { RefreshCw, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function LinkedInInsightsPage() {
@@ -66,71 +68,33 @@ export default function LinkedInInsightsPage() {
   const t = getTranslations(lang);
   const isRTL = lang === "ar";
 
-  // Always show sidebar for navigation
   const renderContent = () => {
-    // Prevent hydration mismatch by using consistent text until mounted
     if (!mounted) {
       return (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center animate-fade-in">
-            <div className="relative">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-              <div className="absolute inset-0 h-12 w-12 mx-auto animate-ping opacity-20">
-                <Loader2 className="h-12 w-12 text-primary" />
-              </div>
-            </div>
-            <p className="text-muted-foreground text-lg animate-pulse-slow">
-              جاري تحميل بيانات LinkedIn...
-            </p>
-            <div className="mt-4 flex gap-2 justify-center">
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-          </div>
-        </div>
+        <DashboardLoader label={isRTL ? "جاري تحميل بيانات LinkedIn..." : "Loading LinkedIn data..."} />
       );
     }
 
     if (loading) {
       return (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center animate-fade-in">
-            <div className="relative">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-              <div className="absolute inset-0 h-12 w-12 mx-auto animate-ping opacity-20">
-                <Loader2 className="h-12 w-12 text-primary" />
-              </div>
-            </div>
-            <p className="text-muted-foreground text-lg animate-pulse-slow">
-              {isRTL ? "جاري تحميل بيانات LinkedIn..." : "Loading LinkedIn data..."}
-            </p>
-            <div className="mt-4 flex gap-2 justify-center">
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-          </div>
-        </div>
+        <DashboardLoader label={isRTL ? "جاري تحميل بيانات LinkedIn..." : "Loading LinkedIn data..."} />
       );
     }
 
     if (error) {
       return (
-        <div className="flex-1 flex items-center justify-center p-6">
-          <Card className="max-w-md animate-fade-in">
+        <div className="flex min-h-[50vh] items-center justify-center py-8">
+          <Card className="max-w-md w-full border-destructive/40">
             <CardHeader>
-              <CardTitle className="text-destructive">Error</CardTitle>
+              <CardTitle className="text-lg text-destructive">
+                {isRTL ? "خطأ" : "Error"}
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">{error}</p>
-              <button
-                type="button"
-                onClick={() => fetchData()}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-              >
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground leading-relaxed">{error}</p>
+              <Button type="button" onClick={() => fetchData()}>
                 {isRTL ? "إعادة المحاولة" : "Retry"}
-              </button>
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -139,8 +103,8 @@ export default function LinkedInInsightsPage() {
 
     if (!data) {
       return (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">{isRTL ? "لا توجد بيانات" : "No data available"}</p>
+        <div className="flex min-h-[40vh] items-center justify-center py-12">
+          <p className="text-sm text-muted-foreground">{isRTL ? "لا توجد بيانات" : "No data available"}</p>
         </div>
       );
     }
@@ -157,36 +121,34 @@ export default function LinkedInInsightsPage() {
         : null;
 
     return (
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-3 md:p-4 space-y-2 md:space-y-3">
-          {/* Header Section */}
-          <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-1">
-                {t.linkedin.title}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {t.linkedin.subtitle}
-                {exportDate ? (
-                  <span className="block mt-1 text-xs">
-                    {isRTL ? "تقريبًا من تصدير: " : "Approx. export window: "}
-                    {exportDate}
-                  </span>
-                ) : null}
-              </p>
-            </div>
+      <div className="flex flex-col gap-6 md:gap-8">
+        <PageHeader
+          title={t.linkedin.title}
+          description={
+            <>
+              <span>{t.linkedin.subtitle}</span>
+              {exportDate ? (
+                <span className="mt-2 block text-xs text-muted-foreground">
+                  {isRTL ? "تقريبًا من تصدير: " : "Approx. export window: "}
+                  {exportDate}
+                </span>
+              ) : null}
+            </>
+          }
+          actions={
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="shrink-0 gap-2"
+              className="gap-2"
               disabled={loading}
               onClick={() => fetchData(true)}
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-4 w-4 shrink-0 ${loading ? "animate-spin" : ""}`} />
               {loading ? t.linkedin.refreshing : t.linkedin.refresh}
             </Button>
-          </div>
+          }
+        />
 
           {insights.bullets.length > 0 && (
             <Card className="border-primary/20 bg-primary/5">
@@ -212,11 +174,8 @@ export default function LinkedInInsightsPage() {
           </div>
 
           {/* Charts Section */}
-          <div className="space-y-4 md:space-y-5">
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">{t.linkedin.sectionContent}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{t.linkedin.sectionHintContent}</p>
-            </div>
+          <div className="space-y-4 md:space-y-6">
+            <SectionHeader title={t.linkedin.sectionContent} description={t.linkedin.sectionHintContent} />
 
             {/* Time-based Charts - Only show if data exists */}
             {kpis.impressionsOverTime.length > 0 ||
@@ -260,10 +219,11 @@ export default function LinkedInInsightsPage() {
               </div>
             ) : null}
 
-            <div className="pt-2">
-              <h2 className="text-lg font-semibold tracking-tight">{t.linkedin.sectionAudience}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{t.linkedin.sectionHintAudience}</p>
-            </div>
+            <SectionHeader
+              className="pt-2"
+              title={t.linkedin.sectionAudience}
+              description={t.linkedin.sectionHintAudience}
+            />
 
             {/* Followers Distribution - Only show if data exists */}
             {(kpis.followersByCountry.length > 0 || kpis.followersByIndustry.length > 0) && (
@@ -305,10 +265,11 @@ export default function LinkedInInsightsPage() {
               </div>
             )}
 
-            <div className="pt-2">
-              <h2 className="text-lg font-semibold tracking-tight">{t.linkedin.sectionBenchmark}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{t.linkedin.sectionHintBenchmark}</p>
-            </div>
+            <SectionHeader
+              className="pt-2"
+              title={t.linkedin.sectionBenchmark}
+              description={t.linkedin.sectionHintBenchmark}
+            />
 
             {/* Competitor Comparison */}
             {kpis.competitorComparison.length > 0 && (
@@ -435,17 +396,11 @@ export default function LinkedInInsightsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
       </div>
     );
   };
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
-      <Sidebar />
-      {renderContent()}
-    </div>
-  );
+  return <DashboardShell>{renderContent()}</DashboardShell>;
 }
 
 

@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Sidebar } from "@/components/sidebar";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { PageHeader } from "@/components/page-header";
+import { DashboardLoader } from "@/components/dashboard-states";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -221,41 +223,25 @@ export default function InstagramAnalyticsPage() {
 
   if (!mounted) {
     return (
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-muted-foreground">
-              {isRTL ? "جاري التحميل..." : "Loading..."}
-            </p>
-          </div>
-        </div>
-      </div>
+      <DashboardShell>
+        <DashboardLoader label={isRTL ? "جاري التحميل..." : "Loading..."} />
+      </DashboardShell>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-muted-foreground">
-              {isRTL ? "جاري تحميل البيانات..." : "Loading analytics..."}
-            </p>
-          </div>
-        </div>
-      </div>
+      <DashboardShell>
+        <DashboardLoader label={isRTL ? "جاري تحميل البيانات..." : "Loading analytics..."} />
+      </DashboardShell>
     );
   }
 
   if (error || (data && data.error)) {
     return (
-      <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Sidebar />
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-3 md:p-4 space-y-2 md:space-y-3">
-            <Card className="border border-destructive">
+      <DashboardShell>
+        <div className="flex flex-col gap-6">
+            <Card className="border-destructive/50">
               <CardHeader>
                 <CardTitle className="text-destructive">
                   {isRTL ? "خطأ في تحميل البيانات" : "Error Loading Data"}
@@ -272,19 +258,16 @@ export default function InstagramAnalyticsPage() {
                 </p>
               </CardContent>
             </Card>
-          </div>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
   
   if (!data) {
     return (
-      <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Sidebar />
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-3 md:p-4 space-y-2 md:space-y-3">
-            <Card className="border border-border">
+      <DashboardShell>
+        <div className="flex flex-col gap-6">
+            <Card>
               <CardHeader>
                 <CardTitle>
                   {isRTL ? "لا توجد بيانات" : "No Data Available"}
@@ -298,28 +281,18 @@ export default function InstagramAnalyticsPage() {
                 </p>
               </CardContent>
             </Card>
-          </div>
         </div>
-      </div>
+      </DashboardShell>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Sidebar />
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-3 md:p-4 space-y-2 md:space-y-3">
-          {/* Header Section */}
-          <div className="mb-2">
-            <h1 className="text-2xl md:text-3xl font-bold mb-1">
-              {t.sidebar.instagram}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {isRTL 
-                ? "تحليلات شاملة لإنستجرام" 
-                : "Comprehensive Instagram Analytics"}
-            </p>
-          </div>
+    <DashboardShell>
+      <div className="flex flex-col gap-6 md:gap-8">
+        <PageHeader
+          title={t.sidebar.instagram}
+          description={isRTL ? "تحليلات شاملة لإنستجرام" : "Comprehensive Instagram Analytics"}
+        />
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
@@ -670,9 +643,8 @@ export default function InstagramAnalyticsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }
 

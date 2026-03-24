@@ -68,16 +68,20 @@ export default function LoginPage() {
   const t = getTranslations(lang);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-secondary/20 p-4">
-      <Card className="w-full max-w-md shadow-2xl">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-br from-primary/[0.07] via-background to-secondary/[0.07] px-4 py-10">
+      <Card className="w-full max-w-md border-border/70 shadow-lg">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center mb-4">
             <div className="w-40 h-40 flex items-center justify-center">
               <LogoImage />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold">{t.login.title}</CardTitle>
-          <CardDescription className="text-base">{t.login.subtitle}</CardDescription>
+          <CardTitle className="text-balance text-2xl font-semibold tracking-tight md:text-3xl">
+            {t.login.title}
+          </CardTitle>
+          <CardDescription className="text-pretty text-sm leading-relaxed md:text-base">
+            {t.login.subtitle}
+          </CardDescription>
           <div className="flex justify-end">
             <Button
               variant="outline"
@@ -89,8 +93,8 @@ export default function LoginPage() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <CardContent className="pt-2">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 {t.login.email}
@@ -124,14 +128,18 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground outline-none ring-offset-background hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label={showPassword ? (lang === "ar" ? "إخفاء كلمة المرور" : "Hide password") : lang === "ar" ? "إظهار كلمة المرور" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+              <div
+                role="alert"
+                className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
                 {error}
               </div>
             )}

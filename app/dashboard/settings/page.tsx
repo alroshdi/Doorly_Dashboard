@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sidebar } from "@/components/sidebar";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { PageHeader } from "@/components/page-header";
+import { DashboardLoader } from "@/components/dashboard-states";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { isAuthenticated, isAdmin } from "@/lib/auth";
@@ -62,12 +64,9 @@ export default function SettingsPage() {
 
   if (!mounted) {
     return (
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </div>
+      <DashboardShell>
+        <DashboardLoader label={lang === "ar" ? "جاري التحميل..." : "Loading..."} />
+      </DashboardShell>
     );
   }
 
@@ -75,16 +74,12 @@ export default function SettingsPage() {
   const isRTL = lang === "ar";
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6 space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">{t.sidebar.settings}</h1>
-            <p className="text-muted-foreground mt-2">
-              {isRTL ? "إدارة إعدادات التطبيق" : "Manage application settings"}
-            </p>
-          </div>
+    <DashboardShell>
+      <div className="flex flex-col gap-8">
+        <PageHeader
+          title={t.sidebar.settings}
+          description={isRTL ? "إدارة إعدادات التطبيق" : "Manage application settings"}
+        />
 
           {/* Language Settings */}
           <Card>
@@ -208,9 +203,8 @@ export default function SettingsPage() {
               )}
             </Button>
           </div>
-        </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }
 
