@@ -1,10 +1,18 @@
 "use client";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartData } from "@/lib/analytics";
-import { parseISO, format as formatDate } from "date-fns";
-import { getLanguage } from "@/lib/i18n";
+import { parseISO, format as formatDate, parse, isValid } from "date-fns";
+import { getLanguage, getTranslations } from "@/lib/i18n";
 import { formatNumber } from "@/lib/chart-utils";
 
 interface LineChartComponentProps {
@@ -12,19 +20,74 @@ interface LineChartComponentProps {
   title: string;
   subtitle?: string;
   insight?: string | null;
+  /** Shown in tooltip and Y-axis — must match the metric (not "requests" unless this chart is requests). */
+  valueLabel?: string;
+  /** Max points to show (most recent). */
+  maxPoints?: number;
+  /** Use straight segments between daily points instead of smooth curves. */
+  lineType?: "linear" | "monotone";
 }
 
-export function LineChartComponent({ data, title, subtitle, insight }: LineChartComponentProps) {
+function tryParseChartDate(raw: string): Date | null {
+  const s = String(raw).trim();
+  if (!s) return null;
+  try {
+    const iso = parseISO(s);
+    if (isValid(iso)) return iso;
+  } catch {
+    /* continue */
+  }
+  for (const fmt of ["MM/dd/yyyy", "M/d/yyyy", "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd"]) {
+    const d = parse(s, fmt, new Date());
+    if (isValid(d)) return d;
+  }
+  const ymd = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) {
+    const d = parseISO(`${ymd[1]}-${ymd[2]}-${ymd[3]}`);
+    if (isValid(d)) return d;
+  }
+  return null;
+}
+
+function formatTickDate(raw: string, lang: "ar" | "en"): string {
+  const d = tryParseChartDate(raw);
+  if (d) {
+    return formatDate(d, lang === "ar" ? "dd/MM" : "MM/dd");
+  }
+  const monthMatch = raw.match(/^(\d{4})-(\d{2})$/);
+  if (monthMatch) {
+    return `${monthMatch[2]}/${monthMatch[1].slice(2)}`;
+  }
+  return raw.length > 12 ? raw.slice(0, 12) + "…" : raw;
+}
+
+function formatTooltipDate(raw: string, lang: "ar" | "en"): string {
+  const d = tryParseChartDate(raw);
+  if (d) {
+    return formatDate(d, lang === "ar" ? "dd/MM/yyyy" : "MM/dd/yyyy");
+  }
+  return String(raw);
+}
+
+export function LineChartComponent({
+  data,
+  title,
+  subtitle,
+  insight,
+  valueLabel,
+  maxPoints = 30,
+  lineType = "linear",
+}: LineChartComponentProps) {
   const lang = getLanguage();
   const isRTL = lang === "ar";
+  const t = getTranslations(lang);
+  const seriesLabel = valueLabel ?? t.charts.axisValue;
 
-  // Filter out zero values and limit to top 10 for time-based data
   const filteredData = (data || [])
-    .filter(item => item.value > 0)
+    .filter((item) => item.value > 0)
     .sort((a, b) => a.name.localeCompare(b.name))
-    .slice(-10); // Last 10 for time series
+    .slice(-maxPoints);
 
-  // If no data, show empty state
   if (filteredData.length === 0) {
     return (
       <Card className="border border-border bg-card">
@@ -43,167 +106,130 @@ export function LineChartComponent({ data, title, subtitle, insight }: LineChart
 
   const displayData = filteredData;
 
-  // Find the last date with data (value > 0)
-  const lastDateWithData = displayData
-    .filter(item => item.value > 0)
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .pop();
-
-  // Get the last date in the dataset (even if value is 0)
   const lastDate = displayData.length > 0 ? displayData[displayData.length - 1] : null;
+  const year = lastDate
+    ? (() => {
+        const d = tryParseChartDate(lastDate.name);
+        return d ? formatDate(d, "yyyy") : "";
+      })()
+    : "";
 
-  // Extract year from the first date (assuming all dates are in the same year)
-  const year = lastDate ? (() => {
-    try {
-      const date = parseISO(lastDate.name);
-      if (!isNaN(date.getTime())) {
-        return formatDate(date, "yyyy");
-      }
-    } catch {
-      // Try to extract year from string format
-      const match = lastDate.name.match(/^(\d{4})/);
-      return match ? match[1] : "";
-    }
-    return "";
-  })() : "";
+  const calculatedInsight =
+    insight ||
+    (() => {
+      if (displayData.length === 0 || displayData[0].value === 0) return null;
+      const values = displayData.filter((d) => d.value > 0).map((d) => d.value);
+      if (values.length === 0) return null;
+      const maxValue = Math.max(...values);
+      const minValue = Math.min(...values);
+      const maxDate = displayData.find((d) => d.value === maxValue)?.name || "";
+      const maxDateFmt = formatTooltipDate(maxDate, lang);
+      const trend =
+        maxValue > minValue ? (isRTL ? "زيادة" : "Increase") : isRTL ? "انخفاض" : "Decrease";
+      return isRTL
+        ? `الذروة: ${formatNumber(maxValue)} في ${maxDateFmt}. الاتجاه: ${trend}`
+        : `Peak: ${formatNumber(maxValue)} on ${maxDateFmt}. Trend: ${trend}`;
+    })();
 
-  // Format date labels to show only day and month
-  const formatXAxisLabel = (tickItem: string) => {
-    try {
-      const date = parseISO(tickItem);
-      if (!isNaN(date.getTime())) {
-        return formatDate(date, "dd-MM");
-      }
-    } catch {
-      // If parsing fails, try to extract day and month from string
-      const match = tickItem.match(/^\d{4}-(\d{2})-(\d{2})$/);
-      if (match) {
-        return `${match[2]}-${match[1]}`;
-      }
-      // For monthly format (yyyy-MM)
-      const monthMatch = tickItem.match(/^\d{4}-(\d{2})$/);
-      if (monthMatch) {
-        return monthMatch[1];
-      }
-    }
-    return tickItem;
-  };
-
-  // Calculate insights if not provided
-  const calculatedInsight = insight || (() => {
-    if (displayData.length === 0 || displayData[0].value === 0) return null;
-    const values = displayData.filter(d => d.value > 0).map(d => d.value);
-    if (values.length === 0) return null;
-    const maxValue = Math.max(...values);
-    const minValue = Math.min(...values);
-    const maxDate = displayData.find(d => d.value === maxValue)?.name || "";
-    const trend = maxValue > minValue ? (isRTL ? "زيادة" : "Increase") : (isRTL ? "انخفاض" : "Decrease");
-    return isRTL
-      ? `الذروة: ${formatNumber(maxValue)} في ${maxDate}. الاتجاه: ${trend}`
-      : `Peak: ${formatNumber(maxValue)} on ${maxDate}. Trend: ${trend}`;
-  })();
+  const muted = "hsl(var(--muted-foreground))";
 
   return (
     <Card className="border border-border bg-card shadow-sm">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
         {calculatedInsight && (
-          <p className="text-xs text-muted-foreground mt-2 font-medium">
-            {calculatedInsight}
-          </p>
+          <p className="text-xs text-muted-foreground mt-2 font-medium">{calculatedInsight}</p>
         )}
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="relative">
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={displayData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground) / 0.2)" />
-              <XAxis 
-                dataKey="name" 
-                hide={true}
-              />
-              <YAxis 
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                tickFormatter={(value) => formatNumber(value)}
-                width={70}
-                tickMargin={10}
-                axisLine={false}
+        <div className="relative" dir="ltr">
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart
+              data={displayData}
+              margin={{ top: 8, right: 12, left: 4, bottom: 28 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={`${muted} / 0.2`} />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: muted, fontSize: 10 }}
+                tickFormatter={(v) => formatTickDate(String(v), lang)}
+                interval="preserveStartEnd"
+                angle={displayData.length > 8 ? -35 : 0}
+                textAnchor={displayData.length > 8 ? "end" : "middle"}
+                height={displayData.length > 8 ? 52 : 28}
+                axisLine={{ stroke: `${muted} / 0.35` }}
                 tickLine={false}
               />
-              <Tooltip 
+              <YAxis
+                tick={{ fill: muted, fontSize: 11 }}
+                tickFormatter={(value) => formatNumber(value)}
+                width={56}
+                tickMargin={8}
+                axisLine={false}
+                tickLine={false}
+                label={{
+                  value: seriesLabel,
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: 10,
+                  style: { fill: muted, fontSize: 11, fontWeight: 500 },
+                }}
+              />
+              <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '12px',
-                  padding: '12px',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
-                  backdropFilter: 'blur(10px)',
-                  transition: 'all 0.3s ease'
+                  backgroundColor: "rgba(255, 255, 255, 0.96)",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px",
+                  padding: "8px 10px",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
                 }}
                 labelStyle={{
-                  color: 'hsl(var(--foreground))',
-                  fontWeight: 'bold',
-                  marginBottom: '8px',
-                  fontSize: '14px'
+                  color: "hsl(var(--foreground))",
+                  fontWeight: 600,
+                  marginBottom: "4px",
+                  fontSize: "12px",
                 }}
                 itemStyle={{
-                  color: '#3B82F6',
-                  fontWeight: '600',
-                  fontSize: '13px'
+                  color: "#3B82F6",
+                  fontWeight: 600,
+                  fontSize: "12px",
                 }}
-                labelFormatter={(label) => {
-                  try {
-                    const date = parseISO(String(label));
-                    if (!isNaN(date.getTime())) {
-                      return formatDate(date, "dd-MM-yyyy");
-                    }
-                  } catch {}
-                  return String(label);
-                }}
-                formatter={(value: any) => {
-                  return [formatNumber(value), isRTL ? 'الطلبات' : 'Requests'];
-                }}
-                cursor={{ stroke: '#3B82F6', strokeWidth: 2, strokeDasharray: '5 5', opacity: 0.5 }}
+                labelFormatter={(label) => formatTooltipDate(String(label), lang)}
+                formatter={(value: number | string) => [
+                  formatNumber(typeof value === "number" ? value : Number(value)),
+                  seriesLabel,
+                ]}
+                cursor={{ stroke: "#3B82F6", strokeWidth: 1, strokeDasharray: "4 4", opacity: 0.35 }}
                 animationDuration={200}
               />
-              <Legend 
-                verticalAlign="top" 
-                align="left"
-                formatter={() => isRTL ? "الطلبات" : "Requests"}
-                iconType="line"
-                wrapperStyle={{ paddingBottom: '10px' }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="value" 
-                stroke="#3B82F6" 
-                strokeWidth={3}
-                dot={{ 
-                  r: 5, 
-                  fill: '#3B82F6',
+              <Line
+                type={lineType}
+                dataKey="value"
+                name={seriesLabel}
+                stroke="#3B82F6"
+                strokeWidth={2}
+                dot={{
+                  r: 4,
+                  fill: "#3B82F6",
+                  strokeWidth: 1.5,
+                  stroke: "#ffffff",
+                }}
+                activeDot={{
+                  r: 6,
+                  fill: "#2563EB",
                   strokeWidth: 2,
-                  stroke: '#ffffff'
+                  stroke: "#ffffff",
                 }}
-                activeDot={{ 
-                  r: 10, 
-                  fill: '#2563EB',
-                  strokeWidth: 3,
-                  stroke: '#ffffff',
-                  style: { 
-                    filter: 'drop-shadow(0 4px 8px rgba(59, 130, 246, 0.5))',
-                    transition: 'all 0.3s ease'
-                  }
-                }}
-                animationDuration={800}
+                animationDuration={500}
                 animationEasing="ease-out"
                 isAnimationActive={true}
               />
             </LineChart>
           </ResponsiveContainer>
           {year && (
-            <div className="text-center text-sm font-medium text-muted-foreground mt-1">
-              {year}
+            <div className="text-center text-xs font-medium text-muted-foreground mt-0.5" dir={isRTL ? "rtl" : "ltr"}>
+              {isRTL ? `السنة: ${year}` : `Year: ${year}`}
             </div>
           )}
         </div>
@@ -211,4 +237,3 @@ export function LineChartComponent({ data, title, subtitle, insight }: LineChart
     </Card>
   );
 }
-

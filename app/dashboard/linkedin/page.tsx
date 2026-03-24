@@ -222,12 +222,23 @@ export default function LinkedInInsightsPage() {
             {kpis.impressionsOverTime.length > 0 ||
             kpis.engagementsOverTime.length > 0 ||
             kpis.followersOverTime.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3">
+              <div
+                className={
+                  [
+                    kpis.impressionsOverTime.length > 0,
+                    kpis.engagementsOverTime.length > 0,
+                    kpis.followersOverTime.length > 0,
+                  ].filter(Boolean).length === 3
+                    ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 md:gap-3"
+                    : "grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3"
+                }
+              >
                 {kpis.impressionsOverTime.length > 0 && (
                   <LineChartComponent 
                     data={kpis.impressionsOverTime} 
                     title={t.linkedin.charts.impressionsOverTime}
                     subtitle={isRTL ? "من ورقة Metrics (إجمالي الظهور اليومي)" : "From Metrics sheet (daily total impressions)"}
+                    valueLabel={t.linkedin.charts.axisImpressions}
                   />
                 )}
                 {kpis.engagementsOverTime.length > 0 && (
@@ -235,6 +246,7 @@ export default function LinkedInInsightsPage() {
                     data={kpis.engagementsOverTime} 
                     title={t.linkedin.charts.engagementsOverTime}
                     subtitle={isRTL ? "تفاعلات يومية (تعليقات + تفاعلات + مشاركات + نقرات)" : "Daily engagements (reactions + comments + reposts + clicks)"}
+                    valueLabel={t.linkedin.charts.axisEngagements}
                   />
                 )}
                 {kpis.followersOverTime.length > 0 && (
@@ -242,6 +254,7 @@ export default function LinkedInInsightsPage() {
                     data={kpis.followersOverTime}
                     title={t.linkedin.charts.followersOverTime}
                     subtitle={isRTL ? "متابعون جدد يوميًا" : "New followers gained per day"}
+                    valueLabel={t.linkedin.charts.axisNewFollowers}
                   />
                 )}
               </div>
@@ -341,6 +354,7 @@ export default function LinkedInInsightsPage() {
                     data={kpis.engagementTimeOverTime} 
                     title={t.linkedin.charts.engagementTimeOverTime}
                     subtitle={isRTL ? "وقت التفاعل عبر الزمن" : "Engagement time over time"}
+                    valueLabel={t.linkedin.charts.axisEngagementSeries}
                   />
                 )}
               </div>

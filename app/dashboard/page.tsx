@@ -361,6 +361,7 @@ export default function DashboardPage() {
               data={requestsOverTime} 
               title={t.charts.requestsOverTime}
               subtitle={isRTL ? "تطور عدد الطلبات عبر الزمن" : "Request trends over time"}
+              valueLabel={t.charts.axisRequests}
               insight={(() => {
                 if (requestsOverTime.length === 0) return null;
                 const values = requestsOverTime.filter(d => d.value > 0).map(d => d.value);

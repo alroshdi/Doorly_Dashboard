@@ -440,6 +440,7 @@ export default function InstagramAnalyticsPage() {
                   value: d.reach,
                 }))}
                 title={isRTL ? "الوصول خلال آخر 7 أيام" : "Reach Over Last 7 Days"}
+                valueLabel={t.instagram.charts.axisReach}
               />
               <LineChartComponent
                 data={data.timeTrends.last7Days.map(d => ({
@@ -447,6 +448,7 @@ export default function InstagramAnalyticsPage() {
                   value: d.interactions,
                 }))}
                 title={isRTL ? "التفاعلات خلال آخر 7 أيام" : "Interactions Over Last 7 Days"}
+                valueLabel={t.instagram.charts.axisInteractions}
               />
             </div>
           )}

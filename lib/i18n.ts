@@ -111,6 +111,9 @@ export const translations = {
       daily: "يومي",
       weekly: "أسبوعي",
       monthly: "شهري",
+      axisRequests: "عدد الطلبات",
+      axisValue: "القيمة",
+      axisDate: "التاريخ",
     },
     tables: {
       recentRequests: "الطلبات الأخيرة",
@@ -188,6 +191,10 @@ export const translations = {
         topContent: "أفضل المحتوى (أفضل 10)",
         engagementByType: "التفاعل حسب النوع (أفضل 10)",
         reachBySource: "الوصول حسب المصدر (أفضل 10)",
+        axisImpressions: "الظهور",
+        axisEngagements: "التفاعلات",
+        axisNewFollowers: "متابعون جدد",
+        axisEngagementSeries: "التفاعل",
       },
     },
     instagram: {
@@ -209,6 +216,8 @@ export const translations = {
         reachOverTime: "الوصول عبر الزمن",
         contentTypePerformance: "أداء أنواع المحتوى (معدل التفاعل)",
         avgEngagementByType: "متوسط التفاعل حسب النوع",
+        axisReach: "الوصول",
+        axisInteractions: "التفاعلات",
       },
       table: {
         title: "جدول أداء المنشورات",
@@ -339,6 +348,9 @@ export const translations = {
       daily: "Daily",
       weekly: "Weekly",
       monthly: "Monthly",
+      axisRequests: "Requests",
+      axisValue: "Value",
+      axisDate: "Date",
     },
     tables: {
       recentRequests: "Recent Requests",
@@ -416,6 +428,10 @@ export const translations = {
         topContent: "Top Performing Content (Top 10)",
         engagementByType: "Engagement by Type (Top 10)",
         reachBySource: "Reach by Source (Top 10)",
+        axisImpressions: "Impressions",
+        axisEngagements: "Engagements",
+        axisNewFollowers: "New followers",
+        axisEngagementSeries: "Engagement",
       },
     },
     instagram: {
@@ -437,6 +453,8 @@ export const translations = {
         reachOverTime: "Reach Over Time",
         contentTypePerformance: "Content Type Performance (Engagement Rate)",
         avgEngagementByType: "Average Engagement by Type",
+        axisReach: "Reach",
+        axisInteractions: "Interactions",
       },
       table: {
         title: "Posts Performance Table",
