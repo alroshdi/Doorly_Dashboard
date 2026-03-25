@@ -2,6 +2,8 @@
 
 Professional A4 PDF reports using [barryvdh/laravel-dompdf](https://github.com/barryvdh/laravel-dompdf).
 
+**This Next.js app** already exposes the same style of report at **`GET /api/reports/admin-pdf`** (data from Google Sheets). Use this Laravel bundle only if you run a separate Laravel API with a real SQL database (`orders`, `custom_orders`, etc.).
+
 ## Prerequisites
 
 - PHP 8.2+

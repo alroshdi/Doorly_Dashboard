@@ -14,7 +14,7 @@ A modern, bilingual (Arabic/English) admin dashboard for Doorly with Google Shee
 - 🔍 **Advanced Filtering**: Filter by date range, area, property type, source, and status
 - 📉 **Interactive Charts**: Line, bar, pie, and donut charts using Recharts
 - ✨ **Smooth Animations**: Beautiful animations and transitions throughout
-- 📄 **PDF Export**: Export dashboard reports as PDF
+- 📄 **PDF Export**: Admin report PDF via `GET /api/reports/admin-pdf` (structured tables from Google Sheet requests). Optional Laravel + DomPDF templates live in `laravel-pdf-reporting/`.
 
 ## LinkedIn Insights Features
 
@@ -34,7 +34,7 @@ A modern, bilingual (Arabic/English) admin dashboard for Doorly with Google Shee
 - **UI Components**: shadcn/ui
 - **Charts**: Recharts
 - **Data Processing**: xlsx (Excel parsing)
-- **PDF Export**: jsPDF, html2canvas
+- **PDF Export**: jsPDF + jspdf-autotable (server report); jsPDF + html2canvas (legacy full-page capture in `lib/pdf-export.ts`)
 - **Date Handling**: date-fns
 - **Icons**: lucide-react
 - **Theme**: next-themes

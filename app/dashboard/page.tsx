@@ -28,7 +28,6 @@ import {
 import { FileText } from "lucide-react";
 import { parseISO, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
-import { exportDashboardToPDF } from "@/lib/pdf-export";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -239,6 +238,8 @@ export default function DashboardPage() {
   const usageTypeDistribution = useMemo(() => getUsageTypeDistribution(filteredData), [filteredData]);
 
   const [mounted, setMounted] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const [pdfExportError, setPdfExportError] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -281,17 +282,37 @@ export default function DashboardPage() {
   }
 
   const handleExportPDF = async () => {
-    const reportTitle = isRTL 
-      ? `تقرير دورلي - ${new Date().toLocaleDateString("ar-DZ")}`
-      : `Doorly Report - ${new Date().toLocaleDateString("en-US")}`;
-    
-    await exportDashboardToPDF("dashboard-content", {
-      title: reportTitle,
-      filename: `doorly-dashboard-${new Date().toISOString().split("T")[0]}.pdf`,
-      includeKPIs: true,
-      includeCharts: true,
-      includeTables: true,
-    });
+    setPdfExportError("");
+    setPdfExporting(true);
+    try {
+      const q = new URLSearchParams();
+      if (filters.startDate) q.set("from", filters.startDate);
+      if (filters.endDate) q.set("to", filters.endDate);
+      q.set("refresh", "true");
+      const res = await fetch(`/api/reports/admin-pdf?${q.toString()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(
+          typeof errJson.error === "string" ? errJson.error : `HTTP ${res.status}`
+        );
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `doorly-admin-report-${new Date().toISOString().split("T")[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: unknown) {
+      setPdfExportError(e instanceof Error ? e.message : "PDF export failed");
+    } finally {
+      setPdfExporting(false);
+    }
   };
 
   return (
@@ -398,23 +419,33 @@ export default function DashboardPage() {
             <Tables data={filteredData} />
           </div>
 
-          {/* PDF Reports Button (UI Only) */}
+          {/* PDF: structured admin report from /api/reports/admin-pdf */}
           <Card className="border border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-base">{t.reports.title}</CardTitle>
             </CardHeader>
-            <CardContent className="pt-2">
-              <Button 
-                variant="outline" 
+            <CardContent className="pt-2 space-y-2">
+              <Button
+                variant="outline"
                 className="w-full"
-                onClick={handleExportPDF}
+                disabled={pdfExporting}
+                onClick={() => void handleExportPDF()}
               >
                 <FileText className={cn("h-4 w-4", isRTL ? "mr-2" : "ml-2")} />
-                {t.reports.export}
+                {pdfExporting
+                  ? isRTL
+                    ? "جاري التصدير…"
+                    : "Exporting…"
+                  : t.reports.export}
               </Button>
-              <p className="text-xs text-muted-foreground mt-1 text-center">
-                {isRTL ? "انقر لتصدير التقرير كملف PDF" : "Click to export report as PDF"}
+              <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                {isRTL
+                  ? "تقرير منظم: ملخص، طلبات، طلبات مخصصة، عملاء، مدفوعات (من جدول الطلبات)."
+                  : "Structured report: summary, orders, custom orders, customers, payments (from your requests sheet)."}
               </p>
+              {pdfExportError ? (
+                <p className="text-xs text-destructive text-center">{pdfExportError}</p>
+              ) : null}
             </CardContent>
           </Card>
       </div>
